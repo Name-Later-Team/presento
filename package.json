@@ -14,22 +14,24 @@
     "@types/node": "^16.18.12",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4",
-    "axios": "^1.2.0",
+    "axios": "^1.3.3",
     "bootstrap": "^5.2.3",
+    "http-proxy-middleware": "^2.0.6",
+    "react": "^18.2.0",
     "react-bootstrap": "^2.6.0",
+    "react-dom": "^18.2.0",
     "react-router-dom": "^6.2.2",
-    "sass": "^1.53.0"
+    "react-scripts": "5.0.1",
+    "sass": "^1.53.0",
+    "typescript": "^4.9.5",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start:dev": "concurrently --kill-others \"npm start\" \"cd backend && npm run start:dev\""
   },
   "eslintConfig": {
     "extends": [
@@ -48,5 +50,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
   }
 }
