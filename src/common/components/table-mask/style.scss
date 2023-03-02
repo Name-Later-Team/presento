@@ -1,0 +1,22 @@
+.table-mask-wrapper {
+	position: relative;
+
+	.table-mask-indicator {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		right: 0;
+		z-index: 1;
+	}
+
+	.table-mask-overlay {
+		opacity: 1;
+		background: transparent;
+	}
+
+	.table-mask-overlay.show {
+		opacity: 0.5;
+		background: #fff;
+	}
+}

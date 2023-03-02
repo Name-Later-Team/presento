@@ -1,26 +1,24 @@
 {
-  "semi": true,
-  "arrowParens": "always",
-  "bracketSameLine": false,
-  "bracketSpacing": true,
-  "jsxSingleQuote": false,
-  "printWidth": 120,
-  "singleQuote": false,
-  "useTabs": true,
-  "tabWidth": 4,
-  "trailingComma": "all",
-  "overrides": [
-    {
-      "files": "*.css",
-      "options": {
-        "parser": "css"
-      }
-    },
-    {
-      "files": "*.scss",
-      "options": {
-        "parser": "scss"
-      }
-    }
-  ]
+	"arrowParens": "always",
+	"printWidth": 120,
+	"semi": true,
+	"singleAttributePerLine": false,
+	"singleQuote": false,
+	"trailingComma": "es5",
+	"useTabs": false,
+	"tabWidth": 4,
+	"overrides": [
+		{
+			"files": "*.css",
+			"options": {
+				"parser": "css"
+			}
+		},
+		{
+			"files": "*.scss",
+			"options": {
+				"parser": "scss"
+			}
+		}
+	]
 }

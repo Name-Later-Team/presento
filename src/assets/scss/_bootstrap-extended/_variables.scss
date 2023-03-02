@@ -46,17 +46,17 @@ $yellow: #ffab00 !default;
 $green: #71dd37 !default;
 $teal: #20c997 !default;
 $cyan: #03c3ec !default;
-$primary-bold: #c96f57 !default;
-$danger-bold: #d94d3e !default;
+// $primary-bold: #c96f57 !default;
+// $danger-bold: #d94d3e !default;
 // scss-docs-end color-variables
 
 // scss-docs-start theme-color-variables
-$primary: $primary-bold !default;
+$primary: $purple !default;
 $secondary: #8592a3 !default;
 $success: $green !default;
 $info: $cyan !default;
 $warning: $yellow !default;
-$danger: $danger-bold !default;
+$danger: $red !default;
 $light: #fcfdfd !default;
 $dark: #233446 !default;
 $gray: $gray-100 !default; // (C)
@@ -144,7 +144,7 @@ $container-max-widths: (
 	md: 720px,
 	lg: 960px,
 	xl: 1140px,
-	xxl: 1440px // Custom xxl size,
+	xxl: 1440px // Custom xxl size,,
 ) !default;
 // scss-docs-end container-max-widths
 

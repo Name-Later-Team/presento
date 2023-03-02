@@ -1,6 +1,7 @@
 import React from "react";
 import logo from "./logo.svg";
 import "./App.css";
+import { Button } from "react-bootstrap";
 
 function App() {
 	const handleClick = () => {
@@ -20,7 +21,7 @@ function App() {
 					Learn React
 				</a>
 
-				<button onClick={handleClick}>Click</button>
+				<Button onClick={handleClick}>Click</Button>
 			</header>
 		</div>
 	);

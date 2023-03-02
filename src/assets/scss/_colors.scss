@@ -3,13 +3,7 @@
 // * Bootstrap colors (Uncomment required colors)
 // *******************************************************************************
 
-$bootstrap-colors: (
-	"secondary": #4c5464,
-	"success": #71dd37,
-	"info": #03c3ec,
-	"warning": #ffab00,
-	"danger": #ff5b49,
-) !default;
+$bootstrap-colors: () !default;
 
 @each $color-name, $color-value in $bootstrap-colors {
 	@include bg-variant(".bg-#{$color-name}", $color-value);
