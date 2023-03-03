@@ -5,7 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./assets/scss/index.scss";
 import Home from "./features/home/pages/main";
-import PresentationList from "./features/home/pages/main/presentation/pages/presentation-list";
+import PresentationList from "./features/presentation/pages/presentation-list";
 import reportWebVitals from "./reportWebVitals";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);

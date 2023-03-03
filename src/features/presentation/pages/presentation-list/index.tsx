@@ -3,10 +3,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import moment from "moment";
 import { useState } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
-import { CustomPagination } from "../../../../../../../common/components/custom-pagination";
-import { Loading } from "../../../../../../../common/components/loading";
-import { TableMask } from "../../../../../../../common/components/table-mask";
-import { COMMON_CONSTANTS, PRESENTATION_TYPE } from "../../../../../../../constants/common-constants";
+import { CustomPagination } from "../../../../common/components/custom-pagination";
+import { Loading } from "../../../../common/components/loading";
+import { TableMask } from "../../../../common/components/table-mask";
+import { COMMON_CONSTANTS, PRESENTATION_TYPE } from "../../../../constants/common-constants";
 import PresentationListTable from "../../components/presentation-list-table";
 moment.locale("vi");
 

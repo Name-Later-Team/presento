@@ -4,7 +4,7 @@ import { Dropdown, Table } from "react-bootstrap";
 
 import moment from "moment";
 import { Link } from "react-router-dom";
-import { FontAwesomeIconToggle } from "../../../../../../../common/components/custom-dropdown/icon-toggle";
+import { FontAwesomeIconToggle } from "../../../../common/components/custom-dropdown/icon-toggle";
 moment.locale("vi");
 
 interface IPresentationListTableProps {
