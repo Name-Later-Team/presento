@@ -3,9 +3,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import moment from "moment";
 import { useState } from "react";
 import { Button, Card, Stack } from "react-bootstrap";
+import { SingleValue } from "react-select";
 import { CustomPagination } from "../../../../common/components/custom-pagination";
 import { Loading } from "../../../../common/components/loading";
+import { BaseSelect } from "../../../../common/components/select";
 import { TableMask } from "../../../../common/components/table-mask";
+import CustomizedTooltip from "../../../../common/components/tooltip";
+import { useGlobalContext } from "../../../../common/contexts";
 import { COMMON_CONSTANTS, PRESENTATION_TYPE } from "../../../../constants/common-constants";
 import PresentationListTable from "../../components/presentation-list-table";
 moment.locale("vi");
@@ -113,10 +117,15 @@ const fakeData = [
     },
 ];
 
+const presentationTypeOption = [
+    { value: PRESENTATION_TYPE.OWNER, label: "Tôi sở hữu" },
+    { value: PRESENTATION_TYPE.COLLABORATOR, label: "Tôi cộng tác" },
+];
+
 export default function PresentationList() {
-    const [isLoading, setIsLoading] = useState(false);
-    const [dataSource, setDataSource] = useState(fakeData);
-    const [pagination, setPagination] = useState({
+    const [isLoading] = useState(false);
+    const [dataSource] = useState(fakeData);
+    const [pagination] = useState({
         currentPage: COMMON_CONSTANTS.pagination.defaultPage,
         totalRecords: fakeData.length,
         rowsPerPage: COMMON_CONSTANTS.pagination.limit,
@@ -128,18 +137,29 @@ export default function PresentationList() {
             limit: COMMON_CONSTANTS.pagination.limit,
         };
     });
+    const [presentationType, setPresentationType] = useState(presentationTypeOption[0]);
 
     // manage create & edit modal
     const [presentationModal, setPresentationModal] = useState({
         show: false,
     });
 
+    const globalContext = useGlobalContext();
+
     const handlePageChange = (newPage: number) => {
         setSearchObject({ ...searchObject, page: newPage });
     };
 
+    const handlePresentationTypeChange = (newValue: SingleValue<{ label: string; value: string }>) => {
+        setSearchObject({ ...searchObject, type: newValue?.value || "" });
+        setPresentationType({ label: newValue?.label || "", value: newValue?.value || "" });
+    };
+
     const openPresentationModal = () => {
         setPresentationModal({ ...presentationModal, show: true });
+        globalContext.blockUI();
+
+        setTimeout(() => globalContext.unBlockUI(), 2000);
     };
 
     return (
@@ -154,11 +174,27 @@ export default function PresentationList() {
                 <Card.Body>
                     <Stack className="mb-3 justify-content-between align-items-center" direction="horizontal">
                         <div>
-                            <Button variant="primary" onClick={openPresentationModal}>
+                            <Button id="create-presentation-btn" variant="primary" onClick={openPresentationModal}>
                                 <FontAwesomeIcon icon={faPlus} className="me-2" />
                                 Tạo mới
                             </Button>
+                            <CustomizedTooltip anchorSelect="#create-presentation-btn" place="right">
+                                Tạo mới bài trình bày
+                            </CustomizedTooltip>
                         </div>
+
+                        {/* filter container */}
+                        <BaseSelect
+                            options={presentationTypeOption}
+                            styles={{
+                                control: (baseStyles, state) => ({
+                                    ...baseStyles,
+                                    minWidth: "200px",
+                                }),
+                            }}
+                            onChange={handlePresentationTypeChange}
+                            value={presentationType}
+                        />
                     </Stack>
 
                     <TableMask loading={isLoading} indicator={<Loading color={"primary"} />}>
