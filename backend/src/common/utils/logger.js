@@ -1,20 +1,27 @@
+import * as fastStringify from "fast-safe-stringify";
 import fs from "fs";
 import moment from "moment";
 import path from "path";
 import { fileURLToPath } from "url";
 import * as winston from "winston";
 import "winston-daily-rotate-file";
-import { APP_CONFIG } from "../configs/index.js";
+import { APP_CONFIG } from "../../configs/index.js";
 
-const format = winston.format.combine(
-	winston.format.timestamp(),
-	winston.format.ms(),
-	winston.format.printf(({ level, timestamp, ms, message }) => {
-		const timestampString = moment(timestamp).toLocaleString();
-		return `[${timestampString}] : [${level}] : ${message} ${ms}`;
-	}),
-);
+/**
+ * @description Example:   Logger.debug ("debug", "error", ["debug 3"], {key: "value"}, "and many parameters")
+ */
+const formatFunction = winston.format.printf(({ level, timestamp, ms, message, ...rest }) => {
+	const timestampString = moment(timestamp).toLocaleString();
 
+	const args = rest[Symbol.for("splat")];
+	const outMessage = args ? [message, args.map(fastStringify.default).join(" ")].join(" ") : message;
+
+	return `[${timestampString}] : [${level}] : ${outMessage} ${ms}`;
+});
+
+const format = winston.format.combine(winston.format.timestamp(), winston.format.ms(), formatFunction);
+
+// Base on config, we'll indicate the destination that the logger will write to: console or file system
 const logTransports = [];
 
 if (APP_CONFIG.logDriver === "file") {
@@ -42,6 +49,7 @@ export const Logger = winston.createLogger({
 	format,
 	level: APP_CONFIG.logLevel,
 });
+
 
 
 // create a rotating write stream
