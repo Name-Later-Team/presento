@@ -15,16 +15,13 @@ router.get(
         })
             .then((response) => res.send(response.data))
             .catch((error) => {
-                logger.error("Forward error - " + error);
                 if (axios.isAxiosError(error)) {
                     return res.status(error.response.status).send(error.response.data);
                 }
 
                 return res.status(504).json({
                     code: 504,
-                    message: statuses(504),
-                    data: {},
-                    metadata: { createdDate: new Date().toISOString() },
+                    message: "Gateway Timeout",
                 });
             });
     })
