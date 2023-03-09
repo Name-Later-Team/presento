@@ -15,20 +15,12 @@ const mainSidebarNavigations: ISidebarNavItem[] = [
         path: "",
         subNavs: [
             {
-                name: "Sub-nav 1",
-                path: "/dashboard/1",
-            },
-            {
-                name: "Sub-nav 2",
-                path: "/dashboard/2",
-            },
-            {
-                name: "Sub-nav 3",
-                path: "/dashboard/3",
-            },
-            {
                 name: "Demo",
                 path: "/dashboard/demo",
+            },
+            {
+                name: "Danh sách bài trình bày",
+                path: "/dashboard/presentation-list",
             },
         ],
     },

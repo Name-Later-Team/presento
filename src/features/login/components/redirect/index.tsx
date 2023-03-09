@@ -1,12 +1,30 @@
 import { useState } from "react";
 import { Button, Spinner, Stack } from "react-bootstrap";
+import { Notification } from "../../../../common/components/notification";
+import { HttpService } from "../../../../services";
 import "./style.scss";
 
 export default function Redirect() {
     const [isSubmitting] = useState(false);
 
-    const handleLogin = () => {
-        console.log("Do something");
+    const handleLogin = async () => {
+        try {
+            const res = await HttpService.get<any>("/api/auth/login_url");
+
+            if (res.code === 200) {
+                const loginUrl = res.data?.loginUrl;
+                if (loginUrl === "" || loginUrl == null) {
+                    throw new Error("Unknown login url");
+                }
+
+                window.location.href = loginUrl;
+            }
+
+            throw new Error("Unhandled error code");
+        } catch (err) {
+            console.error("Redirect:", err);
+            Notification.notifyError("Có lỗi xảy ra trong quá trình đăng nhập");
+        }
     };
 
     const handleRegister = () => {
