@@ -39,4 +39,6 @@ export const APP_CONFIG = {
             userinfo: process.env.AUTHZ_ENDPOINT_USERINFO,
         },
     },
+
+    apiGateway: process.env.API_GATEWAY,
 };

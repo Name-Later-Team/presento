@@ -7,16 +7,21 @@ import Forbidden from "./common/pages/forbidden";
 import DashboardLayout from "./common/layouts/dashboard";
 import MainSidebar from "./common/layouts/dashboard/main-sidebar";
 import { loginRoutes } from "./features/login";
+import Demo from "./features/demo/pages";
+import { PrivateRoute } from "./common/special-routes";
 
 function App() {
     return (
         <main id="app">
             <Routes>
                 {/* Features */}
-                <Route path="/dashboard/*" element={<FullscreenLayout noPadding />}>
-                    <Route path="demo" element={<DashboardLayout sidebarElement={<MainSidebar />} />}>
-                        <Route index element={<PresentationList />} />
-                    </Route>
+                <Route
+                    path="/dashboard/*"
+                    element={<PrivateRoute element={<DashboardLayout sidebarElement={<MainSidebar />} />} />}
+                >
+                    <Route path="demo" element={<Demo />} />
+
+                    <Route path="presentation-list" element={<PresentationList />} />
 
                     <Route path="*" element={<Navigate to="/404" replace />} />
                 </Route>
