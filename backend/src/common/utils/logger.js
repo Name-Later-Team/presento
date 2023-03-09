@@ -14,7 +14,7 @@ const formatFunction = winston.format.printf(({ level, timestamp, ms, message, .
 	const timestampString = moment(timestamp).toLocaleString();
 
 	const args = rest[Symbol.for("splat")];
-	const outMessage = args ? [message, args.map(fastStringify.default).join(" ")].join(" ") : message;
+	const outMessage = [message, args].map(fastStringify.default).join(" ");
 
 	return `[${timestampString}] : [${level}] : ${outMessage} ${ms}`;
 });

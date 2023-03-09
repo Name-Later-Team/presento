@@ -1,5 +1,5 @@
 import compression from "compression";
-import ConnectRedis from "connect-redis";
+import RedisStore from "connect-redis";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -8,11 +8,12 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { env } from "process";
-import { createClient } from "redis";
 import { fileURLToPath } from "url";
 import { errorHandler } from "./common/middlewares/error.handler.js";
 import { AccessLogStream, Logger } from "./common/utils/logger.js";
 import { APP_CONFIG } from "./configs/index.js";
+import RedisClient from "./connections/redis.js";
+import { router as authRouter } from "./routes/auth.js";
 import { router as apiRouter } from "./routes/index.js";
 
 env.TZ = "Asia/Ho_Chi_Minh";
@@ -39,20 +40,20 @@ app.use(
 
 app.use(morgan("combined", { stream: new AccessLogStream() }));
 
-const RedisStrore = ConnectRedis(session);
-const redisClient = createClient();
+RedisClient.initRedisConnectionAsync();
+
+const redisStore = new RedisStore({
+    client: RedisClient.getRedisClient(),
+    prefix: "presento",
+});
+
 app.use(
     session({
-        // store: new RedisStrore({
-        // 	host: APP_CONFIG.redis.host,
-        // 	port: APP_CONFIG.redis.port,
-        // 	client: redisClient,
-        // 	logErrors: (error) => Logger.error(error),
-        // }),
+        store: redisStore,
         secret: APP_CONFIG.cookie.secret,
         name: APP_CONFIG.cookie.name,
         resave: false,
-        saveUninitialized: true,
+        saveUninitialized: false,
         cookie: {
             path: APP_CONFIG.cookie.path,
             httpOnly: true,
@@ -72,6 +73,7 @@ app.use(function (req, res, next) {
 app.get("/favicon.ico", (req, res) => res.status(204).end());
 
 // handle API route here
+app.use("/api/auth", authRouter);
 app.use("/api", apiRouter);
 
 // serve react app in production mode here

@@ -7,9 +7,16 @@ export class ErrorBuilder {
     _message;
     _responseData;
     _errors;
+    _code;
 
     constructor() {
         this._status = 500;
+        this._code = 500;
+    }
+
+    withCode(code) {
+        this._code = code;
+        return this;
     }
 
     withStatus(status) {
@@ -33,6 +40,6 @@ export class ErrorBuilder {
     }
 
     build() {
-        return new BaseException(this._message, this._status, this._responseData, this._errors);
+        return new BaseException(this._message, this._status, this._code, this._responseData, this._errors);
     }
 }
