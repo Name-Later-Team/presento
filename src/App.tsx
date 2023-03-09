@@ -6,6 +6,7 @@ import PageNotFound from "./common/pages/page-not-found";
 import Forbidden from "./common/pages/forbidden";
 import DashboardLayout from "./common/layouts/dashboard";
 import MainSidebar from "./common/layouts/dashboard/main-sidebar";
+import { loginRoutes } from "./features/login";
 
 function App() {
     return (
@@ -18,6 +19,11 @@ function App() {
                     </Route>
 
                     <Route path="*" element={<Navigate to="/404" replace />} />
+                </Route>
+
+                {/* Login */}
+                <Route path="/login/*" element={<FullscreenLayout noPadding />}>
+                    {loginRoutes}
                 </Route>
 
                 {/* Error */}
