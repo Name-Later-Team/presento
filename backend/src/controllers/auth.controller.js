@@ -1,3 +1,4 @@
+import { Logger } from "../common/utils/logger.js";
 import axios, { isAxiosError } from "axios";
 import crypto from "crypto";
 import moment from "moment";
@@ -80,7 +81,8 @@ export async function obtainLoginTokenAsync(req, res) {
             throw error;
         }
 
-        const response = error.response ?? {};
+        const response = error.response ?? error;
+        Logger.error(response.data ?? response);
         throw new ErrorBuilder()
             .withStatus(401)
             .withCode(4011)
