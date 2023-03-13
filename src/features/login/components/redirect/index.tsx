@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button, Spinner, Stack } from "react-bootstrap";
 import { Notification } from "../../../../common/components/notification";
-import { HttpService } from "../../../../services";
+import AuthService from "../../../../services/auth-service";
 import "./style.scss";
 
 export default function Redirect() {
@@ -9,7 +9,7 @@ export default function Redirect() {
 
     const handleLogin = async () => {
         try {
-            const res = await HttpService.get<any>("/api/auth/login_url");
+            const res = await AuthService.getLoginUrl();
 
             if (res.code === 200) {
                 const loginUrl = res.data?.loginUrl;

@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { Spinner, Stack } from "react-bootstrap";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Notification } from "../../../../common/components/notification";
+import { useAuth } from "../../../../common/contexts/auth-context";
 import { RESPONSE_CODE } from "../../../../constants";
-import { HttpService } from "../../../../services";
+import AuthService from "../../../../services/auth-service";
 import "./style.scss";
 
 export default function Callback() {
     const [queries] = useSearchParams();
     const navigate = useNavigate();
     const [loggedIn, setLoggedIn] = useState(true);
+    const { fetchLatestUserInfoFromApi } = useAuth();
 
     useEffect(() => {
         const callLogin = async () => {
@@ -20,13 +22,12 @@ export default function Callback() {
                 return;
             }
             try {
-                const res = await HttpService.post<any>("/api/auth/token", {
-                    code: code,
-                });
+                const res = await AuthService.postAuthorizationCode(code);
 
                 if (res.code === 200) {
                     setLoggedIn(true);
-                    navigate("/");
+                    fetchLatestUserInfoFromApi();
+                    setTimeout(() => navigate("/"), 1500);
                     return;
                 }
 
@@ -42,6 +43,7 @@ export default function Callback() {
         };
 
         callLogin();
+        // eslint-disable-next-line
     }, [queries, navigate]);
 
     return (

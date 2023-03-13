@@ -7,16 +7,19 @@ import "./assets/scss/index.scss";
 import NotificationContainer from "./common/components/notification/notification-container";
 import reportWebVitals from "./reportWebVitals";
 import { GlobalContextProvider } from "./common/contexts/global-context";
+import { AuthContextProvider } from "./common/contexts/auth-context";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 root.render(
     <React.StrictMode>
         <BrowserRouter>
             <GlobalContextProvider>
-                <>
-                    <App />
-                    <NotificationContainer />
-                </>
+                <AuthContextProvider>
+                    <>
+                        <App />
+                        <NotificationContainer />
+                    </>
+                </AuthContextProvider>
             </GlobalContextProvider>
         </BrowserRouter>
     </React.StrictMode>
