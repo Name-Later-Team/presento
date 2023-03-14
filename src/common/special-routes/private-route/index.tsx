@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-// import { AuthService } from "../../../services";
 import { Loading } from "../../components/loading";
+import { Notification } from "../../components/notification";
 
 export interface IPrivateRouteProps {
     element: JSX.Element;
@@ -14,17 +14,19 @@ export function PrivateRoute(props: IPrivateRouteProps) {
     useEffect(() => {
         let timeoutId: number;
 
-        // !current solution: check access token
-        // TODO: revise with user role and user permission
-        const checkPermission = () => {
-            // const accessToken = AuthService.getAccessToken();
-            // if (!accessToken) {
-            // 	setProcess({ isAuth: false, isLoading: false });
-            // 	return;
-            // }
-            // timeoutId = setTimeout(() => {
-            // 	setProcess({ isAuth: true, isLoading: false });
-            // }, 500);
+        // TODO: call API to check login state
+        const checkPermission = async () => {
+            try {
+                // TODO: uncomment the code below when having an API to check
+                // const res = await AuthService.checkLoginState();
+                // if (res.code === 200) {
+                //     return;
+                // }
+                // throw new Error("Unhandled error code");
+            } catch (error) {
+                console.error("PrivateRoute:", error);
+                Notification.notifyError("Có lỗi xảy ra trong quá trình kiểm tra");
+            }
         };
         checkPermission();
 
@@ -36,7 +38,7 @@ export function PrivateRoute(props: IPrivateRouteProps) {
     if (process.isLoading) {
         return (
             <div style={{ height: "100vh" }}>
-                <Loading message="Đang kiểm tra quyền truy cập, vui lòng đợi trong giây lát..." color={"primary"} />
+                <Loading message="Đang kiểm tra quyền truy cập, vui lòng đợi trong giây lát ..." color={"primary"} />
             </div>
         );
     }

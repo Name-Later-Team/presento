@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useState } from "react";
 import { Button, Dropdown } from "react-bootstrap";
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/auth-context";
 import { IBaseComponent } from "../../interfaces/basic-interfaces";
 import "./style.scss";
 
@@ -12,7 +13,7 @@ interface IDashboardLayout extends IBaseComponent {
 
 export default function DashboardLayout(props: IDashboardLayout) {
     const { sidebarElement } = props;
-    const userInfo: { avatar?: string } = {};
+    const { userInfo } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
     const navigate = useNavigate();
 

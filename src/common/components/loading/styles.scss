@@ -8,4 +8,30 @@
     > p {
         font-weight: 600;
     }
+
+    .loading-container__app-logo-container {
+        height: 25vh;
+        max-height: 250px;
+
+        .loading-container__app-logo-container__app-logo {
+            height: 100%;
+            -webkit-user-drag: none;
+
+            animation: flashing 2000ms infinite linear;
+        }
+    }
+}
+
+@keyframes flashing {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.25;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
