@@ -4,7 +4,8 @@ import {
     checkUserLoginState,
     getLoginUri,
     getUserInfomationAsync,
-    obtainLoginTokenAsync,
+
+    obtainLoginTokenAsync,getSignupUri
 } from "../controllers/auth.controller.js";
 
 export const router = express.Router();
@@ -16,3 +17,6 @@ router.post("/token", asyncRouteHandler(obtainLoginTokenAsync));
 router.get("/userinfo", asyncRouteHandler(getUserInfomationAsync));
 
 router.get("/state", asyncRouteHandler(checkUserLoginState));
+
+router.get("/signup",asyncRouteHandler(getSignupUri));
+
