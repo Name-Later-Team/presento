@@ -5,9 +5,7 @@ import {
     getLoginUri,
     getUserInfomationAsync,
 
-    obtainLoginTokenAsync,getSignupUri,
-
-    obtainLoginTokenAsync,
+    obtainLoginTokenAsync,getSignupUri
 } from "../controllers/auth.controller.js";
 
 export const router = express.Router();
