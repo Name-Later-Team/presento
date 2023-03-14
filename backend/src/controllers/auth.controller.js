@@ -120,17 +120,17 @@ export async function getUserInfomationAsync(req, res) {
                 .build();
         }
 
-        res.json(
-            new ResponseBuilder()
-                .withData({
-                    userId: data.sub,
-                    username: data.name,
-                    email: data.email,
-                    avatar: data.picture,
-                    fullname: data.preferred_username,
-                })
-                .build()
-        );
+        const userInfo = {
+            userId: data.sub,
+            username: data.name,
+            email: data.email,
+            avatar: data.picture,
+            fullname: data.preferred_username,
+        };
+
+        req.session.userInfo = userInfo;
+
+        res.json(new ResponseBuilder().withData(userInfo).build());
     } catch (error) {
         if (!isAxiosError(error)) {
             throw error;
@@ -144,4 +144,31 @@ export async function getUserInfomationAsync(req, res) {
             .withErrors(response.data)
             .build();
     }
+}
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @description Check login state from local session, do not call introspection to IAM
+ */
+export function checkUserLoginState(req, res) {
+    // retriev user -> token
+    const { session } = req;
+
+    const userToken = session.user ?? {};
+
+    const expiresAt = moment(userToken.expiresAt);
+
+    // session timeout
+    if (!expiresAt.isValid() || expiresAt.isSameOrBefore(moment()) || !userToken.accessToken) {
+        delete session.user;
+        req.session.save();
+        throw new ErrorBuilder().withStatus(401).withCode(4011).withMessage("Phiên đăng nhập hết hạn").build();
+    }
+
+    // login session valids, must return user info
+    const userInfo = session.userInfo ?? null;
+
+    const data = { ...userInfo };
+    res.json(new ResponseBuilder().withData(data).build());
 }
