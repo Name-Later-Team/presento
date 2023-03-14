@@ -145,3 +145,14 @@ export async function getUserInfomationAsync(req, res) {
             .build();
     }
 }
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+export async function getSignupUri(req, res) {
+    const signupUri = `${APP_CONFIG.authz.baseUrl}${APP_CONFIG.authz.endpoints.signup}/${APP_CONFIG.authz.application}`;
+
+    res.json(new ResponseBuilder().withData({ signupUri }).build());
+}
