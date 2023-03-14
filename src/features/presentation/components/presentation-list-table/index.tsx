@@ -1,10 +1,10 @@
-import { faEdit, faShareAlt } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faShareAlt, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Dropdown, Table } from "react-bootstrap";
-
 import moment from "moment";
 import { Link } from "react-router-dom";
 import { FontAwesomeIconToggle } from "../../../../common/components/custom-dropdown/icon-toggle";
+import { AlertBuilder } from "../../../../common/components/alert";
 moment.locale("vi");
 
 interface IPresentationListTableProps {
@@ -14,16 +14,37 @@ interface IPresentationListTableProps {
         totalRecords: number;
         rowsPerPage: number;
     };
+    action?: {
+        handleDeletePresentation: (id: string) => {};
+    };
 }
 
 export default function PresentationListTable(props: IPresentationListTableProps) {
-    const { dataSource, pagination } = props;
+    const { dataSource, pagination, action } = props;
 
+    // display the newest record first
     const mappedDataSource = dataSource.sort((left, right) => {
         const leftMoment = moment((left as any).updatedAt);
         const rightMoment = moment((right as any).updatedAt);
         return rightMoment.diff(leftMoment);
     });
+
+    const handleDeletePresentation = (id: string) => {
+        action && action.handleDeletePresentation(id);
+    };
+
+    const openDeleteConfirm = (id: string) => {
+        new AlertBuilder()
+            .setAlertType("warning")
+            .setTitle("Xóa bài trình bày")
+            .setText("Sau khi xóa bài trình bày, mọi dữ liệu sẽ không thể được phục hồi")
+            .setOnConfirm(() => {
+                handleDeletePresentation(id);
+            })
+            .setCancelBtnText("Hủy")
+            .getAlert()
+            .fireAlert();
+    };
 
     return (
         <>
@@ -31,11 +52,11 @@ export default function PresentationListTable(props: IPresentationListTableProps
                 <thead>
                     <tr>
                         <th style={{ minWidth: "50px", width: "50px" }}>STT</th>
-                        <th style={{ minWidth: "200px" }}>Tên</th>
+                        <th style={{ minWidth: "240px" }}>Tên bài trình bày</th>
                         <th style={{ minWidth: "200px", width: "250px" }}>Người tạo</th>
-                        <th style={{ minWidth: "200px", width: "200px" }}>Ngày sửa gần nhất</th>
-                        <th style={{ minWidth: "200px", width: "200px" }}>Ngày tạo</th>
-                        <th style={{ minWidth: "150px", width: "150px" }}>Hành động</th>
+                        <th style={{ minWidth: "210px", width: "210px" }}>Ngày sửa gần nhất</th>
+                        <th style={{ minWidth: "210px", width: "210px" }}>Ngày tạo</th>
+                        <th style={{ minWidth: "130px", width: "130px" }}>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,6 +87,15 @@ export default function PresentationListTable(props: IPresentationListTableProps
 
                                             <Dropdown.Item href="#" onClick={() => {}}>
                                                 <FontAwesomeIcon className="me-1" icon={faShareAlt} /> Chia sẻ
+                                            </Dropdown.Item>
+
+                                            <Dropdown.Divider />
+                                            <Dropdown.Item
+                                                href="#"
+                                                onClick={() => openDeleteConfirm(presentation?.id)}
+                                                className="text-danger"
+                                            >
+                                                <FontAwesomeIcon className="me-1" icon={faTrashAlt} /> Xóa
                                             </Dropdown.Item>
                                         </Dropdown.Menu>
                                     </Dropdown>

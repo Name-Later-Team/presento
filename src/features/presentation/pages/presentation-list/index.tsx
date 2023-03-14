@@ -1,15 +1,15 @@
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faFilter, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import moment from "moment";
 import { useState } from "react";
-import { Button, Card, Stack } from "react-bootstrap";
+import { Button, Stack } from "react-bootstrap";
 import { SingleValue } from "react-select";
 import { CustomPagination } from "../../../../common/components/custom-pagination";
 import { Loading } from "../../../../common/components/loading";
 import { BaseSelect } from "../../../../common/components/select";
 import { TableMask } from "../../../../common/components/table-mask";
-import CustomizedTooltip from "../../../../common/components/tooltip";
 import { useGlobalContext } from "../../../../common/contexts";
+import DashboardPageSkeleton from "../../../../common/layouts/dashboard/dashboard-page-skeleton";
 import { COMMON_CONSTANTS, PRESENTATION_TYPE } from "../../../../constants/common-constants";
 import PresentationListTable from "../../components/presentation-list-table";
 moment.locale("vi");
@@ -123,6 +123,7 @@ const presentationTypeOption = [
 ];
 
 export default function PresentationList() {
+    // states
     const [isLoading] = useState(false);
     const [dataSource] = useState(fakeData);
     const [pagination] = useState({
@@ -144,8 +145,10 @@ export default function PresentationList() {
         show: false,
     });
 
+    // contexts
     const globalContext = useGlobalContext();
 
+    // processing functions
     const handlePageChange = (newPage: number) => {
         setSearchObject({ ...searchObject, page: newPage });
     };
@@ -163,27 +166,22 @@ export default function PresentationList() {
     };
 
     return (
-        <>
-            <Card>
-                <Card.Header>
-                    <Card.Title as={"h4"} className="text-uppercase">
-                        Danh sách bài trình bày
-                    </Card.Title>
-                </Card.Header>
+        <DashboardPageSkeleton pageTitle="Danh sách bài trình bày">
+            <>
+                <Stack className="mb-3 justify-content-between align-items-center" direction="horizontal">
+                    <div>
+                        <Button variant="primary" onClick={openPresentationModal}>
+                            <FontAwesomeIcon icon={faPlus} className="me-2" />
+                            Tạo mới
+                        </Button>
+                    </div>
 
-                <Card.Body>
-                    <Stack className="mb-3 justify-content-between align-items-center" direction="horizontal">
-                        <div>
-                            <Button id="create-presentation-btn" variant="primary" onClick={openPresentationModal}>
-                                <FontAwesomeIcon icon={faPlus} className="me-2" />
-                                Tạo mới
-                            </Button>
-                            <CustomizedTooltip anchorSelect="#create-presentation-btn" place="right">
-                                Tạo mới bài trình bày
-                            </CustomizedTooltip>
+                    {/* filter container */}
+                    <Stack direction="horizontal" gap={3}>
+                        <div className="d-flex justify-content-center align-items-center text-uppercase fw-bold">
+                            <FontAwesomeIcon className="me-2" icon={faFilter} />
+                            Bộ lọc
                         </div>
-
-                        {/* filter container */}
                         <BaseSelect
                             options={presentationTypeOption}
                             styles={{
@@ -196,16 +194,16 @@ export default function PresentationList() {
                             value={presentationType}
                         />
                     </Stack>
+                </Stack>
 
-                    <TableMask loading={isLoading} indicator={<Loading color={"primary"} />}>
-                        <PresentationListTable dataSource={dataSource} pagination={pagination} />
+                <TableMask loading={isLoading} indicator={<Loading color={"primary"} />}>
+                    <PresentationListTable dataSource={dataSource} pagination={pagination} />
 
-                        <div className="d-inline-flex justify-content-center w-100 mt-3">
-                            <CustomPagination {...pagination} pageChange={handlePageChange} />
-                        </div>
-                    </TableMask>
-                </Card.Body>
-            </Card>
-        </>
+                    <div className="d-inline-flex justify-content-center w-100 mt-3">
+                        <CustomPagination {...pagination} pageChange={handlePageChange} />
+                    </div>
+                </TableMask>
+            </>
+        </DashboardPageSkeleton>
     );
 }
