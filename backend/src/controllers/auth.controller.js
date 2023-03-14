@@ -183,3 +183,4 @@ export async function getSignupUri(req, res) {
 
     res.json(new ResponseBuilder().withData({ signupUri }).build());
 }
+
