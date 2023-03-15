@@ -85,7 +85,7 @@ export async function obtainLoginTokenAsync(req, res) {
         Logger.error(response.data ?? response);
         throw new ErrorBuilder()
             .withStatus(401)
-            .withCode(4011)
+            .withCode(4012)
             .withMessage("Đăng nhập thất bại")
             .withErrors(response.data)
             .build();
@@ -183,4 +183,3 @@ export async function getSignupUri(req, res) {
 
     res.json(new ResponseBuilder().withData({ signupUri }).build());
 }
-

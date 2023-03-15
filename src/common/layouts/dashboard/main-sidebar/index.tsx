@@ -11,23 +11,13 @@ export interface ISidebarNavItem {
 
 const mainSidebarNavigations: ISidebarNavItem[] = [
     {
-        name: "Navigation",
-        path: "",
-        subNavs: [
-            {
-                name: "Demo",
-                path: "/dashboard/demo",
-            },
-            {
-                name: "Danh sách bài trình bày",
-                path: "/dashboard/presentation-list",
-            },
-        ],
+        name: "Demo",
+        path: "/dashboard/demo",
     },
-    // {
-    //     name: "Demo",
-    //     path: "/dashboard/demo",
-    // },
+    {
+        name: "Danh sách bài trình bày",
+        path: "/dashboard/presentation-list",
+    },
 ];
 
 export default function MainSidebar() {

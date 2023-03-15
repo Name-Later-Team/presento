@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ERROR_NOTIFICATION } from "../../constants";
 import AuthService from "../../services/auth-service";
 import { Notification } from "../components/notification";
 import { IBaseComponent } from "../interfaces";
@@ -46,7 +47,7 @@ export const AuthContextProvider = (props: IAuthContextProvider) => {
             throw new Error("Unhandled error code");
         } catch (err) {
             console.error("AuthContextProvider:", err);
-            Notification.notifyError("Có lỗi xảy ra khi lấy thông tin người dùng");
+            Notification.notifyError(ERROR_NOTIFICATION.FETCH_USER_INFO_PROCESS);
         }
     };
 

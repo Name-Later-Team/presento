@@ -13,11 +13,19 @@ export const RESPONSE_CODE = {
     // 400: BAD REQUEST
 
     // 401: UNAUTHORIZED
-    INVALID_TOKEN: 4011,
-    MISSING_TOKEN: 4012,
+    LOGIN_EXPIRED: 4011,
+    LOGIN_FAILED: 4012,
 
     // 403: FORBIDDEN
     INVALID_RESOURCE_PERMISSION: 4038,
+};
+
+export const ERROR_NOTIFICATION = {
+    LOGIN_PROCESS: "Có lỗi xảy ra trong quá trình đăng nhập",
+    SINGUP_PROCESS: "Có lỗi xảy ra trong quá trình đăng ký",
+    MISSING_AUTHORIZATION_CODE: "Thông tin để xử lý đăng nhập bị thiếu",
+    CHECK_LOGIN_PROCESS: "Có lỗi xảy ra trong quá trình kiểm tra",
+    FETCH_USER_INFO_PROCESS: "Có lỗi xảy ra khi lấy thông tin người dùng",
 };
 
 export const PRESENTATION_TYPE = {

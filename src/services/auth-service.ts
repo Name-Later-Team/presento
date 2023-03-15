@@ -10,6 +10,10 @@ export default class AuthService {
         return HttpService.get<any>("/api/auth/login_url");
     }
 
+    static getSignupUrl() {
+        return HttpService.get<any>("/api/auth/signup");
+    }
+
     static postAuthorizationCode(code: string) {
         return HttpService.post<any>("/api/auth/token", {
             code: code,
