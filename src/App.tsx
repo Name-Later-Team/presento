@@ -10,6 +10,8 @@ import { PrivateRoute } from "./common/special-routes";
 import { createRouteTemplate } from "./common/utils";
 import { presentationRoutes } from "./features/presentation";
 import { demoRoutes } from "./features/demo";
+import { PresentFeatureContextProvider } from "./common/contexts/present-feature-context";
+import { presentationDetailRoutes } from "./features/presentation-detail";
 
 function App() {
     return (
@@ -26,6 +28,21 @@ function App() {
                             {presentationRoutes}
                         </>
                     )}
+                </Route>
+
+                <Route
+                    path="/presentation/*"
+                    element={
+                        <PrivateRoute
+                            element={
+                                <PresentFeatureContextProvider>
+                                    <FullscreenLayout noPadding />
+                                </PresentFeatureContextProvider>
+                            }
+                        />
+                    }
+                >
+                    {createRouteTemplate(presentationDetailRoutes)}
                 </Route>
 
                 {/* Login */}

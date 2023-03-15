@@ -1,0 +1,23 @@
+.presentation-fetching {
+    // variables
+
+    // rules
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+
+    .presentation-fetching__card__app-logo-container {
+        height: 35vh;
+        max-height: 350px;
+
+        .presentation-fetching__card__app-logo-container__app-logo {
+            height: 100%;
+            -webkit-user-drag: none;
+        }
+    }
+}

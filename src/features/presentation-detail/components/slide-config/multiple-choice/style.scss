@@ -1,0 +1,28 @@
+.tab-content {
+	padding: 1rem 0 !important;
+}
+
+.presentation-tabs__container .nav-item {
+	position: relative;
+}
+
+.presentation-tabs__container .nav-item {
+	--border-height: 2px;
+	&::before {
+		content: "";
+		position: absolute;
+		bottom: calc(-1 * var(--border-height));
+		right: 0;
+		left: 0;
+		height: var(--border-height);
+
+		background-color: var(--bs-primary);
+		opacity: 0;
+	}
+
+	&:has(.nav-link.active) {
+		&::before {
+			opacity: 1;
+		}
+	}
+}
