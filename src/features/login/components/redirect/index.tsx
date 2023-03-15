@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button, Spinner, Stack } from "react-bootstrap";
+import { useSearchParams } from "react-router-dom";
 import { Notification } from "../../../../common/components/notification";
+import { ERROR_NOTIFICATION } from "../../../../constants";
 import AuthService from "../../../../services/auth-service";
 import "./style.scss";
 
 export default function Redirect() {
+    const [queries] = useSearchParams();
     const [isSubmitting] = useState(false);
 
-    const handleLogin = async () => {
+    const handleLogin = useCallback(async () => {
         try {
             const res = await AuthService.getLoginUrl();
 
@@ -23,12 +26,41 @@ export default function Redirect() {
             throw new Error("Unhandled error code");
         } catch (err) {
             console.error("Redirect:", err);
-            Notification.notifyError("Có lỗi xảy ra trong quá trình đăng nhập");
+            Notification.notifyError(ERROR_NOTIFICATION.LOGIN_PROCESS);
         }
-    };
+    }, []);
 
-    const handleRegister = () => {
-        console.log("Do something");
+    // redirect automatically to the login page of IAM
+    useEffect(() => {
+        const autoRedirectLogin = queries.get("auto_redirect_login");
+
+        if (autoRedirectLogin == null || autoRedirectLogin === "") {
+            return;
+        }
+
+        if (autoRedirectLogin === "true") {
+            handleLogin();
+        }
+    }, [queries, handleLogin]);
+
+    const handleRegister = async () => {
+        try {
+            const res = await AuthService.getSignupUrl();
+
+            if (res.code === 200) {
+                const signupUri = res.data?.signupUri;
+                if (signupUri === "" || signupUri == null) {
+                    throw new Error("Unknown signup uri");
+                }
+
+                window.location.href = signupUri;
+            }
+
+            throw new Error("Unhandled error code");
+        } catch (err) {
+            console.error("Redirect:", err);
+            Notification.notifyError(ERROR_NOTIFICATION.SINGUP_PROCESS);
+        }
     };
 
     return (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { ERROR_NOTIFICATION } from "../../../constants";
 import { Loading } from "../../components/loading";
 import { Notification } from "../../components/notification";
 
@@ -25,7 +26,7 @@ export function PrivateRoute(props: IPrivateRouteProps) {
                 // throw new Error("Unhandled error code");
             } catch (error) {
                 console.error("PrivateRoute:", error);
-                Notification.notifyError("Có lỗi xảy ra trong quá trình kiểm tra");
+                Notification.notifyError(ERROR_NOTIFICATION.CHECK_LOGIN_PROCESS);
             }
         };
         checkPermission();
