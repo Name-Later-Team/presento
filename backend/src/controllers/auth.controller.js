@@ -189,7 +189,9 @@ export async function getSignupUri(req, res) {
  * @param {import("express").Request} req
  * @param {import("express").Response} res
  */
-export async function logout(req, res) {
+export function logout(req, res) {
+    //TODO: handle api logout call from Casdoor
+
     delete req.session.user;
 
     res.json(new ResponseBuilder().withCode(200).build());

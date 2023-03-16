@@ -18,7 +18,7 @@ router.get("/userinfo", asyncRouteHandler(getUserInfomationAsync));
 
 router.get("/state", asyncRouteHandler(checkUserLoginState));
 
-router.get("/signup",asyncRouteHandler(getSignupUri));
+router.get("/signup", asyncRouteHandler(getSignupUri));
 
-router.get("/logout",asyncRouteHandler(logout));
+router.get("/logout", asyncRouteHandler(logout));
 
