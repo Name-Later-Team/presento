@@ -1,0 +1,147 @@
+.present-presentation {
+	// make sure the aspect ratio of the slide is alway 16/9
+	// height: 100vh;
+	// width: calc(100vh * 16 / 9);
+	width: min(calc(100vh * 16 / 9), 100vw);
+	margin: auto;
+
+	// other rules
+	position: relative;
+}
+
+.present-presentation__slide {
+	width: 100%;
+	height: 100%;
+	background-color: white;
+	box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+	padding: 1rem;
+	cursor: default;
+}
+
+.present-presentation__question {
+	height: 15%;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.present-presentation__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.present-presentation__chart {
+	position: relative;
+}
+
+.present-presentation__sidebar-left {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 75%;
+
+	padding: 1rem 1rem 0 1rem;
+	display: flex;
+	align-items: flex-start;
+	overflow: hidden;
+}
+
+.present-presentation__sidebar-right {
+	position: absolute;
+	top: 50%;
+	right: 0;
+	height: 75%;
+	transform: translateY(-50%);
+
+	padding: 0 1rem;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+}
+
+.present-presentation__control-bar-right,
+.present-presentation__control-bar-left {
+	background-color: rgba(33, 33, 34);
+	cursor: pointer;
+	border-radius: 25px;
+	opacity: 0;
+	transition: opacity 0.2s linear, transform 0.3s ease-out;
+	position: relative;
+}
+
+.present-presentation__control-bar-right--visible {
+	opacity: 1 !important;
+}
+
+.present-presentation:has(.present-presentation__sidebar-right:hover) {
+	& .present-presentation__control-bar-right {
+		opacity: 1;
+	}
+
+	& .present-presentation__control-bar-left {
+		opacity: 1;
+	}
+}
+
+.present-presentation:has(.present-presentation__sidebar-left:hover) {
+	& .present-presentation__control-bar-right {
+		opacity: 1;
+	}
+
+	& .present-presentation__control-bar-left {
+		opacity: 1;
+	}
+}
+
+.control-bar__action-icon {
+	transition: all 0.1s linear;
+	color: white;
+}
+
+.control-bar__action-button {
+	background-color: transparent;
+
+	border: 0;
+	margin: 0;
+	width: 50px;
+	height: 50px;
+	padding: 0.3rem;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+
+	&:hover > .control-bar__action-icon {
+		color: var(--bs-primary);
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+	}
+
+	&:disabled > .control-bar__action-icon {
+		color: rgb(146, 146, 146);
+	}
+}
+
+.control-bar__chat-btn-badge {
+	position: absolute;
+	right: 2px;
+	top: 2px;
+
+	font-size: 0.65rem !important;
+}
+
+@keyframes right-to-left {
+	0% {
+		transform: translateX(0);
+	}
+	50% {
+		transform: translateX(-50%);
+	}
+	100% {
+		transform: translateX(0);
+	}
+}

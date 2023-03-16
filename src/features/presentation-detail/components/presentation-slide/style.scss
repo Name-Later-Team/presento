@@ -1,0 +1,81 @@
+.presentation-slide__slide-wrapper {
+    // make sure the aspect ratio of the slide is alway 16/9
+    width: 100%;
+    padding-bottom: calc(100% * 9 / 16);
+    position: relative;
+
+    // other rules
+}
+
+.presentation-slide__slide {
+    // make sure the aspect ratio of the slide is alway 16/9
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    overflow: hidden;
+
+    // other rules
+    --slide-padding: 1rem;
+    background-color: white;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    padding: var(--slide-padding);
+    cursor: default;
+}
+
+.presentation-slide__instruction-bar {
+    font-size: 1.45vw;
+}
+
+.presentation-slide__footer,
+.presentation-slide__footer-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 5%;
+    min-height: 2.6vw;
+}
+
+.presentation-slide__footer {
+    position: absolute;
+    bottom: var(--slide-padding);
+    left: var(--slide-padding);
+    right: var(--slide-padding);
+
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+
+    & * {
+        background-color: rgba(255, 255, 255, 0.6);
+    }
+}
+
+.footer__team-logo-wrapper {
+    height: 100%;
+    width: 4vw;
+}
+
+.footer__team-logo {
+    object-fit: contain;
+    width: 100%;
+    pointer-events: none;
+}
+
+.instruction-bar__vote-link {
+    cursor: pointer;
+    transition: all 0.1s linear;
+}
+
+.instruction-bar__vote-link:active {
+    color: var(--bs-secondary) !important;
+}
+
+#footer__total-respondents {
+    font-size: 0.93vw;
+}
+
+.footer__total-respondents-logo {
+    font-size: 1vw;
+}
