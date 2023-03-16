@@ -20,6 +20,11 @@ export const RESPONSE_CODE = {
     INVALID_RESOURCE_PERMISSION: 4038,
 };
 
+export const SUCCESS_NOTIFICATION = {
+    ADD_SLIDE_SUCCESS: "Thêm trang chiếu mới thành công",
+    DELETE_SLIDE_SUCCESS: "Xóa trang chiếu thành công",
+};
+
 export const ERROR_NOTIFICATION = {
     LOGIN_PROCESS: "Có lỗi xảy ra trong quá trình đăng nhập",
     SINGUP_PROCESS: "Có lỗi xảy ra trong quá trình đăng ký",
