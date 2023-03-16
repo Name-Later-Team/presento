@@ -43,6 +43,19 @@ export default function Redirect() {
         }
     }, [queries, handleLogin]);
 
+    // display toast when login expired
+    useEffect(() => {
+        const loginExpired = queries.get("login_expired");
+
+        if (loginExpired == null || loginExpired === "") {
+            return;
+        }
+
+        if (loginExpired === "true") {
+            Notification.notifyError(ERROR_NOTIFICATION.LOGIN_EXPIRED);
+        }
+    }, [queries]);
+
     const handleRegister = async () => {
         try {
             const res = await AuthService.getSignupUrl();

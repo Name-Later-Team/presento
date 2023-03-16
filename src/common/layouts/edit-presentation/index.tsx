@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useEffect, useState } from "react";
 import { Button, Dropdown, Stack } from "react-bootstrap";
 import { Link, Outlet, useNavigate, useParams } from "react-router-dom";
+import { ERROR_NOTIFICATION } from "../../../constants";
 import PresentationService from "../../../services/presentation-service";
 import { Notification } from "../../components/notification";
 import CustomizedTooltip from "../../components/tooltip";
@@ -108,7 +109,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                         globalContext.unBlockUI();
                         return;
                     }
-                    Notification.notifyError("Có lỗi xảy ra khi lấy kết quả");
+                    Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_RESULT);
                     globalContext.unBlockUI();
                     return;
                 }
@@ -265,75 +266,70 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
     };
 
     const handlePresentSlide = async () => {
-        // try {
-        // 	globalContext.blockUI(undefined, true);
-        // 	const res = await PresentationService.updatePresentationPaceAsync(
-        // 		presentationId ?? "",
-        // 		slideId ?? "",
-        // 		"present",
-        // 		{
-        // 			scope: "public",
-        // 			groupId: null,
-        // 		},
-        // 	);
-        // 	if (
-        // 		res.code === RESPONSE_CODE.MY_PRESENTATION_IN_GROUP ||
-        // 		res.code === RESPONSE_CODE.PRESENTING_SLIDE_PERMISSION
-        // 	) {
-        // 		const handleRequestTurnOffPresenting = async () => {
-        // 			globalContext.blockUI(undefined, true);
-        // 			try {
-        // 				await PresentationService.updatePresentationPaceAsync(
-        // 					presentationId ?? "",
-        // 					slideId ?? "",
-        // 					"quit",
-        // 				);
-        // 				Notification.notifySuccess("Tắt trang đang chiếu thành công");
-        // 			} catch (err) {
-        // 				console.error(err);
-        // 				Notification.notifyError(
-        // 					"Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
-        // 				);
-        // 			}
-        // 			globalContext.unBlockUI();
-        // 		};
-        // 		new AlertBuilder()
-        // 			.setTitle("Thông báo")
-        // 			.setText(
-        // 				"Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?",
-        // 			)
-        // 			.setAlertType("info")
-        // 			.setConfirmBtnText("Đến trang chiếu")
-        // 			.setCancelBtnText("Tắt trang chiếu")
-        // 			.showCloseButton()
-        // 			.preventDismiss()
-        // 			.setOnConfirm(() => navigate(`/presentations/${presentationId}/${presentationState.pace.active}`))
-        // 			.setOnCancel(handleRequestTurnOffPresenting)
-        // 			.getAlert()
-        // 			.fireAlert();
-        // 		globalContext.unBlockUI();
-        // 		return;
-        // 	}
-        // 	if (res.code === RESPONSE_CODE.OTHER_PRESENTATION_IN_GROUP) {
-        // 		new AlertBuilder()
-        // 			.setTitle("Thông báo")
-        // 			.setText("Bạn không được phép trình chiếu do nhóm này đang có người khác đang trình chiếu")
-        // 			.setAlertType("info")
-        // 			.setConfirmBtnText("Đã hiểu")
-        // 			.showCloseButton()
-        // 			.getAlert()
-        // 			.fireAlert();
-        // 		globalContext.unBlockUI();
-        // 		return;
-        // 	}
-        // 	globalContext.unBlockUI();
-        // 	navigate(`/presentations/${presentationId}/${slideId}`);
-        // } catch (updatePaceErr) {
-        // 	console.error(updatePaceErr);
-        // 	Notification.notifyError("Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau");
-        // 	globalContext.unBlockUI();
-        // 	return;
-        // }
+        try {
+            globalContext.blockUI(undefined, true);
+            await PresentationService.updatePresentationPaceAsync(presentationId ?? "", slideId ?? "", "present", {
+                scope: "public",
+                groupId: null,
+            });
+            // if (
+            // 	res.code === RESPONSE_CODE.MY_PRESENTATION_IN_GROUP ||
+            // 	res.code === RESPONSE_CODE.PRESENTING_SLIDE_PERMISSION
+            // ) {
+            // 	const handleRequestTurnOffPresenting = async () => {
+            // 		globalContext.blockUI(undefined, true);
+            // 		try {
+            // 			await PresentationService.updatePresentationPaceAsync(
+            // 				presentationId ?? "",
+            // 				slideId ?? "",
+            // 				"quit",
+            // 			);
+            // 			Notification.notifySuccess("Tắt trang đang chiếu thành công");
+            // 		} catch (err) {
+            // 			console.error(err);
+            // 			Notification.notifyError(
+            // 				"Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
+            // 			);
+            // 		}
+            // 		globalContext.unBlockUI();
+            // 	};
+            // 	new AlertBuilder()
+            // 		.setTitle("Thông báo")
+            // 		.setText(
+            // 			"Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?",
+            // 		)
+            // 		.setAlertType("info")
+            // 		.setConfirmBtnText("Đến trang chiếu")
+            // 		.setCancelBtnText("Tắt trang chiếu")
+            // 		.showCloseButton()
+            // 		.preventDismiss()
+            // 		.setOnConfirm(() => navigate(`/presentations/${presentationId}/${presentationState.pace.active}`))
+            // 		.setOnCancel(handleRequestTurnOffPresenting)
+            // 		.getAlert()
+            // 		.fireAlert();
+            // 	globalContext.unBlockUI();
+            // 	return;
+            // }
+            // if (res.code === RESPONSE_CODE.OTHER_PRESENTATION_IN_GROUP) {
+            // 	new AlertBuilder()
+            // 		.setTitle("Thông báo")
+            // 		.setText("Bạn không được phép trình chiếu do nhóm này đang có người khác đang trình chiếu")
+            // 		.setAlertType("info")
+            // 		.setConfirmBtnText("Đã hiểu")
+            // 		.showCloseButton()
+            // 		.getAlert()
+            // 		.fireAlert();
+            // 	globalContext.unBlockUI();
+            // 	return;
+            // }
+            globalContext.unBlockUI();
+            navigate(`/presentation/${presentationId}/${slideId}`);
+        } catch (updatePaceErr) {
+            console.error(updatePaceErr);
+            Notification.notifyError(ERROR_NOTIFICATION.PRESENT_FAILED);
+            globalContext.unBlockUI();
+            return;
+        }
     };
 
     return (
