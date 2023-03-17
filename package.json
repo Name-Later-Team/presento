@@ -61,7 +61,9 @@
     ]
   },
   "devDependencies": {
+    "concurrently": "^7.6.0",
     "@types/randomcolor": "^0.5.7",
-    "concurrently": "^7.6.0"
+
+    "cypress": "^12.8.0"
   }
 }
