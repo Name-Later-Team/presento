@@ -1,22 +1,26 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { Route, Routes } from "react-router";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import "react-tooltip/dist/react-tooltip.css";
 import "./assets/scss/index.scss";
-import Home from "./features/home/pages/main";
-import PresentationList from "./features/presentation/pages/presentation-list";
+import NotificationContainer from "./common/components/notification/notification-container";
 import reportWebVitals from "./reportWebVitals";
+import { GlobalContextProvider } from "./common/contexts/global-context";
+import { AuthContextProvider } from "./common/contexts/auth-context";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 root.render(
     <React.StrictMode>
         <BrowserRouter>
-            <Routes>
-                <Route index element={<App />} />
-                <Route path="home" element={<Home />} />
-                <Route path="demo" element={<PresentationList />} />
-            </Routes>
+            <GlobalContextProvider>
+                <AuthContextProvider>
+                    <>
+                        <App />
+                        <NotificationContainer />
+                    </>
+                </AuthContextProvider>
+            </GlobalContextProvider>
         </BrowserRouter>
     </React.StrictMode>
 );

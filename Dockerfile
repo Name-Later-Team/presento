@@ -1,4 +1,4 @@
-FROM node:16 as builder
+FROM node:16-alpine as builder
 
 # Create directory in the image
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN npm install
 RUN npm run build
 
 # -------------------------------------------------------------------------
-FROM node:16
+FROM node:16-alpine
 
 WORKDIR /usr/src
 
@@ -24,6 +24,6 @@ COPY --from=builder /app/client-build ./presento/client-build
 
 COPY ./backend ./presento
 
-RUN cd ./presento && npm install
+RUN cd ./presento && npm ci
 
 CMD cd presento && npm start

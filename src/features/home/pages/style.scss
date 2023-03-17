@@ -1,0 +1,23 @@
+.home {
+    // variables
+
+    // rules
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+
+    .home__card__app-logo-container {
+        height: 35vh;
+        max-height: 350px;
+
+        .home__card__app-logo-container__app-logo {
+            height: 100%;
+            -webkit-user-drag: none;
+        }
+    }
+}
