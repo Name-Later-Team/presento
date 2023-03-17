@@ -1,8 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 import { IBaseResponse } from "../common/interfaces";
-import { COMMON_CONSTANTS } from "../constants";
-// import { APP_CONSTANTS } from "../constants/app-constants";
+import { COMMON_CONSTANTS, RESPONSE_CODE } from "../constants";
 
 export const axiosInstance = axios.create({
     // baseURL: APP_CONSTANTS.API_URL,
@@ -27,6 +26,12 @@ axiosInstance.interceptors.response.use(
         }
 
         const { status } = response;
+
+        if ((response.data as IBaseResponse<any>).code === RESPONSE_CODE.LOGIN_EXPIRED) {
+            const data = response.data;
+            window.location.replace("/login?login_expired=true");
+            return Promise.reject(data?.errors);
+        }
 
         if (status === 500) {
             const data = response.data;

@@ -21,7 +21,7 @@ const mockData = {
             pace: {
                 mode: "presenter",
                 active: "SsIibypcSLJGwVOgO7eCf",
-                state: "idle",
+                state: "presenting",
                 counter: 1,
                 scope: "public",
                 groupId: null,
@@ -152,10 +152,11 @@ export default class PresentationService {
         action: PRESENTATION_PACE_ACTIONS,
         data: any = {}
     ) {
-        return HttpService.post(`/v1/presentations/${presentationId}`, {
-            ...data,
-            action,
-            admin_key: slideId === "" ? undefined : slideId,
-        });
+        // return HttpService.post(`/v1/presentations/${presentationId}`, {
+        //     ...data,
+        //     action,
+        //     admin_key: slideId === "" ? undefined : slideId,
+        // });
+        return Promise.resolve("OK");
     }
 }

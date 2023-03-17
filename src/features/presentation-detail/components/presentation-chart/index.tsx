@@ -72,6 +72,7 @@ export default function PresentationChart() {
                 },
             ],
         });
+        // eslint-disable-next-line
     }, [slideState]);
 
     return (

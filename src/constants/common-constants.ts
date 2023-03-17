@@ -30,7 +30,11 @@ export const ERROR_NOTIFICATION = {
     SINGUP_PROCESS: "Có lỗi xảy ra trong quá trình đăng ký",
     MISSING_AUTHORIZATION_CODE: "Thông tin để xử lý đăng nhập bị thiếu",
     CHECK_LOGIN_PROCESS: "Có lỗi xảy ra trong quá trình kiểm tra",
+    LOGIN_EXPIRED: "Phiên đăng nhập đã hết hạn",
     FETCH_USER_INFO_PROCESS: "Có lỗi xảy ra khi lấy thông tin người dùng",
+    PRESENT_FAILED: "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
+    FETCH_SLIDE_RESULT: "Có lỗi xảy ra khi lấy kết quả",
+    UPDATE_PRESENTATION_STATE: "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
 };
 
 export const PRESENTATION_TYPE = {

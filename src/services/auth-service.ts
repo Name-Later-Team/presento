@@ -3,7 +3,7 @@ import { HttpService } from "./http-service";
 
 export default class AuthService {
     static checkLoginState() {
-        return HttpService.get<any>("/api/");
+        return HttpService.get<any>("/api/auth/state");
     }
 
     static getLoginUrl() {
