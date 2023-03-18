@@ -63,7 +63,7 @@ export const AuthContextProvider = (props: IAuthContextProvider) => {
     const removeUserInfo = () => {
         setAuthInfo({});
         AuthService.signOut();
-        navigate("/");
+        navigate("/login");
     };
 
     return (

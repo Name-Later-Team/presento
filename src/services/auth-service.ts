@@ -40,6 +40,6 @@ export default class AuthService {
 
     static signOut() {
         this.clearUserInfoFromLocal();
-        return HttpService.post("/api/auth/sign-out", {});
+        return HttpService.get("/api/auth/logout");
     }
 }
