@@ -60,10 +60,14 @@ export const AuthContextProvider = (props: IAuthContextProvider) => {
         AuthService.saveUserInfoToLocal(newUserInfo);
     };
 
-    const removeUserInfo = () => {
+    const removeUserInfo = async () => {
         setAuthInfo({});
-        AuthService.signOut();
-        navigate("/login");
+        try {
+            await AuthService.signOut();
+            navigate("/login");
+        } catch (err) {
+            console.error("AuthContextProvider", err);
+        }
     };
 
     return (
