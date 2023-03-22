@@ -189,10 +189,41 @@ export async function getSignupUri(req, res) {
  * @param {import("express").Request} req
  * @param {import("express").Response} res
  */
-export function logout(req, res) {
-    //TODO: handle api logout call from Casdoor
+export async function logout(req, res) {
+    const { user } = req.session ?? {};
+    const { accessToken } = user ?? {};
 
     delete req.session.user;
-
     res.json(new ResponseBuilder().withCode(200).build());
+
+    const query = {
+        id_token_hint: accessToken,
+        post_logout_redirect_uri: APP_CONFIG.authz.endpoints.logoutRedirectUri,
+        state: v4(),
+    };
+    try {
+        const response = await axios.post(
+            `${APP_CONFIG.authz.baseUrl}${APP_CONFIG.authz.endpoints.logout}?${queryString.stringify(query)}`,
+            undefined,
+            {
+                maxRedirects: 0, // disable auto redirect
+            }
+        );
+
+        const { data } = response;
+
+        if (data.status && data.status === "error") {
+            Logger.error(data.msg);
+            return;
+        }
+    } catch (error) {
+        if (!error.response) {
+            Logger.error(error);
+            return;
+        }
+
+        Logger.error(JSON.stringify(error.response.data));
+    }
+
+    //TODO: handle revocation api later
 }
