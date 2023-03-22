@@ -8,11 +8,15 @@ import { APP_CONFIG } from "../configs/index.js";
 export const router = express.Router();
 
 router.get(
-    "/:service/:path",
+    "/:service/v1/*",
     asyncRouteHandler((req, res) => {
+        const { accessToken, tokenType } = req.session?.user ?? {};
+        const headers = { Authorization: `${tokenType} ${accessToken}` };
+
         axios({
             method: req.method,
-            url: `${APP_CONFIG.apiGateway}/${req.params.service}/${req.params.path}`,
+            url: `${APP_CONFIG.apiGateway}${req.originalUrl.replace("/api", "")}`,
+            headers,
         })
             .then((response) => res.send(response.data))
             .catch((error) => {
