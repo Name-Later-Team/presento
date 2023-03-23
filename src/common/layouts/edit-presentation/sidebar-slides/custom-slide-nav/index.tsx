@@ -8,17 +8,20 @@ import { IBaseComponent } from "../../../../interfaces";
 import { CustomActionDropdownToggle } from "../custom-action-dropdown";
 import "./style.scss";
 import CustomizedTooltip from "../../../../components/tooltip";
+import React from "react";
+import { DraggableProvided } from "react-beautiful-dnd";
 
 interface ICustomSlideNav extends IBaseComponent, ISidebarSlideNav {
     slideNum?: number;
     actions?: {
         onDelete: (adminKey: string) => void;
     };
+    draggableProvided: DraggableProvided;
 }
 
-export default function CustomSlideNav(props: ICustomSlideNav) {
+const CustomSlideNav = React.forwardRef<HTMLDivElement, ICustomSlideNav>((props, ref) => {
     const { presentationState } = usePresentFeature();
-    const { icon, path, slideId, slideNum, actions } = props;
+    const { icon, typeLabel, path, slideId, slideNum, actions, draggableProvided } = props;
     const navigate = useNavigate();
 
     const handleOnClick = () => {
@@ -30,7 +33,12 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
     };
 
     return (
-        <div className="custom-slide-nav__container">
+        <div
+            ref={ref}
+            {...draggableProvided.draggableProps}
+            {...draggableProvided.dragHandleProps}
+            className="custom-slide-nav__container"
+        >
             <Nav.Item className="custom-slide-nav__slide">
                 <Nav.Link className="custom-slide-nav__slide-link" onClick={handleOnClick} eventKey={path}>
                     <div className="d-flex justify-content-between">
@@ -74,7 +82,7 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
                                         as="button"
                                         onClick={() => handleDeleteSlide(slideId)}
                                     >
-                                        <FontAwesomeIcon className="me-2" icon={faTrash} />
+                                        <FontAwesomeIcon className="me-3" icon={faTrash} />
                                         Xóa trang chiếu
                                     </Dropdown.Item>
                                 </Dropdown.Menu>
@@ -84,6 +92,7 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
                         <div className="custom-slide-nav__slide-preview">
                             <span className="custom-slide-nav__slide-name">
                                 <FontAwesomeIcon icon={icon} />
+                                <span style={{ fontSize: "0.8rem" }}>{typeLabel}</span>
                             </span>
                         </div>
                     </div>
@@ -91,4 +100,6 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
             </Nav.Item>
         </div>
     );
-}
+});
+
+export default CustomSlideNav;

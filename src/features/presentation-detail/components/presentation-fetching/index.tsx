@@ -10,10 +10,15 @@ import {
 import PresentationService from "../../../../services/presentation-service";
 import "./style.scss";
 
-export const SLIDE_TYPE: { [type: string]: IconDefinition } = {
-    multiple_choice: faChartSimple,
-    heading: faHeading,
-    paragraph: faParagraph,
+export const SLIDE_TYPE: {
+    [type: string]: {
+        icon: IconDefinition;
+        label: string;
+    };
+} = {
+    multiple_choice: { icon: faChartSimple, label: "Multiple Choice" },
+    heading: { icon: faHeading, label: "Tiêu đề" },
+    paragraph: { icon: faParagraph, label: "Đoạn văn" },
 };
 
 export const PREFETCHING_REDIRECT_CODE = "AQsyfXWrig";
@@ -37,6 +42,7 @@ export default function PresentationFetching() {
                                 id: item?.id ?? "",
                                 adminKey: item?.admin_key ?? "",
                                 type: item?.type ?? "",
+                                position: item?.position ?? 1,
                             } as IPresentationSlide)
                     );
                     changePresentationState({
@@ -45,6 +51,7 @@ export default function PresentationFetching() {
                         ownerDisplayName: data.ownerDisplayName,
                         slides: mappedSlideList,
                         voteKey: data?.voteKey ?? "",
+                        votingCode: data?.votingCode ?? "",
                         pace: {
                             active: data?.pace?.active ?? "",
                             counter: data?.pace?.counter ?? 0,

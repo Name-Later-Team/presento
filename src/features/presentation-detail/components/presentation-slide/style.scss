@@ -26,6 +26,7 @@
 
 .presentation-slide__instruction-bar {
     font-size: 1.45vw;
+    cursor: pointer;
 }
 
 .presentation-slide__footer,
@@ -64,7 +65,6 @@
 }
 
 .instruction-bar__vote-link {
-    cursor: pointer;
     transition: all 0.1s linear;
 }
 

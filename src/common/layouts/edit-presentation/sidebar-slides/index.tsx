@@ -1,6 +1,6 @@
 import { faPlus, IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button, Nav } from "react-bootstrap";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Notification } from "../../../components/notification";
@@ -15,29 +15,22 @@ import {
 } from "../../../../features/presentation-detail/components/presentation-fetching";
 import PresentationService from "../../../../services/presentation-service";
 import SlideService from "../../../../services/slide-service";
+import { DragDropContext, Draggable, Droppable, OnDragEndResponder } from "react-beautiful-dnd";
 
 export interface ISidebarSlideNav {
     slideId: string;
     icon: IconDefinition;
+    typeLabel: string;
     path: string;
+    position: number;
 }
 
 export default function SidebarSlides() {
     const location = useLocation();
     const navigate = useNavigate();
     const { presentationId } = useParams();
-    const { presentationState, changePresentationState } = usePresentFeature();
+    const { presentationState, changePresentationState, resetPresentationState } = usePresentFeature();
     const globalContext = useGlobalContext();
-    const [slideData, setSlideData] = useState<ISidebarSlideNav[]>([]);
-
-    const updateSlideList = () => {
-        const slideNavs: ISidebarSlideNav[] = presentationState.slides.map((item) => ({
-            slideId: item.adminKey,
-            icon: SLIDE_TYPE[item.type],
-            path: `/presentation/${presentationId}/${item.adminKey}/edit`,
-        }));
-        setSlideData(slideNavs);
-    };
 
     const getPresentationDetail = async (navigateToLastItem: boolean = false) => {
         if (presentationId == null) {
@@ -56,9 +49,10 @@ export default function SidebarSlides() {
                             id: item?.id ?? "",
                             adminKey: item?.admin_key ?? "",
                             type: item?.type ?? "",
+                            position: item?.position ?? 1,
                         } as IPresentationSlide)
                 );
-                changePresentationState({
+                resetPresentationState({
                     ...presentationState,
                     slides: mappedSlideList,
                     name: data.name,
@@ -71,6 +65,7 @@ export default function SidebarSlides() {
                         groupId: data?.pace?.groupId ?? null,
                     } as IPresentationPace,
                     voteKey: data?.voteKey ?? "",
+                    votingCode: data?.votingCode ?? "",
                 });
                 globalContext.unBlockUI();
                 // if last is true, navigate to the last item in slide list (used when creating a new slide), otherwise navigating according to pace field from api
@@ -103,21 +98,13 @@ export default function SidebarSlides() {
 
     useEffect(() => {
         if (location.state !== null && location.state !== undefined && presentationState.slides.length !== 0) {
-            if ((location.state as any)?.code === PREFETCHING_REDIRECT_CODE) {
-                updateSlideList();
-            }
-            return;
+            if ((location.state as any)?.code === PREFETCHING_REDIRECT_CODE) return;
         }
+
         // if user enter url directly into the url bar, fetch slide list and presentation config directly
         getPresentationDetail();
         // eslint-disable-next-line
     }, []);
-
-    // update slide list when there is change
-    useEffect(() => {
-        updateSlideList();
-        // eslint-disable-next-line
-    }, [presentationState.slides]);
 
     // create new slide
     const handleAddNewSlide = async () => {
@@ -198,7 +185,7 @@ export default function SidebarSlides() {
 
     // delete a slide
     const handleDeleteSlide = async (adminKey: string) => {
-        if (slideData.length <= 1) {
+        if (presentationState.slides.length <= 1) {
             new AlertBuilder()
                 .setTitle("Cảnh báo")
                 .setAlertType("warning")
@@ -289,20 +276,72 @@ export default function SidebarSlides() {
         }
     };
 
+    const dragEnd: OnDragEndResponder = (result) => {
+        const { source, destination } = result;
+
+        let [src, des] = [-1, -1];
+        const tempSlideData = [...presentationState.slides];
+
+        tempSlideData.forEach((item, index) => {
+            if (item.position === source.index) src = index;
+            if (item.position === destination?.index) des = index;
+        });
+
+        if (src === des || src === -1 || des === -1) return;
+
+        // swap position
+        const tempPosition = tempSlideData[src].position;
+        tempSlideData[src].position = tempSlideData[des].position;
+        tempSlideData[des].position = tempPosition;
+
+        changePresentationState({
+            ...presentationState,
+            slides: tempSlideData,
+        });
+    };
+
+    const slideNavs: ISidebarSlideNav[] = presentationState.slides.map((item) => ({
+        slideId: item.adminKey,
+        icon: SLIDE_TYPE[item.type].icon,
+        typeLabel: SLIDE_TYPE[item.type].label,
+        path: `/presentation/${presentationId}/${item.adminKey}/edit`,
+        position: item.position,
+    }));
+
+    const mappedSlideData = [...slideNavs].sort((front, end) => front.position - end.position);
+
     return (
-        <Nav className="flex-column" variant="pills" activeKey={location.pathname}>
-            {slideData &&
-                slideData.map((nav, index) => (
-                    <CustomSlideNav
-                        key={nav.path}
-                        slideNum={index + 1}
-                        actions={{ onDelete: handleDeleteSlide }}
-                        {...nav}
-                    />
-                ))}
-            <Button variant="outline-primary" onClick={handleAddNewSlide}>
-                <FontAwesomeIcon className="me-2" icon={faPlus} /> Trang chiếu mới
-            </Button>
-        </Nav>
+        <DragDropContext onDragEnd={dragEnd}>
+            <Droppable droppableId="slide-list-dropzone">
+                {(provided) => (
+                    <Nav
+                        ref={provided.innerRef}
+                        className="flex-column"
+                        variant="pills"
+                        activeKey={location.pathname}
+                        {...provided.droppableProps}
+                    >
+                        {mappedSlideData &&
+                            mappedSlideData.map((nav, index) => (
+                                <Draggable draggableId={nav.path} key={nav.path} index={nav.position}>
+                                    {(provided) => (
+                                        <CustomSlideNav
+                                            slideNum={index + 1}
+                                            actions={{ onDelete: handleDeleteSlide }}
+                                            {...nav}
+                                            draggableProvided={provided}
+                                            ref={provided.innerRef}
+                                        />
+                                    )}
+                                </Draggable>
+                            ))}
+                        {provided.placeholder}
+                        <Button variant="outline-primary" onClick={handleAddNewSlide}>
+                            <FontAwesomeIcon className="me-2" icon={faPlus} /> Trang chiếu mới
+                        </Button>
+                    </Nav>
+                )}
+            </Droppable>
+        </DragDropContext>
     );
 }
