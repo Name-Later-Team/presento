@@ -16,6 +16,7 @@ import {
 import PresentationService from "../../../../services/presentation-service";
 import SlideService from "../../../../services/slide-service";
 import { DragDropContext, Draggable, Droppable, OnDragEndResponder } from "react-beautiful-dnd";
+import "./style.scss";
 
 export interface ISidebarSlideNav {
     slideId: string;
@@ -316,11 +317,17 @@ export default function SidebarSlides() {
                 {(provided) => (
                     <Nav
                         ref={provided.innerRef}
-                        className="flex-column"
+                        className="sidebar-slides__container flex-column"
                         variant="pills"
                         activeKey={location.pathname}
                         {...provided.droppableProps}
                     >
+                        <div className="sidebar-slides__add-new-slide">
+                            <Button variant="primary" className="w-100" onClick={handleAddNewSlide}>
+                                <FontAwesomeIcon className="me-2" icon={faPlus} /> Trang chiếu mới
+                            </Button>
+                            <hr />
+                        </div>
                         {mappedSlideData &&
                             mappedSlideData.map((nav, index) => (
                                 <Draggable draggableId={nav.path} key={nav.path} index={nav.position}>
@@ -336,9 +343,6 @@ export default function SidebarSlides() {
                                 </Draggable>
                             ))}
                         {provided.placeholder}
-                        <Button variant="outline-primary" onClick={handleAddNewSlide}>
-                            <FontAwesomeIcon className="me-2" icon={faPlus} /> Trang chiếu mới
-                        </Button>
                     </Nav>
                 )}
             </Droppable>

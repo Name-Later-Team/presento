@@ -84,6 +84,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
+
+    cursor: pointer !important;
 }
 
 .custom-slide-nav__slide {
@@ -103,6 +105,8 @@
 
 .custom-slide-nav__slide-link {
     padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-y) 0.3rem !important;
+    cursor: -webkit-grab !important;
+    cursor: grab !important;
 }
 
 .custom-slide-nav__slide-control {
@@ -120,6 +124,7 @@
     border-radius: var(--bs-nav-pills-border-radius);
     transition: background-color 0.1s linear;
     display: flex;
+    cursor: pointer !important;
 
     &:hover,
     &.show.dropdown {

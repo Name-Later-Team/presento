@@ -46,7 +46,7 @@ export default function PresentationSlide() {
                                 để bầu chọn
                             </div>
                             <CustomizedTooltip place="bottom" anchorSelect="#instruction-bar__vote-link">
-                                Nhấn để sao chép đường dẫn trực tiếp
+                                Nhấn để sao chép đường dẫn vào trực tiếp
                             </CustomizedTooltip>
                         </>
                     )}
