@@ -9,7 +9,9 @@ import HeadingSlideComponent from "./components/heading";
 import MultipleChoiceSlideComponent from "./components/multiple-choice";
 import ParagraphSlideComponent from "./components/paragraph";
 import "./style.scss";
+import FormatUtil from "../../../../common/utils/format-util";
 
+// define all types of slide here
 const slideTypeComponents: { [type: string]: JSX.Element } = {
     multiple_choice: <MultipleChoiceSlideComponent />,
     heading: <HeadingSlideComponent />,
@@ -41,7 +43,7 @@ export default function PresentationSlide() {
                                 </span>
                                 nhập mã
                                 <span className="instruction-bar__vote-link mx-1 fw-bolder text-primary">
-                                    {presentationState.votingCode}
+                                    {FormatUtil.formatVotingCodeString(presentationState.votingCode)}
                                 </span>
                                 để bầu chọn
                             </div>

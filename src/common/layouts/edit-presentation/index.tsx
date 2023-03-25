@@ -399,29 +399,19 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                             </Button> */}
 
                             {isModified ? (
-                                <>
-                                    <FontAwesomeIcon
-                                        id="not-save"
-                                        className="mx-2 text-danger"
-                                        icon={faXmark}
-                                        size="lg"
-                                    />
-                                    <CustomizedTooltip
-                                        anchorSelect="#not-save"
-                                        content="Chưa lưu thay đổi"
-                                        place="left"
-                                    />
-                                </>
+                                <div className="mx-2">
+                                    <span className="text-danger me-2" style={{ fontSize: "0.9rem" }}>
+                                        Chưa lưu
+                                    </span>
+                                    <FontAwesomeIcon className=" text-danger" icon={faXmark} size="lg" />
+                                </div>
                             ) : (
-                                <>
-                                    <FontAwesomeIcon
-                                        id="saved"
-                                        className="mx-2 text-success"
-                                        icon={faCheck}
-                                        size="lg"
-                                    />
-                                    <CustomizedTooltip anchorSelect="#saved" content="Đã lưu thay đổi" place="left" />
-                                </>
+                                <div className="mx-2">
+                                    <span className="text-muted me-2" style={{ fontSize: "0.9rem" }}>
+                                        Đã lưu
+                                    </span>
+                                    <FontAwesomeIcon className="text-success" icon={faCheck} size="lg" />
+                                </div>
                             )}
 
                             <Button
@@ -459,11 +449,6 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                     </div>
                 </div>
             </div>
-            {/* <SelectGroupModal
-				show={showSelectGroupModal}
-				hideModal={() => setShowSelectGroupModal(false)}
-				callbackWithGroupId={handlePresentSlideToGroup}
-			/> */}
         </>
     );
 }
