@@ -20,7 +20,7 @@ import { ERROR_NOTIFICATION } from "../../../../constants";
 export default function PresentPresentation() {
     // contexts
     const globalContext = useGlobalContext();
-    const { presentationState, slideState, changePresentationState, changeSlideState } = usePresentFeature();
+    const { presentationState, slideState, resetPresentationState, resetSlideState } = usePresentFeature();
     // const { socket, initNewSocket, closeCurrentSocket } = useSocket();
 
     // states
@@ -234,12 +234,14 @@ export default function PresentPresentation() {
                                 id: item?.id ?? "",
                                 adminKey: item?.admin_key ?? "",
                                 type: item?.type ?? "",
+                                position: item?.position ?? 1,
                             } as IPresentationSlide)
                     );
-                    changePresentationState({
+                    resetPresentationState({
                         ...presentationState,
                         slides: mappedSlideList,
                         voteKey: data?.voteKey ?? "",
+                        votingCode: data?.votingCode ?? "",
                         pace: {
                             active: data?.pace?.active ?? "",
                             counter: data?.pace?.counter ?? 0,
@@ -287,7 +289,7 @@ export default function PresentPresentation() {
                             newVal.updatedAt = resData?.updatedAt ?? "";
                             newVal.questionImageUrl = resData?.questionImageUrl ?? "";
                             newVal.questionVideoUrl = resData?.questionVideoUrl ?? "";
-                            changeSlideState(newVal);
+                            resetSlideState(newVal);
                             globalContext.unBlockUI();
                             return;
                         }

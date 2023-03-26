@@ -9,7 +9,9 @@ import HeadingSlideComponent from "./components/heading";
 import MultipleChoiceSlideComponent from "./components/multiple-choice";
 import ParagraphSlideComponent from "./components/paragraph";
 import "./style.scss";
+import FormatUtil from "../../../../common/utils/format-util";
 
+// define all types of slide here
 const slideTypeComponents: { [type: string]: JSX.Element } = {
     multiple_choice: <MultipleChoiceSlideComponent />,
     heading: <HeadingSlideComponent />,
@@ -20,7 +22,7 @@ export default function PresentationSlide() {
     const { slideState, presentationState } = usePresentFeature();
 
     const handleCopyLink = () => {
-        navigator.clipboard.writeText(`${APP_CONSTANTS.APP_DOMAIN}/voting/${presentationState.voteKey}`);
+        navigator.clipboard.writeText(`${APP_CONSTANTS.APP_DOMAIN}/${presentationState.voteKey}`);
         Notification.notifySuccess("Sao chép liên kết thành công!");
     };
 
@@ -29,22 +31,26 @@ export default function PresentationSlide() {
             <div className="presentation-slide__slide text-break">
                 <Stack className="text-center h-100" gap={3}>
                     {slideState.showInstructionBar && (
-                        <div className="presentation-slide__instruction-bar">
-                            Truy cập
-                            <span
+                        <>
+                            <div
                                 id="instruction-bar__vote-link"
+                                className="presentation-slide__instruction-bar"
                                 onClick={handleCopyLink}
-                                className="instruction-bar__vote-link mx-1 fw-bolder text-primary"
                             >
-                                {`${APP_CONSTANTS.APP_DOMAIN}/voting/${presentationState.voteKey}`}
-                            </span>
-                            <CustomizedTooltip
-                                place="bottom"
-                                anchorSelect="#instruction-bar__vote-link"
-                                content="Nhấn để sao chép liên kết"
-                            />
-                            để bầu chọn
-                        </div>
+                                Truy cập
+                                <span className="instruction-bar__vote-link mx-1 fw-bolder text-primary">
+                                    {APP_CONSTANTS.APP_DOMAIN}
+                                </span>
+                                nhập mã
+                                <span className="instruction-bar__vote-link mx-1 fw-bolder text-primary">
+                                    {FormatUtil.formatVotingCodeString(presentationState.votingCode)}
+                                </span>
+                                để bầu chọn
+                            </div>
+                            <CustomizedTooltip place="bottom" anchorSelect="#instruction-bar__vote-link">
+                                Nhấn để sao chép đường dẫn vào trực tiếp
+                            </CustomizedTooltip>
+                        </>
                     )}
 
                     <div className="presentation-slide__slide-component flex-grow-1">

@@ -20,8 +20,8 @@
     "http-proxy-middleware": "^2.0.6",
     "moment": "^2.29.4",
     "query-string": "^8.1.0",
-    "randomcolor": "^0.6.2",
     "react": "^18.2.0",
+    "react-beautiful-dnd": "^13.1.1",
     "react-bootstrap": "^2.6.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
@@ -61,7 +61,7 @@
     ]
   },
   "devDependencies": {
-    "@types/randomcolor": "^0.5.7",
+    "@types/react-beautiful-dnd": "^13.1.4",
     "concurrently": "^7.6.0"
   }
 }

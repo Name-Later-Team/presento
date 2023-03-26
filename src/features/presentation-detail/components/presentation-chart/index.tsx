@@ -1,9 +1,9 @@
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import randomColor from "randomcolor";
 import "./style.scss";
 import { usePresentFeature } from "../../../../common/contexts/present-feature-context";
 import { useEffect, useState } from "react";
+import CHART_COLORS from "../../../../constants/chart-colors";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -24,8 +24,14 @@ const options = {
     },
 };
 
-const generateRandomColor = () => {
-    return randomColor({ format: "rgb", hue: "purple" });
+const getColor = (index: number) => {
+    const colorDataLength = CHART_COLORS.length;
+
+    if (index > colorDataLength - 1) {
+        return CHART_COLORS[index % colorDataLength];
+    }
+
+    return CHART_COLORS[index];
 };
 
 interface IChartData {
@@ -55,9 +61,9 @@ export default function PresentationChart() {
             labels.push(item.value);
             values.push(slideState.result.find((element) => element.key === item.key)?.value || 0);
             try {
-                backgroundColors.push(data.datasets[0].backgroundColor[index] || generateRandomColor());
+                backgroundColors.push(data.datasets[0].backgroundColor[index] || getColor(index));
             } catch (err) {
-                backgroundColors.push(generateRandomColor());
+                backgroundColors.push(getColor(index));
             }
         });
 

@@ -5,6 +5,8 @@
     --static-header-margin: 1rem;
     --static-header-margin-bottom: 0.5rem;
     --static-header-padding-inline: 1.5rem;
+    --sidebar-padding-y: 1rem;
+    --sidebar-padding-x: 0.5rem;
 
     height: 100vh;
     width: 100%;
@@ -35,7 +37,7 @@
     width: var(--sidebar-width);
     height: 100vh;
     max-height: 100vh;
-    padding: 1rem 0.5rem 1rem 0.5rem;
+    padding: var(--sidebar-padding-y) var(--sidebar-padding-x);
 
     position: relative;
     z-index: 1000;

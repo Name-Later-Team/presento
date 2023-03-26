@@ -1,4 +1,4 @@
-import { faBars, faChevronLeft, faFloppyDisk, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faCheck, faChevronLeft, faFloppyDisk, faPlay, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useEffect, useState } from "react";
 import { Button, Dropdown, Stack } from "react-bootstrap";
@@ -20,7 +20,7 @@ interface IEditPresentationLayout extends IBaseComponent {
 export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
     const { userInfo, removeUserInfo } = useAuth();
-    const { presentationState, slideState, changeSlideState } = usePresentFeature();
+    const { presentationState, slideState, isModified, resetSlideState } = usePresentFeature();
     const globalContext = useGlobalContext();
 
     const { presentationId, slideId } = useParams();
@@ -105,7 +105,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                         newVal.updatedAt = resData?.updatedAt ?? "";
                         newVal.questionImageUrl = resData?.questionImageUrl ?? "";
                         newVal.questionVideoUrl = resData?.questionVideoUrl ?? "";
-                        changeSlideState(newVal);
+                        resetSlideState(newVal);
                         globalContext.unBlockUI();
                         return;
                     }
@@ -380,10 +380,10 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                             />
 
                             <Stack className="justify-content-center ms-1">
-                                <p className="mb-0 fs-5" style={{ fontWeight: 600 }}>
+                                <p className="mb-0" style={{ fontSize: "1.09rem", fontWeight: 600 }}>
                                     {presentationState.name}
                                 </p>
-                                <span className="mb-0" style={{ fontSize: "0.76rem" }}>
+                                <span className="mb-0" style={{ fontSize: "0.75rem" }}>
                                     Được tạo bởi {presentationState.ownerDisplayName}
                                 </span>
                             </Stack>
@@ -398,7 +398,28 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                 <FontAwesomeIcon className="me-1" icon={faSquarePollVertical} size="lg" /> Xem kết quả
                             </Button> */}
 
-                            <Button className="mx-2" variant="secondary" onClick={handleSaveSlide}>
+                            {isModified ? (
+                                <div className="mx-2">
+                                    <span className="text-danger me-2" style={{ fontSize: "0.9rem" }}>
+                                        Chưa lưu
+                                    </span>
+                                    <FontAwesomeIcon className=" text-danger" icon={faXmark} size="lg" />
+                                </div>
+                            ) : (
+                                <div className="mx-2">
+                                    <span className="text-muted me-2" style={{ fontSize: "0.9rem" }}>
+                                        Đã lưu
+                                    </span>
+                                    <FontAwesomeIcon className="text-success" icon={faCheck} size="lg" />
+                                </div>
+                            )}
+
+                            <Button
+                                className="mx-2"
+                                variant="secondary"
+                                disabled={!isModified}
+                                onClick={handleSaveSlide}
+                            >
                                 <FontAwesomeIcon className="me-1" icon={faFloppyDisk} size="lg" /> Lưu
                             </Button>
 
@@ -428,11 +449,6 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                     </div>
                 </div>
             </div>
-            {/* <SelectGroupModal
-				show={showSelectGroupModal}
-				hideModal={() => setShowSelectGroupModal(false)}
-				callbackWithGroupId={handlePresentSlideToGroup}
-			/> */}
         </>
     );
 }

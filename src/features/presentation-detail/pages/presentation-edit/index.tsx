@@ -10,89 +10,102 @@ import ParagraphConfig from "../../components/slide-config/paragraph";
 import "./style.scss";
 
 interface ISlideTypeOption {
-	value: string;
-	label: string;
+    value: string;
+    label: string;
 }
 
 const slideTypeLabels: { [type: string]: string } = {
-	multiple_choice: "Multiple Choice",
-	heading: "Tiêu đề",
-	paragraph: "Đoạn văn",
+    multiple_choice: "Multiple Choice",
+    heading: "Tiêu đề",
+    paragraph: "Đoạn văn",
 };
 
 const slideTypeComponents: { [type: string]: JSX.Element } = {
-	multiple_choice: <MultipleChoiceConfig />,
-	heading: <HeadingConfig />,
-	paragraph: <ParagraphConfig />,
+    multiple_choice: <MultipleChoiceConfig />,
+    heading: <HeadingConfig />,
+    paragraph: <ParagraphConfig />,
 };
 
 const slideTypeOptions: ISlideTypeOption[] = [
-	{ value: "multiple_choice", label: slideTypeLabels["multiple_choice"] },
-	{ value: "heading", label: slideTypeLabels["heading"] },
-	{ value: "paragraph", label: slideTypeLabels["paragraph"] },
+    { value: "multiple_choice", label: slideTypeLabels["multiple_choice"] },
+    { value: "heading", label: slideTypeLabels["heading"] },
+    { value: "paragraph", label: slideTypeLabels["paragraph"] },
 ];
 
 export default function EditPresentation() {
-	const { slideState, changeSlideState } = usePresentFeature();
-	const [showAlert, setShowAlert] = useState(true);
+    const { slideState, presentationState, changeSlideState, changePresentationState } = usePresentFeature();
+    const [showAlert, setShowAlert] = useState(true);
 
-	const slideType: ISlideTypeOption = {
-		value: slideState.type,
-		label: slideTypeLabels[slideState.type],
-	};
+    const slideType: ISlideTypeOption = {
+        value: slideState.type,
+        label: slideTypeLabels[slideState.type],
+    };
 
-	const handleSlideTypeChange = (newSlideType: SingleValue<{ value: string; label: string }>) => {
-		const oldSlideState = { ...slideState };
-		changeSlideState({
-			...initSlideState,
-			type: newSlideType?.value || "",
-			position: oldSlideState.position,
-			id: oldSlideState.id,
-			presentationId: oldSlideState.presentationId,
-			presentationSeriesId: oldSlideState.presentationSeriesId,
-			adminKey: oldSlideState.adminKey,
-			createdAt: oldSlideState.createdAt,
-			updatedAt: oldSlideState.updatedAt,
-		});
-	};
-	return (
-		<Row className="edit-presentation">
-			<Col className="edit-presentation__col edit-presentation__col--left">
-				<PresentationSlide />
-			</Col>
-			<Col className="edit-presentation__col edit-presentation__col--right">
-				<div className="edit-presentation__slide-config">
-					<Stack>
-						<Alert show={showAlert} className="m-0 mb-3" variant="primary">
-							<p className="m-0 mb-2 fw-bolder text-uppercase">Nhắc nhở</p>
-							<p className="m-0 mb-3">Lưu trước khi chuyển trang chiếu hoặc chuyển trang</p>
-							<div className="d-flex justify-content-end">
-								<Button size="sm" onClick={() => setShowAlert(false)} variant="outline-primary">
-									Đã hiểu
-								</Button>
-							</div>
-						</Alert>
+    const handleSlideTypeChange = (newSlideType: SingleValue<{ value: string; label: string }>) => {
+        const oldSlideState = { ...slideState };
+        changeSlideState({
+            ...initSlideState,
+            type: newSlideType?.value || "",
+            position: oldSlideState.position,
+            id: oldSlideState.id,
+            presentationId: oldSlideState.presentationId,
+            presentationSeriesId: oldSlideState.presentationSeriesId,
+            adminKey: oldSlideState.adminKey,
+            createdAt: oldSlideState.createdAt,
+            updatedAt: oldSlideState.updatedAt,
+        });
+        // change the preview icon of the slide
+        const newSlides = [...presentationState.slides];
+        for (let element of newSlides) {
+            if (element.adminKey === oldSlideState.adminKey) {
+                element.type = newSlideType?.value || "";
+                changePresentationState({
+                    ...presentationState,
+                    slides: newSlides,
+                });
+                break;
+            }
+        }
+    };
 
-						<p className="m-0 mb-3">Loại trang trình bày</p>
+    return (
+        <Row className="edit-presentation">
+            <Col className="edit-presentation__col edit-presentation__col--left">
+                <PresentationSlide />
+            </Col>
+            <Col className="edit-presentation__col edit-presentation__col--right">
+                <div className="edit-presentation__slide-config">
+                    <Stack>
+                        <Alert show={showAlert} className="m-0 mb-3" variant="primary">
+                            <p className="m-0 mb-2 fw-bolder text-uppercase">Nhắc nhở</p>
+                            <p className="m-0 mb-3">Bấm lưu trước khi chuyển trang chiếu hoặc chuyển trang</p>
+                            <div className="d-flex justify-content-end">
+                                <Button size="sm" onClick={() => setShowAlert(false)} variant="outline-primary">
+                                    Đã hiểu
+                                </Button>
+                            </div>
+                        </Alert>
 
-						<BaseSelect
-							options={slideTypeOptions}
-							styles={{
-								control: (baseStyles, state) => ({
-									...baseStyles,
-									minWidth: "200px",
-								}),
-							}}
-							onChange={handleSlideTypeChange}
-							value={slideType}
-						/>
+                        <p className="m-0 mb-2">Loại trang trình bày</p>
 
-						<hr className="my-3" />
+                        <BaseSelect
+                            options={slideTypeOptions}
+                            styles={{
+                                control: (baseStyles, state) => ({
+                                    ...baseStyles,
+                                    minWidth: "200px",
+                                }),
+                            }}
+                            onChange={handleSlideTypeChange}
+                            value={slideType}
+                        />
 
-						{slideTypeComponents[slideState.type]}
-					</Stack>
-				</div>
-			</Col>
-		</Row>
-	);
+                        <hr className="my-3" />
+
+                        {slideTypeComponents[slideState.type]}
+                    </Stack>
+                </div>
+            </Col>
+        </Row>
+    );
 }

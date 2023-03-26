@@ -30,6 +30,7 @@ export interface IPresentationSlide {
     id: string;
     adminKey: string;
     type: string;
+    position: number;
 }
 
 export interface IPresentationPace {
@@ -49,16 +50,22 @@ export interface IPresentationState {
     pace: IPresentationPace;
     slideCount: number;
     voteKey: string;
+    votingCode: string;
 }
 
 interface IPresentFeatureContext {
+    // state to indicate that data has been changed or not
+    isModified: boolean;
+
     // access and change state that has information relating to a slide
     slideState: ISlideState;
     changeSlideState: (newSlideState: ISlideState) => void;
+    resetSlideState: (newSlideState?: ISlideState) => void;
 
     // access and change state that has information relating to a presentation
     presentationState: IPresentationState;
     changePresentationState: (newPresentationState: IPresentationState) => void;
+    resetPresentationState: (newPresentationState?: IPresentationState) => void;
 }
 
 // props types for the context provider
@@ -83,6 +90,7 @@ export const initPresentationState: IPresentationState = {
     },
     slideCount: 0,
     voteKey: "",
+    votingCode: "",
 };
 
 export const initSlideState: ISlideState = {
@@ -109,33 +117,85 @@ export const initSlideState: ISlideState = {
     respondents: 0,
 };
 
+interface IDataState {
+    slideState: ISlideState;
+    presentationState: IPresentationState;
+    isModified: boolean;
+}
+
 export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvider) => {
-    const [slideState, setSlideState] = useState<ISlideState>(initSlideState);
-    const [presentationState, setPresentationState] = useState<IPresentationState>(initPresentationState);
+    // const [slideState, setSlideState] = useState<ISlideState>(initSlideState);
+    // const [presentationState, setPresentationState] = useState<IPresentationState>(initPresentationState);
+    // const isModified = useRef(false);
+    const [dataState, setDataState] = useState<IDataState>({
+        slideState: initSlideState,
+        presentationState: initPresentationState,
+        isModified: false,
+    });
 
     const changeSlideState = (newSlideState: ISlideState) => {
-        const tempSlideState = {
-            ...slideState,
-            ...newSlideState,
-        };
-        setSlideState(tempSlideState);
+        // mark as data has been changed and change data state
+        setDataState((prevState) => ({
+            ...prevState,
+            slideState: { ...dataState.slideState, ...newSlideState },
+            isModified: true,
+        }));
     };
 
     const changePresentationState = (newPresentationState: IPresentationState) => {
-        const tempPresentationState = {
-            ...presentationState,
-            ...newPresentationState,
-        };
-        setPresentationState(tempPresentationState);
+        // mark as data has been changed and change data state
+        setDataState((prevState) => ({
+            ...prevState,
+            presentationState: { ...dataState.presentationState, ...newPresentationState },
+            isModified: true,
+        }));
+    };
+
+    // mark as data has not been changed
+    const resetSlideState = (newSlideState?: ISlideState) => {
+        // only reset data state to the unchanged state (do not pass any argument to the function)
+        if (newSlideState == null) {
+            setDataState((prevState) => ({
+                ...prevState,
+                isModified: false,
+            }));
+            return;
+        }
+
+        setDataState((prevState) => ({
+            ...prevState,
+            slideState: { ...dataState.slideState, ...newSlideState },
+            isModified: false,
+        }));
+    };
+
+    const resetPresentationState = (newPresentationState?: IPresentationState) => {
+        // only reset data state to the unchanged state (do not pass any argument to the function)
+        if (newPresentationState == null) {
+            setDataState((prevState) => ({
+                ...prevState,
+                isModified: false,
+            }));
+            return;
+        }
+
+        setDataState((prevState) => ({
+            ...prevState,
+            presentationState: { ...dataState.presentationState, ...newPresentationState },
+            isModified: false,
+        }));
     };
 
     return (
         <PresentFeature.Provider
             value={{
-                slideState,
-                presentationState,
+                slideState: dataState.slideState,
+                presentationState: dataState.presentationState,
                 changeSlideState,
                 changePresentationState,
+                resetSlideState,
+                resetPresentationState,
+                isModified: dataState.isModified,
             }}
         >
             {props.children}

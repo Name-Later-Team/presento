@@ -1,0 +1,27 @@
+.sidebar-slides__container {
+    position: relative;
+}
+
+.sidebar-slides__add-new-slide {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    background-color: white;
+    z-index: 1;
+}
+
+.sidebar-slides__add-new-slide::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+
+    background-color: white;
+    transform: translateY(calc(-1 * var(--sidebar-padding-y)));
+}
