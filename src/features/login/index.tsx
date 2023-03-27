@@ -1,4 +1,4 @@
-import { Navigate, Route } from "react-router";
+import { Route } from "react-router";
 import Callback from "./components/callback";
 import Redirect from "./components/redirect";
 import Login from "./pages";
@@ -7,6 +7,5 @@ export const loginRoutes = (
     <>
         <Route path="" element={<Login innerComponent={<Redirect />} />} />
         <Route path="callback" element={<Login innerComponent={<Callback />} />} />
-        <Route path="*" element={<Navigate to="/404" replace />} />
     </>
 );

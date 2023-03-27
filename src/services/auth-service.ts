@@ -3,11 +3,15 @@ import { HttpService } from "./http-service";
 
 export default class AuthService {
     static checkLoginState() {
-        return HttpService.get<any>("/api/");
+        return HttpService.get<any>("/api/auth/state");
     }
 
     static getLoginUrl() {
         return HttpService.get<any>("/api/auth/login_url");
+    }
+
+    static getSignupUrl() {
+        return HttpService.get<any>("/api/auth/signup");
     }
 
     static postAuthorizationCode(code: string) {
@@ -36,6 +40,6 @@ export default class AuthService {
 
     static signOut() {
         this.clearUserInfoFromLocal();
-        return HttpService.post("/api/auth/sign-out", {});
+        return HttpService.get("/api/auth/logout");
     }
 }
