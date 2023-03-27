@@ -117,7 +117,7 @@ const mockData = {
 // TODO: change mock data to API when having real API
 export default class PresentationService {
     static getPresentationListAsync(filter: { page: number; limit: number }) {
-        return HttpService.get(`/v1/presentations?${queryString.stringify(filter)}`);
+        return HttpService.get<any>(`/api/presentation/v1/presentations?${queryString.stringify(filter)}`);
     }
 
     static createPresentationAsync(data: { name: string }) {

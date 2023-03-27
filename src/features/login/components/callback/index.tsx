@@ -29,7 +29,7 @@ export default function Callback() {
                 if (res.code === 200) {
                     setLoggedIn(true);
                     fetchLatestUserInfoFromApi();
-                    setTimeout(() => navigate("/"), 1500);
+                    setTimeout(() => navigate("/"), 1000);
                     return;
                 }
 
