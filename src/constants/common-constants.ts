@@ -24,6 +24,7 @@ export const RESPONSE_CODE = {
 export const SUCCESS_NOTIFICATION = {
     ADD_SLIDE_SUCCESS: "Thêm trang chiếu mới thành công",
     DELETE_SLIDE_SUCCESS: "Xóa trang chiếu thành công",
+    CREATE_PRESENTATION: "Tạo bài trình bày mới thành công",
 };
 
 export const ERROR_NOTIFICATION = {
@@ -38,6 +39,7 @@ export const ERROR_NOTIFICATION = {
     UPDATE_PRESENTATION_STATE: "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
     FETCH_PRESENTATION_LIST: "Có lỗi xảy ra khi lấy danh sách các bài trình bày",
     VALIDATION_ERROR: "Có lỗi trong yêu cầu đã gửi",
+    CREATE_PRESENTATION: "Có lỗi xảy ra khi gửi yêu cầu tạo bài trình bày mới",
 };
 
 export const PRESENTATION_TYPE = {

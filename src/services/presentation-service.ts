@@ -74,7 +74,7 @@ const mockData = {
         data: {
             slideId: "24",
             slideAdminKey: "SsIibypcSLJGwVOgO7eCf",
-            respondents: 1,
+            respondents: 7,
             results: [
                 { id: "0", label: "Lựa chọn 1", score: [1] },
                 { id: "1", label: "Lựa chọn 2", score: [2] },

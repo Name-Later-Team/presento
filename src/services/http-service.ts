@@ -28,9 +28,8 @@ axiosInstance.interceptors.response.use(
         const { status } = response;
 
         if ((response.data as IBaseResponse<any>).code === RESPONSE_CODE.LOGIN_EXPIRED) {
-            const data = response.data;
             window.location.replace("/login?login_expired=true");
-            return Promise.reject(data?.errors);
+            return new Promise(() => {});
         }
 
         if (status === 500) {
