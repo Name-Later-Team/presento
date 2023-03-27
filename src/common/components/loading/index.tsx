@@ -15,7 +15,7 @@ export function Loading(props: ILoadingProps) {
     } = props;
     return (
         <Stack direction="vertical" className="loading-container justify-content-center align-items-center">
-            <div className="mb-3">
+            <div className="d-flex align-items-center justify-content-center mb-3">
                 {/* <Spinner animation={animationType || "grow"} variant={color || "primary"} /> */}
                 <div className="loading-container__app-logo-container">
                     <img

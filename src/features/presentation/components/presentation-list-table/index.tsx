@@ -5,17 +5,18 @@ import moment from "moment";
 import { Link } from "react-router-dom";
 import { FontAwesomeIconToggle } from "../../../../common/components/custom-dropdown/icon-toggle";
 import { AlertBuilder } from "../../../../common/components/alert";
+import { IPresentationListItem } from "../../pages/presentation-list";
 moment.locale("vi");
 
 interface IPresentationListTableProps {
-    dataSource: any[];
+    dataSource: IPresentationListItem[];
     pagination: {
         currentPage: number;
         totalRecords: number;
         rowsPerPage: number;
     };
     action?: {
-        handleDeletePresentation: (id: string) => {};
+        handleDeletePresentation: (identifier: string) => void;
     };
 }
 
@@ -29,17 +30,17 @@ export default function PresentationListTable(props: IPresentationListTableProps
         return rightMoment.diff(leftMoment);
     });
 
-    const handleDeletePresentation = (id: string) => {
-        action && action.handleDeletePresentation(id);
+    const handleDeletePresentation = (identifier: string) => {
+        action && action.handleDeletePresentation(identifier);
     };
 
-    const openDeleteConfirm = (id: string) => {
+    const openDeleteConfirm = (identifier: string) => {
         new AlertBuilder()
             .setAlertType("warning")
             .setTitle("Xóa bài trình bày")
             .setText("Sau khi xóa bài trình bày, mọi dữ liệu sẽ không thể được phục hồi")
             .setOnConfirm(() => {
-                handleDeletePresentation(id);
+                handleDeletePresentation(identifier);
             })
             .setCancelBtnText("Hủy")
             .getAlert()
@@ -60,16 +61,16 @@ export default function PresentationListTable(props: IPresentationListTableProps
                     </tr>
                 </thead>
                 <tbody>
-                    {mappedDataSource.map((presentation: any, index) => {
+                    {mappedDataSource.map((presentation, index) => {
                         return (
-                            <tr key={presentation?.id}>
+                            <tr key={presentation.id}>
                                 <td>{index + 1 + (pagination.currentPage - 1) * pagination.rowsPerPage}</td>
                                 <td>
-                                    <Link to={`./${presentation?.seriesId}`}>{presentation?.name}</Link>
+                                    <Link to={`/presentation/${presentation.identifier}`}>{presentation.name}</Link>
                                 </td>
-                                <td>{presentation?.ownerDisplayName}</td>
-                                <td>{moment(presentation?.updatedAt).format("DD/MM/YYYY HH:mm:ss")}</td>
-                                <td>{moment(presentation?.createdAt).format("DD/MM/YYYY HH:mm:ss")}</td>
+                                <td>{presentation.ownerDisplayName}</td>
+                                <td>{moment(presentation.updatedAt).format("DD/MM/YYYY HH:mm:ss")}</td>
+                                <td>{moment(presentation.createdAt).format("DD/MM/YYYY HH:mm:ss")}</td>
                                 <td>
                                     <Dropdown>
                                         <Dropdown.Toggle
@@ -81,18 +82,18 @@ export default function PresentationListTable(props: IPresentationListTableProps
                                             renderOnMount
                                             popperConfig={{ strategy: "fixed" }}
                                         >
-                                            <Dropdown.Item href="#" onClick={() => {}}>
+                                            <Dropdown.Item as="button" onClick={() => {}}>
                                                 <FontAwesomeIcon className="me-1" icon={faEdit} /> Sửa tên
                                             </Dropdown.Item>
 
-                                            <Dropdown.Item href="#" onClick={() => {}}>
+                                            <Dropdown.Item as="button" onClick={() => {}}>
                                                 <FontAwesomeIcon className="me-1" icon={faShareAlt} /> Chia sẻ
                                             </Dropdown.Item>
 
                                             <Dropdown.Divider />
                                             <Dropdown.Item
-                                                href="#"
-                                                onClick={() => openDeleteConfirm(presentation?.id)}
+                                                as="button"
+                                                onClick={() => openDeleteConfirm(presentation.identifier)}
                                                 className="text-danger"
                                             >
                                                 <FontAwesomeIcon className="me-1" icon={faTrashAlt} /> Xóa

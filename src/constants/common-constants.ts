@@ -11,6 +11,7 @@ export const COMMON_CONSTANTS = {
 
 export const RESPONSE_CODE = {
     // 400: BAD REQUEST
+    VALIDATION_ERROR: 4001,
 
     // 401: UNAUTHORIZED
     LOGIN_EXPIRED: 4011,
@@ -35,6 +36,8 @@ export const ERROR_NOTIFICATION = {
     PRESENT_FAILED: "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
     FETCH_SLIDE_RESULT: "Có lỗi xảy ra khi lấy kết quả",
     UPDATE_PRESENTATION_STATE: "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
+    FETCH_PRESENTATION_LIST: "Có lỗi xảy ra khi lấy danh sách các bài trình bày",
+    VALIDATION_ERROR: "Có lỗi trong yêu cầu đã gửi",
 };
 
 export const PRESENTATION_TYPE = {

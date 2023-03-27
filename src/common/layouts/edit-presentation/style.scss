@@ -5,6 +5,10 @@
     --static-header-margin: 1rem;
     --static-header-margin-bottom: 0.5rem;
     --static-header-padding-inline: 1.5rem;
+
+    --dynamic-content-padding-inline: 1rem;
+    --dynamic-content-padding-block: 1rem;
+
     --sidebar-padding-y: 1rem;
     --sidebar-padding-x: 0.5rem;
 
@@ -90,7 +94,7 @@
     background-color: white;
     height: var(--static-header-height);
     margin: var(--static-header-margin);
-    margin-bottom: var(--static-header-margin-bottom);
+    margin-bottom: calc(var(--static-header-margin-bottom) + var(--dynamic-content-padding-block));
     padding-inline: var(--static-header-padding-inline);
 
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
@@ -140,15 +144,17 @@
 // main page
 .main-content__dynamic-content {
     height: calc(
-        100vh - var(--static-header-height) - var(--static-header-margin) - var(--static-header-margin-bottom)
+        100vh - var(--static-header-height) - var(--static-header-margin) - var(--static-header-margin-bottom) -
+            var(--dynamic-content-padding-block)
     );
     max-height: calc(
-        100vh - var(--static-header-height) - var(--static-header-margin) - var(--static-header-margin-bottom)
+        100vh - var(--static-header-height) - var(--static-header-margin) - var(--static-header-margin-bottom) -
+            var(--dynamic-content-padding-block)
     );
     overflow-x: hidden;
     overflow-y: auto;
-    padding-inline: 1rem;
-    padding-block: 1rem;
+    padding-inline: var(--dynamic-content-padding-inline);
+    padding-bottom: var(--dynamic-content-padding-block);
 }
 
 // responsive code

@@ -7,7 +7,7 @@ export default function Home() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        let redirectTo = "/dashboard/demo";
+        let redirectTo = "/dashboard/presentation-list";
         setTimeout(() => navigate(redirectTo), 900);
     }, [navigate]);
 
