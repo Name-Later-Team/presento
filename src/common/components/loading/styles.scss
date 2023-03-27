@@ -11,7 +11,7 @@
 
     .loading-container__app-logo-container {
         height: 25vh;
-        max-height: 250px;
+        max-height: min(250px, 50%);
 
         .loading-container__app-logo-container__app-logo {
             height: 100%;

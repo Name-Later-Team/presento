@@ -89,8 +89,7 @@ if (APP_CONFIG.appEnvironment !== "development") {
 
 // 404
 app.use(function (req, res, next) {
-    res.status(404);
-    next();
+    res.sendStatus(404);
 });
 
 // error

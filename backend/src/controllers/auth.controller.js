@@ -85,7 +85,7 @@ export async function obtainLoginTokenAsync(req, res) {
         Logger.error(response.data ?? response);
         throw new ErrorBuilder()
             .withStatus(401)
-            .withCode(4011)
+            .withCode(4012)
             .withMessage("Đăng nhập thất bại")
             .withErrors(response.data)
             .build();
@@ -120,17 +120,17 @@ export async function getUserInfomationAsync(req, res) {
                 .build();
         }
 
-        res.json(
-            new ResponseBuilder()
-                .withData({
-                    userId: data.sub,
-                    username: data.name,
-                    email: data.email,
-                    avatar: data.picture,
-                    fullname: data.preferred_username,
-                })
-                .build()
-        );
+        const userInfo = {
+            userId: data.sub,
+            username: data.name,
+            email: data.email,
+            avatar: data.picture,
+            fullname: data.preferred_username,
+        };
+
+        req.session.userInfo = userInfo;
+
+        res.json(new ResponseBuilder().withData(userInfo).build());
     } catch (error) {
         if (!isAxiosError(error)) {
             throw error;
@@ -144,4 +144,86 @@ export async function getUserInfomationAsync(req, res) {
             .withErrors(response.data)
             .build();
     }
+}
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @description Check login state from local session, do not call introspection to IAM
+ */
+export function checkUserLoginState(req, res) {
+    // retriev user -> token
+    const { session } = req;
+
+    const userToken = session.user ?? {};
+
+    const expiresAt = moment(userToken.expiresAt);
+
+    // session timeout
+    if (!expiresAt.isValid() || expiresAt.isSameOrBefore(moment()) || !userToken.accessToken) {
+        delete session.user;
+        req.session.save();
+        throw new ErrorBuilder().withStatus(401).withCode(4011).withMessage("Phiên đăng nhập hết hạn").build();
+    }
+
+    // login session valids, must return user info
+    const userInfo = session.userInfo ?? null;
+
+    const data = { ...userInfo };
+    res.json(new ResponseBuilder().withData(data).build());
+}
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+export async function getSignupUri(req, res) {
+    const signupUri = `${APP_CONFIG.authz.baseUrl}${APP_CONFIG.authz.endpoints.signup}/${APP_CONFIG.authz.application}`;
+
+    res.json(new ResponseBuilder().withData({ signupUri }).build());
+}
+
+/**
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
+export async function logout(req, res) {
+    const { user } = req.session ?? {};
+    const { accessToken } = user ?? {};
+
+    delete req.session.user;
+    res.json(new ResponseBuilder().withCode(200).build());
+
+    const query = {
+        id_token_hint: accessToken,
+        post_logout_redirect_uri: APP_CONFIG.authz.endpoints.logoutRedirectUri,
+        state: v4(),
+    };
+    try {
+        const response = await axios.post(
+            `${APP_CONFIG.authz.baseUrl}${APP_CONFIG.authz.endpoints.logout}?${queryString.stringify(query)}`,
+            undefined,
+            {
+                maxRedirects: 0, // disable auto redirect
+            }
+        );
+
+        const { data } = response;
+
+        if (data.status && data.status === "error") {
+            Logger.error(data.msg);
+            return;
+        }
+    } catch (error) {
+        if (!error.response) {
+            Logger.error(error);
+            return;
+        }
+
+        Logger.error(JSON.stringify(error.response.data));
+    }
+
+    //TODO: handle revocation api later
 }

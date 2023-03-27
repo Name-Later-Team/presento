@@ -11,6 +11,7 @@ export default function Demo() {
             console.error(err);
         }
     };
+
     return (
         <DashboardPageSkeleton pageTitle="Demo">
             <Stack className="mb-3 justify-content-between align-items-center" direction="horizontal">

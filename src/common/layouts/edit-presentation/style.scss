@@ -1,0 +1,183 @@
+.edit-presentation-layout {
+    // variable declarations
+    --sidebar-width: 235px;
+    --static-header-height: 73px;
+    --static-header-margin: 1rem;
+    --static-header-margin-bottom: 0.5rem;
+    --static-header-padding-inline: 1.5rem;
+
+    --dynamic-content-padding-inline: 1rem;
+    --dynamic-content-padding-block: 1rem;
+
+    --sidebar-padding-y: 1rem;
+    --sidebar-padding-x: 0.5rem;
+
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+// sidebar
+.edit-presentation-layout__backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    margin-left: 0px;
+
+    transition: margin-left 0.2s linear;
+}
+
+.edit-presentation-layout__backdrop--collapsed,
+.sidebar-container__close-btn--collapsed {
+    margin-left: calc(-1 * var(--sidebar-width)) !important;
+    right: unset !important;
+}
+
+.edit-presentation-layout__sidebar-container {
+    width: var(--sidebar-width);
+    height: 100vh;
+    max-height: 100vh;
+    padding: var(--sidebar-padding-y) var(--sidebar-padding-x);
+
+    position: relative;
+    z-index: 1000;
+
+    background-color: white;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.sidebar-container__close-btn {
+    position: fixed;
+    bottom: 0px;
+    left: 0;
+    z-index: 1000;
+
+    display: none !important;
+    text-align: start !important;
+
+    background-color: white !important;
+    color: var(--bs-primary) !important;
+    border: none !important;
+    transform: none !important;
+    padding: 1rem !important;
+}
+
+.sidebar-container__app-logo {
+    height: var(--static-header-height);
+    margin-bottom: var(--static-header-margin-bottom);
+
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.app-logo__container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+}
+
+// content
+.edit-presentation-layout__main-content {
+    flex-grow: 1;
+    padding-left: var(--sidebar-width);
+}
+
+// header
+.main-content__static-header {
+    background-color: white;
+    height: var(--static-header-height);
+    margin: var(--static-header-margin);
+    margin-bottom: calc(var(--static-header-margin-bottom) + var(--dynamic-content-padding-block));
+    padding-inline: var(--static-header-padding-inline);
+
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    border-radius: 0.5rem;
+
+    display: flex;
+    align-items: center;
+}
+
+.static-header__header-actions {
+    flex-grow: 1;
+    height: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.static-header__menu-btn {
+    // customize bootstrap
+    background-color: transparent !important;
+    border: none !important;
+    transform: none !important;
+    padding-inline: calc(2rem - var(--static-header-padding-inline)) !important;
+
+    height: 100%;
+    border-radius: 0.5rem;
+    display: none !important;
+}
+
+.static-header__avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+
+    object-fit: cover;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+.static-header__avatar-dropdown-btn {
+    // customize bootstrap
+    color: var(--bs-primary) !important;
+    border: none !important;
+    transform: none !important;
+    background-color: white !important;
+}
+
+// main page
+.main-content__dynamic-content {
+    height: calc(
+        100vh - var(--static-header-height) - var(--static-header-margin) - var(--static-header-margin-bottom) -
+            var(--dynamic-content-padding-block)
+    );
+    max-height: calc(
+        100vh - var(--static-header-height) - var(--static-header-margin) - var(--static-header-margin-bottom) -
+            var(--dynamic-content-padding-block)
+    );
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-inline: var(--dynamic-content-padding-inline);
+    padding-bottom: var(--dynamic-content-padding-block);
+}
+
+// responsive code
+@import "../../../assets/scss/mixins/common";
+
+@include responsiveMax($breakpoint-xl) {
+    .edit-presentation-layout__main-content {
+        padding-left: 0px;
+    }
+
+    .edit-presentation-layout__backdrop {
+        right: 0;
+        background-color: rgb(0, 0, 0, 0.35);
+    }
+
+    .static-header__menu-btn,
+    .sidebar-container__close-btn {
+        display: unset !important;
+    }
+}
+
+@include responsiveMin($breakpoint-xl) {
+    .edit-presentation-layout__backdrop--collapsed {
+        margin-left: 0px !important;
+    }
+}

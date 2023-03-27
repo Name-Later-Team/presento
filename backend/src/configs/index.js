@@ -31,12 +31,16 @@ export const APP_CONFIG = {
 
     authz: {
         baseUrl: process.env.AUTHZ_URL,
+        application: process.env.AUTHZ_APPLICATION,
         redirectUri: process.env.AUTHZ_REDIRECT_URI,
         scope: process.env.AUTHZ_SCOPE,
         endpoints: {
             login: process.env.AUTHZ_ENDPOINT_LOGIN,
+            signup: process.env.AUTHZ_ENDPOINT_SIGNUP,
             token: process.env.AUTHZ_ENDPOINT_TOKEN,
             userinfo: process.env.AUTHZ_ENDPOINT_USERINFO,
+            logout: process.env.AUTHZ_ENDPOINT_LOGOUT,
+            logoutRedirectUri: process.env.AUTHZ_LOGOUT_REDIRECT_URI,
         },
     },
 

@@ -13,12 +13,12 @@ interface IDashboardLayout extends IBaseComponent {
 
 export default function DashboardLayout(props: IDashboardLayout) {
     const { sidebarElement } = props;
-    const { userInfo } = useAuth();
+    const { userInfo, removeUserInfo } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        // removeUserInfo();
+        removeUserInfo();
     };
 
     return (

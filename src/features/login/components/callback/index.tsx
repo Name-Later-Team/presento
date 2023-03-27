@@ -3,42 +3,44 @@ import { Spinner, Stack } from "react-bootstrap";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Notification } from "../../../../common/components/notification";
 import { useAuth } from "../../../../common/contexts/auth-context";
-import { RESPONSE_CODE } from "../../../../constants";
+import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../../constants";
 import AuthService from "../../../../services/auth-service";
 import "./style.scss";
 
 export default function Callback() {
     const [queries] = useSearchParams();
     const navigate = useNavigate();
-    const [loggedIn, setLoggedIn] = useState(true);
+    const [loggedIn, setLoggedIn] = useState(false);
     const { fetchLatestUserInfoFromApi } = useAuth();
 
     useEffect(() => {
         const callLogin = async () => {
             const code = queries.get("code");
 
+            // if there is no authorization code
             if (code === "" || code == null) {
-                Notification.notifyError("Thông tin xử lý đăng nhập bị thiếu");
+                Notification.notifyError(ERROR_NOTIFICATION.MISSING_AUTHORIZATION_CODE);
                 return;
             }
+
             try {
                 const res = await AuthService.postAuthorizationCode(code);
 
                 if (res.code === 200) {
                     setLoggedIn(true);
                     fetchLatestUserInfoFromApi();
-                    setTimeout(() => navigate("/"), 1500);
+                    setTimeout(() => navigate("/"), 1000);
                     return;
                 }
 
-                if (res.code === RESPONSE_CODE.INVALID_TOKEN) {
+                if (res.code === RESPONSE_CODE.LOGIN_FAILED) {
                     throw new Error("Login error");
                 }
 
                 throw new Error("Unhandled error code");
             } catch (err) {
                 console.error("Callback:", err);
-                Notification.notifyError("Có lỗi xảy ra trong quá trình đăng nhập");
+                Notification.notifyError(ERROR_NOTIFICATION.LOGIN_PROCESS);
             }
         };
 

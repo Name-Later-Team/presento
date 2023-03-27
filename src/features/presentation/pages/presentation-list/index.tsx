@@ -1,16 +1,23 @@
 import { faFilter, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import moment from "moment";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Stack } from "react-bootstrap";
 import { SingleValue } from "react-select";
 import { CustomPagination } from "../../../../common/components/custom-pagination";
 import { Loading } from "../../../../common/components/loading";
+import { Notification } from "../../../../common/components/notification";
 import { BaseSelect } from "../../../../common/components/select";
 import { TableMask } from "../../../../common/components/table-mask";
 import { useGlobalContext } from "../../../../common/contexts";
 import DashboardPageSkeleton from "../../../../common/layouts/dashboard/dashboard-page-skeleton";
-import { COMMON_CONSTANTS, PRESENTATION_TYPE } from "../../../../constants/common-constants";
+import {
+    COMMON_CONSTANTS,
+    ERROR_NOTIFICATION,
+    PRESENTATION_TYPE,
+    RESPONSE_CODE,
+} from "../../../../constants/common-constants";
+import PresentationService from "../../../../services/presentation-service";
 import PresentationListTable from "../../components/presentation-list-table";
 moment.locale("vi");
 
@@ -119,14 +126,38 @@ const fakeData = [
 
 const presentationTypeOption = [
     { value: PRESENTATION_TYPE.OWNER, label: "Tôi sở hữu" },
-    { value: PRESENTATION_TYPE.COLLABORATOR, label: "Tôi cộng tác" },
+    // { value: PRESENTATION_TYPE.COLLABORATOR, label: "Tôi cộng tác" },
 ];
+
+export interface IPresentationListItem {
+    closedForVoting: boolean;
+    createdAt: string;
+    id: number;
+    identifier: string;
+    name: string;
+    ownerDisplayName: string;
+    ownerIdentifier: string;
+    pace: {
+        active_slide_id: string;
+        counter: number;
+        mode: string;
+        state: string;
+    };
+    totalSlides: number;
+    updatedAt: string;
+}
+
+export interface IPresentationListPagination {
+    count: number;
+    limit: number;
+    page: number;
+}
 
 export default function PresentationList() {
     // states
-    const [isLoading] = useState(false);
-    const [dataSource] = useState(fakeData);
-    const [pagination] = useState({
+    const [isLoading, setIsLoading] = useState(false);
+    const [dataSource, setDataSource] = useState<IPresentationListItem[]>([]);
+    const [pagination, setPagination] = useState({
         currentPage: COMMON_CONSTANTS.pagination.defaultPage,
         totalRecords: fakeData.length,
         rowsPerPage: COMMON_CONSTANTS.pagination.limit,
@@ -139,6 +170,50 @@ export default function PresentationList() {
         };
     });
     const [presentationType, setPresentationType] = useState(presentationTypeOption[0]);
+
+    // fetch data
+    useEffect(() => {
+        const fetchPresentationsList = async () => {
+            setIsLoading(true);
+            try {
+                const res = await PresentationService.getPresentationListAsync({
+                    limit: searchObject.limit,
+                    page: searchObject.page,
+                });
+
+                if (res.code === 200) {
+                    const data = res.data?.items;
+                    const pagination = res.data?.pagination;
+                    if (data != null) setDataSource(data);
+                    if (pagination != null)
+                        setPagination({
+                            currentPage: pagination.page,
+                            rowsPerPage: pagination.limit,
+                            totalRecords: pagination.count,
+                        });
+
+                    setIsLoading(false);
+                    return;
+                }
+
+                throw new Error("Unhandle error code");
+            } catch (err: any) {
+                const { response } = err;
+
+                if (response?.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                    Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                    console.error(response);
+                    setIsLoading(false);
+                    return;
+                }
+
+                console.error("PresentationList:", err);
+                Notification.notifyError(ERROR_NOTIFICATION.FETCH_PRESENTATION_LIST);
+                setIsLoading(false);
+            }
+        };
+        fetchPresentationsList();
+    }, [searchObject.limit, searchObject.page]);
 
     // manage create & edit modal
     const [presentationModal, setPresentationModal] = useState({
@@ -163,6 +238,10 @@ export default function PresentationList() {
         globalContext.blockUI();
 
         setTimeout(() => globalContext.unBlockUI(), 2000);
+    };
+
+    const handleDeleteAPresentation = (identifier: string) => {
+        console.log(identifier);
     };
 
     return (
@@ -197,9 +276,13 @@ export default function PresentationList() {
                 </Stack>
 
                 <TableMask loading={isLoading} indicator={<Loading color={"primary"} />}>
-                    <PresentationListTable dataSource={dataSource} pagination={pagination} />
+                    <PresentationListTable
+                        dataSource={dataSource}
+                        pagination={pagination}
+                        action={{ handleDeletePresentation: handleDeleteAPresentation }}
+                    />
 
-                    <div className="d-inline-flex justify-content-center w-100 mt-3">
+                    <div className="d-inline-flex justify-content-center w-100 mt-4">
                         <CustomPagination {...pagination} pageChange={handlePageChange} />
                     </div>
                 </TableMask>

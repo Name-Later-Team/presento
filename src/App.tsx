@@ -1,14 +1,17 @@
-import { Navigate, Route, Routes } from "react-router";
-import PresentationList from "./features/presentation/pages/presentation-list";
-import { homeRoutes } from "./features/home";
+import { Route, Routes } from "react-router";
 import FullscreenLayout from "./common/layouts/fullscreen";
 import PageNotFound from "./common/pages/page-not-found";
 import Forbidden from "./common/pages/forbidden";
 import DashboardLayout from "./common/layouts/dashboard";
 import MainSidebar from "./common/layouts/dashboard/main-sidebar";
+import { homeRoutes } from "./features/home";
 import { loginRoutes } from "./features/login";
-import Demo from "./features/demo/pages";
 import { PrivateRoute } from "./common/special-routes";
+import { createRouteTemplate } from "./common/utils";
+import { presentationRoutes } from "./features/presentation";
+import { demoRoutes } from "./features/demo";
+import { PresentFeatureContextProvider } from "./common/contexts/present-feature-context";
+import { presentationDetailRoutes } from "./features/presentation-detail";
 
 function App() {
     return (
@@ -19,16 +22,32 @@ function App() {
                     path="/dashboard/*"
                     element={<PrivateRoute element={<DashboardLayout sidebarElement={<MainSidebar />} />} />}
                 >
-                    <Route path="demo" element={<Demo />} />
+                    {createRouteTemplate(
+                        <>
+                            {demoRoutes}
+                            {presentationRoutes}
+                        </>
+                    )}
+                </Route>
 
-                    <Route path="presentation-list" element={<PresentationList />} />
-
-                    <Route path="*" element={<Navigate to="/404" replace />} />
+                <Route
+                    path="/presentation/*"
+                    element={
+                        <PrivateRoute
+                            element={
+                                <PresentFeatureContextProvider>
+                                    <FullscreenLayout noPadding />
+                                </PresentFeatureContextProvider>
+                            }
+                        />
+                    }
+                >
+                    {createRouteTemplate(presentationDetailRoutes)}
                 </Route>
 
                 {/* Login */}
                 <Route path="/login/*" element={<FullscreenLayout noPadding />}>
-                    {loginRoutes}
+                    {createRouteTemplate(loginRoutes)}
                 </Route>
 
                 {/* Error */}
@@ -42,7 +61,7 @@ function App() {
 
                 {/* Home */}
                 <Route path="/*" element={<FullscreenLayout />}>
-                    {homeRoutes}
+                    {createRouteTemplate(homeRoutes)}
                 </Route>
             </Routes>
         </main>
