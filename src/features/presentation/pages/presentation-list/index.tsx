@@ -9,120 +9,18 @@ import { Loading } from "../../../../common/components/loading";
 import { Notification } from "../../../../common/components/notification";
 import { BaseSelect } from "../../../../common/components/select";
 import { TableMask } from "../../../../common/components/table-mask";
-import { useGlobalContext } from "../../../../common/contexts";
 import DashboardPageSkeleton from "../../../../common/layouts/dashboard/dashboard-page-skeleton";
 import {
     COMMON_CONSTANTS,
     ERROR_NOTIFICATION,
     PRESENTATION_TYPE,
     RESPONSE_CODE,
+    SUCCESS_NOTIFICATION,
 } from "../../../../constants/common-constants";
 import PresentationService from "../../../../services/presentation-service";
+import PresentationModal, { IPresentationForm } from "../../components/presentation-modal";
 import PresentationListTable from "../../components/presentation-list-table";
 moment.locale("vi");
-
-const fakeData = [
-    {
-        createdAt: "2023-02-17T10:06:47.145Z",
-        updatedAt: "2023-02-17T10:10:44.494Z",
-        id: 1,
-        name: "demo1",
-        seriesId: "30230834-d0eb-4f00-a4cc-7af20fe9c53b",
-        voteKey: "tKiHYGEAqiZbvuopGPY3X",
-        ownerId: 17,
-        ownerDisplayName: "Hung Nguyen Hua",
-        pace: {
-            mode: "presenter",
-            active: "SsIibypcSLJGwVOgO7eCf",
-            state: "idle",
-            counter: 1,
-            scope: "public",
-            groupId: null,
-        },
-        closedForVoting: false,
-        slideCount: 3,
-    },
-    {
-        createdAt: "2023-02-17T10:06:47.145Z",
-        updatedAt: "2023-02-17T10:10:44.494Z",
-        id: 2,
-        name: "demo2",
-        seriesId: "30230834-d0eb-4f00-a4cc-7af20fe9c53b",
-        voteKey: "tKiHYGEAqiZbvuopGPY3X",
-        ownerId: 17,
-        ownerDisplayName: "Hung Nguyen Hua",
-        pace: {
-            mode: "presenter",
-            active: "SsIibypcSLJGwVOgO7eCf",
-            state: "idle",
-            counter: 1,
-            scope: "public",
-            groupId: null,
-        },
-        closedForVoting: false,
-        slideCount: 3,
-    },
-    {
-        createdAt: "2023-02-17T10:06:47.145Z",
-        updatedAt: "2023-02-17T10:10:44.494Z",
-        id: 3,
-        name: "demo3",
-        seriesId: "30230834-d0eb-4f00-a4cc-7af20fe9c53b",
-        voteKey: "tKiHYGEAqiZbvuopGPY3X",
-        ownerId: 17,
-        ownerDisplayName: "Hung Nguyen Hua",
-        pace: {
-            mode: "presenter",
-            active: "SsIibypcSLJGwVOgO7eCf",
-            state: "idle",
-            counter: 1,
-            scope: "public",
-            groupId: null,
-        },
-        closedForVoting: false,
-        slideCount: 3,
-    },
-    {
-        createdAt: "2023-02-17T10:06:47.145Z",
-        updatedAt: "2023-02-17T10:10:44.494Z",
-        id: 4,
-        name: "demo4",
-        seriesId: "30230834-d0eb-4f00-a4cc-7af20fe9c53b",
-        voteKey: "tKiHYGEAqiZbvuopGPY3X",
-        ownerId: 17,
-        ownerDisplayName: "Hung Nguyen Hua",
-        pace: {
-            mode: "presenter",
-            active: "SsIibypcSLJGwVOgO7eCf",
-            state: "idle",
-            counter: 1,
-            scope: "public",
-            groupId: null,
-        },
-        closedForVoting: false,
-        slideCount: 3,
-    },
-    {
-        createdAt: "2023-02-17T10:06:47.145Z",
-        updatedAt: "2023-02-17T10:10:44.494Z",
-        id: 5,
-        name: "demo5",
-        seriesId: "30230834-d0eb-4f00-a4cc-7af20fe9c53b",
-        voteKey: "tKiHYGEAqiZbvuopGPY3X",
-        ownerId: 17,
-        ownerDisplayName: "Hung Nguyen Hua",
-        pace: {
-            mode: "presenter",
-            active: "SsIibypcSLJGwVOgO7eCf",
-            state: "idle",
-            counter: 1,
-            scope: "public",
-            groupId: null,
-        },
-        closedForVoting: false,
-        slideCount: 3,
-    },
-];
 
 const presentationTypeOption = [
     { value: PRESENTATION_TYPE.OWNER, label: "Tôi sở hữu" },
@@ -153,13 +51,15 @@ export interface IPresentationListPagination {
     page: number;
 }
 
+const defaultPresentationModalState = { modalName: "", show: false, onHide: () => {} };
+
 export default function PresentationList() {
     // states
     const [isLoading, setIsLoading] = useState(false);
     const [dataSource, setDataSource] = useState<IPresentationListItem[]>([]);
     const [pagination, setPagination] = useState({
         currentPage: COMMON_CONSTANTS.pagination.defaultPage,
-        totalRecords: fakeData.length,
+        totalRecords: COMMON_CONSTANTS.pagination.defaultTotal,
         rowsPerPage: COMMON_CONSTANTS.pagination.limit,
     });
     const [searchObject, setSearchObject] = useState(() => {
@@ -169,6 +69,7 @@ export default function PresentationList() {
             limit: COMMON_CONSTANTS.pagination.limit,
         };
     });
+    const [rerender] = useState(false); // use this state to force rerender with the same search object
     const [presentationType, setPresentationType] = useState(presentationTypeOption[0]);
 
     // fetch data
@@ -183,7 +84,7 @@ export default function PresentationList() {
 
                 if (res.code === 200) {
                     const data = res.data?.items;
-                    const pagination = res.data?.pagination;
+                    const pagination: IPresentationListPagination = res.data?.pagination;
                     if (data != null) setDataSource(data);
                     if (pagination != null)
                         setPagination({
@@ -213,15 +114,16 @@ export default function PresentationList() {
             }
         };
         fetchPresentationsList();
-    }, [searchObject.limit, searchObject.page]);
+    }, [searchObject.limit, searchObject.page, rerender]);
 
     // manage create & edit modal
-    const [presentationModal, setPresentationModal] = useState({
-        show: false,
-    });
-
-    // contexts
-    const globalContext = useGlobalContext();
+    const [presentationModal, setPresentationModal] = useState<{
+        modalName: string;
+        onHide: () => void | undefined;
+        onSubmit?: (formValues: IPresentationForm) => Promise<void>;
+        show: boolean;
+        initData?: IPresentationForm;
+    }>(defaultPresentationModalState);
 
     // processing functions
     const handlePageChange = (newPage: number) => {
@@ -233,60 +135,110 @@ export default function PresentationList() {
         setPresentationType({ label: newValue?.label || "", value: newValue?.value || "" });
     };
 
-    const openPresentationModal = () => {
-        setPresentationModal({ ...presentationModal, show: true });
-        globalContext.blockUI();
-
-        setTimeout(() => globalContext.unBlockUI(), 2000);
+    const closePresentationModal = () => {
+        setPresentationModal((prev) => ({
+            ...prev,
+            onHide: defaultPresentationModalState.onHide,
+            show: false,
+        }));
+        // navigate to page 1 to see the change (last changed item is always the first item in page 1)
+        setSearchObject((prev) => ({
+            ...prev,
+            page: 1,
+        }));
     };
 
     const handleDeleteAPresentation = (identifier: string) => {
         console.log(identifier);
     };
 
+    // modal handling functions (resolve the promise to notify the modal to close or reject to keep the modal open)
+    const handleCreateAPresentation = async (value: IPresentationForm) => {
+        try {
+            const res = await PresentationService.createPresentationAsync({ name: value.name });
+
+            if (res.code === 201) {
+                Notification.notifySuccess(SUCCESS_NOTIFICATION.CREATE_PRESENTATION);
+                return Promise.resolve();
+            }
+
+            if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                return Promise.reject();
+            }
+
+            throw new Error("Unhandle error code");
+        } catch (error) {
+            console.log("PresentationList:", error);
+            Notification.notifyError(ERROR_NOTIFICATION.CREATE_PRESENTATION);
+            return Promise.reject();
+        }
+    };
+
+    // open an appropriate modal (make sure onSubmit function is a correct funtion to handle the action)
+    const openCreateNewPresentationModal = () => {
+        setPresentationModal({
+            modalName: "Tạo mới bài trình bày",
+            show: true,
+            onSubmit: handleCreateAPresentation,
+            onHide: closePresentationModal,
+        });
+    };
+
     return (
-        <DashboardPageSkeleton pageTitle="Danh sách bài trình bày">
-            <>
-                <Stack className="mb-3 justify-content-between align-items-center" direction="horizontal">
-                    <div>
-                        <Button variant="primary" onClick={openPresentationModal}>
-                            <FontAwesomeIcon icon={faPlus} className="me-2" />
-                            Tạo mới
-                        </Button>
-                    </div>
-
-                    {/* filter container */}
-                    <Stack direction="horizontal" gap={3}>
-                        <div className="d-flex justify-content-center align-items-center text-uppercase fw-bold">
-                            <FontAwesomeIcon className="me-2" icon={faFilter} />
-                            Bộ lọc
+        <>
+            <DashboardPageSkeleton pageTitle="Danh sách bài trình bày">
+                <>
+                    <Stack className="mb-3 justify-content-between align-items-center" direction="horizontal">
+                        <div>
+                            <Button variant="primary" onClick={openCreateNewPresentationModal}>
+                                <FontAwesomeIcon icon={faPlus} className="me-2" />
+                                Tạo mới
+                            </Button>
                         </div>
-                        <BaseSelect
-                            options={presentationTypeOption}
-                            styles={{
-                                control: (baseStyles, state) => ({
-                                    ...baseStyles,
-                                    minWidth: "200px",
-                                }),
-                            }}
-                            onChange={handlePresentationTypeChange}
-                            value={presentationType}
-                        />
+
+                        {/* filter container */}
+                        <Stack direction="horizontal" gap={3}>
+                            <div className="d-flex justify-content-center align-items-center text-uppercase fw-bold">
+                                <FontAwesomeIcon className="me-2" icon={faFilter} />
+                                Bộ lọc
+                            </div>
+                            <BaseSelect
+                                options={presentationTypeOption}
+                                styles={{
+                                    control: (baseStyles, state) => ({
+                                        ...baseStyles,
+                                        minWidth: "200px",
+                                    }),
+                                }}
+                                onChange={handlePresentationTypeChange}
+                                value={presentationType}
+                            />
+                        </Stack>
                     </Stack>
-                </Stack>
 
-                <TableMask loading={isLoading} indicator={<Loading color={"primary"} />}>
-                    <PresentationListTable
-                        dataSource={dataSource}
-                        pagination={pagination}
-                        action={{ handleDeletePresentation: handleDeleteAPresentation }}
-                    />
+                    <TableMask loading={isLoading} indicator={<Loading color={"primary"} />}>
+                        <PresentationListTable
+                            dataSource={dataSource}
+                            pagination={pagination}
+                            action={{ handleDeletePresentation: handleDeleteAPresentation }}
+                        />
 
-                    <div className="d-inline-flex justify-content-center w-100 mt-4">
-                        <CustomPagination {...pagination} pageChange={handlePageChange} />
-                    </div>
-                </TableMask>
-            </>
-        </DashboardPageSkeleton>
+                        <div className="d-inline-flex justify-content-center w-100 mt-4">
+                            <CustomPagination {...pagination} pageChange={handlePageChange} />
+                        </div>
+                    </TableMask>
+                </>
+            </DashboardPageSkeleton>
+
+            {/* Modal for handling create a new presentation or rename a presentation */}
+            <PresentationModal
+                modalName={presentationModal.modalName}
+                show={presentationModal.show}
+                onHide={presentationModal.onHide}
+                onSubmit={presentationModal.onSubmit}
+                initData={presentationModal.initData}
+            />
+        </>
     );
 }
