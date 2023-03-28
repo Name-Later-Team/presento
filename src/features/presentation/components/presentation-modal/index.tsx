@@ -56,17 +56,19 @@ export default function PresentationModal(props: IPresentationModalProps) {
         onHide && onHide();
     };
 
-    const handleSubmitForm: SubmitHandler<IPresentationForm> = (value) => {
-        if (onSubmit == null) return;
+    const handleSubmitForm: SubmitHandler<IPresentationForm> = async (value) => {
+        if (!onSubmit) return;
 
         // call handling function
-        setIsLoading(true);
-        onSubmit(value)
-            .then(() => {
-                setIsLoading(false);
-                handleCloseForm();
-            })
-            .catch(() => setIsLoading(false));
+        try {
+            setIsLoading(true);
+            await onSubmit(value);
+
+            setIsLoading(false);
+            handleCloseForm();
+        } catch (_) {
+            setIsLoading(false);
+        }
     };
 
     return (
