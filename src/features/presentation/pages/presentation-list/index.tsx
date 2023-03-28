@@ -15,6 +15,7 @@ import {
     ERROR_NOTIFICATION,
     PRESENTATION_TYPE,
     RESPONSE_CODE,
+    SUCCESS_NOTIFICATION,
 } from "../../../../constants/common-constants";
 import PresentationService from "../../../../services/presentation-service";
 import PresentationModal, { IPresentationForm } from "../../components/presentation-modal";
@@ -153,33 +154,25 @@ export default function PresentationList() {
 
     // modal handling functions (resolve the promise to notify the modal to close or reject to keep the modal open)
     const handleCreateAPresentation = async (value: IPresentationForm) => {
-        console.log(value);
+        try {
+            const res = await PresentationService.createPresentationAsync({ name: value.name });
 
-        // try {
-        //     setIsLoading(true);
-        //     const res = await PresentationService.createPresentationAsync({ name: value.name });
+            if (res.code === 201) {
+                Notification.notifySuccess(SUCCESS_NOTIFICATION.CREATE_PRESENTATION);
+                return Promise.resolve();
+            }
 
-        //     if (res.code === 201) {
-        //         Notification.notifySuccess(SUCCESS_NOTIFICATION.CREATE_PRESENTATION);
-        //         setIsLoading(false);
-        //         onHide && onHide();
-        //         return;
-        //     }
+            if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                return Promise.reject();
+            }
 
-        //     if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-        //         Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
-        //         setIsLoading(false);
-        //         return;
-        //     }
-
-        //     throw new Error("Unhandle error code");
-        // } catch (error) {
-        //     console.log("CreatePresentationModal:", error);
-        //     Notification.notifyError(ERROR_NOTIFICATION.CREATE_PRESENTATION);
-        //     setIsLoading(false);
-        // }
-
-        return Promise.resolve();
+            throw new Error("Unhandle error code");
+        } catch (error) {
+            console.log("PresentationList:", error);
+            Notification.notifyError(ERROR_NOTIFICATION.CREATE_PRESENTATION);
+            return Promise.reject();
+        }
     };
 
     // open an appropriate modal (make sure onSubmit function is a correct funtion to handle the action)

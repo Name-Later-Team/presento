@@ -46,8 +46,8 @@ export default function PresentationModal(props: IPresentationModalProps) {
     });
 
     useEffect(() => {
-        reset(initData);
-    }, [initData, reset]);
+        if (show) reset(initData);
+    }, [initData, reset, modalName, show, onHide, onSubmit]);
 
     const handleCloseForm = () => {
         reset({

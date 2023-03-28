@@ -121,7 +121,7 @@ export default class PresentationService {
     }
 
     static createPresentationAsync(data: { name: string }) {
-        return HttpService.post("/v1/presentations", data);
+        return HttpService.post<any>("/api/presentation/v1/presentations", data);
     }
 
     static updatePresentationAsync(id: string, data: { name: string }) {
