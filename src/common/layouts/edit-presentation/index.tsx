@@ -11,6 +11,7 @@ import { useAuth } from "../../contexts/auth-context";
 import { useGlobalContext } from "../../contexts/global-context";
 import { usePresentFeature } from "../../contexts/present-feature-context";
 import { IBaseComponent } from "../../interfaces/basic-interfaces";
+import PresentationInfo from "./presentation-info";
 import "./style.scss";
 
 interface IEditPresentationLayout extends IBaseComponent {
@@ -20,11 +21,12 @@ interface IEditPresentationLayout extends IBaseComponent {
 export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
     const { userInfo, removeUserInfo } = useAuth();
-    const { presentationState, slideState, isModified, resetSlideState } = usePresentFeature();
+    const { slideState, isModified, resetSlideState } = usePresentFeature();
     const globalContext = useGlobalContext();
 
     const { presentationId, slideId } = useParams();
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+    const [hideSaveBtn, setHideSaveBtn] = useState(false);
     // const [showSelectGroupModal, setShowSelectGroupModal] = useState<boolean>(false);
     const navigate = useNavigate();
 
@@ -33,14 +35,14 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
         const onCloseWindow = (e: BeforeUnloadEvent) => {
             e.preventDefault();
 
-            return (e.returnValue = "Sure?");
+            return isModified && (e.returnValue = "Sure?");
         };
 
         window.addEventListener("beforeunload", onCloseWindow);
         return () => {
             window.removeEventListener("beforeunload", onCloseWindow);
         };
-    }, []);
+    }, [isModified]);
 
     // effect that happens when change slide within the edit page
     useEffect(() => {
@@ -379,14 +381,10 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                 place="bottom"
                             />
 
-                            <Stack className="justify-content-center ms-1">
-                                <p className="mb-0" style={{ fontSize: "1.09rem", fontWeight: 600 }}>
-                                    {presentationState.name}
-                                </p>
-                                <span className="mb-0" style={{ fontSize: "0.75rem" }}>
-                                    Được tạo bởi {presentationState.ownerDisplayName}
-                                </span>
-                            </Stack>
+                            <PresentationInfo
+                                doesWhenEditModeOn={() => setHideSaveBtn(true)}
+                                doesWhenEditModeOff={() => setHideSaveBtn(false)}
+                            />
                         </Stack>
 
                         <div className="static-header__header-actions">
@@ -398,7 +396,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                 <FontAwesomeIcon className="me-1" icon={faSquarePollVertical} size="lg" /> Xem kết quả
                             </Button> */}
 
-                            {isModified ? (
+                            {hideSaveBtn ? null : isModified ? (
                                 <div className="mx-2">
                                     <span className="text-danger me-2" style={{ fontSize: "0.9rem" }}>
                                         Chưa lưu
@@ -414,14 +412,16 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                 </div>
                             )}
 
-                            <Button
-                                className="mx-2"
-                                variant="secondary"
-                                disabled={!isModified}
-                                onClick={handleSaveSlide}
-                            >
-                                <FontAwesomeIcon className="me-1" icon={faFloppyDisk} size="lg" /> Lưu
-                            </Button>
+                            {hideSaveBtn ? null : (
+                                <Button
+                                    className="mx-2"
+                                    variant="secondary"
+                                    disabled={!isModified}
+                                    onClick={handleSaveSlide}
+                                >
+                                    <FontAwesomeIcon className="me-1" icon={faFloppyDisk} size="lg" /> Lưu
+                                </Button>
+                            )}
 
                             <Button className="mx-2" variant="primary" onClick={handlePresentSlide}>
                                 <FontAwesomeIcon className="me-1" icon={faPlay} size="lg" /> Trình chiếu
@@ -432,7 +432,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                     <img
                                         className="static-header__avatar"
                                         src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
-                                        alt=""
+                                        alt="profile-avatar"
                                         loading="lazy"
                                     />
                                 </Dropdown.Toggle>

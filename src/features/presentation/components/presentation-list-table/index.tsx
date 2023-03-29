@@ -17,6 +17,7 @@ interface IPresentationListTableProps {
     };
     action?: {
         handleDeletePresentation: (identifier: string) => void;
+        handleOpenRenameModal: (record: IPresentationListItem) => void;
     };
 }
 
@@ -32,6 +33,10 @@ export default function PresentationListTable(props: IPresentationListTableProps
 
     const handleDeletePresentation = (identifier: string) => {
         action && action.handleDeletePresentation(identifier);
+    };
+
+    const handleOpenRenameModal = (record: IPresentationListItem) => {
+        action && action.handleOpenRenameModal(record);
     };
 
     const openDeleteConfirm = (identifier: string) => {
@@ -82,21 +87,39 @@ export default function PresentationListTable(props: IPresentationListTableProps
                                             renderOnMount
                                             popperConfig={{ strategy: "fixed" }}
                                         >
-                                            <Dropdown.Item as="button" onClick={() => {}}>
-                                                <FontAwesomeIcon className="me-1" icon={faEdit} /> Sửa tên
+                                            <Dropdown.Item
+                                                as="button"
+                                                onClick={() => handleOpenRenameModal(presentation)}
+                                            >
+                                                <FontAwesomeIcon
+                                                    style={{ width: "1rem" }}
+                                                    className="me-2"
+                                                    icon={faEdit}
+                                                />
+                                                Sửa tên
                                             </Dropdown.Item>
 
                                             <Dropdown.Item as="button" onClick={() => {}}>
-                                                <FontAwesomeIcon className="me-1" icon={faShareAlt} /> Chia sẻ
+                                                <FontAwesomeIcon
+                                                    style={{ width: "1rem" }}
+                                                    className="me-2"
+                                                    icon={faShareAlt}
+                                                />
+                                                Chia sẻ
                                             </Dropdown.Item>
 
                                             <Dropdown.Divider />
                                             <Dropdown.Item
+                                                className="text-danger"
                                                 as="button"
                                                 onClick={() => openDeleteConfirm(presentation.identifier)}
-                                                className="text-danger"
                                             >
-                                                <FontAwesomeIcon className="me-1" icon={faTrashAlt} /> Xóa
+                                                <FontAwesomeIcon
+                                                    style={{ width: "1rem" }}
+                                                    className="me-2"
+                                                    icon={faTrashAlt}
+                                                />
+                                                Xóa
                                             </Dropdown.Item>
                                         </Dropdown.Menu>
                                     </Dropdown>

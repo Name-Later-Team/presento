@@ -3,16 +3,17 @@ import { Button, Form, FormControl, FormGroup, Modal, Spinner, Stack } from "rea
 import { z } from "zod";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { IPresentationListItem } from "../../pages/presentation-list";
 
 export interface IPresentationModalProps {
     modalName: string;
     show: boolean;
-    onHide: () => void | undefined;
+    onHide: (rerender?: boolean) => void | undefined;
     /**
      * RESOLVE the promise to close the modal or REJECT the promise to keep the modal open
      */
-    onSubmit?: (formValues: IPresentationForm) => Promise<void>;
-    initData?: IPresentationForm;
+    onSubmit?: (formValues: IPresentationForm, recordToChange?: IPresentationListItem) => Promise<void>;
+    initData?: IPresentationListItem;
 }
 
 export interface IPresentationForm {
@@ -42,18 +43,18 @@ export default function PresentationModal(props: IPresentationModalProps) {
         formState: { errors },
     } = useForm<IPresentationForm>({
         resolver: zodResolver(presentationSchema),
-        defaultValues: initData,
+        defaultValues: initData && { name: initData.name },
     });
 
     useEffect(() => {
-        if (show) reset(initData);
+        if (show) reset(initData && { name: initData.name });
     }, [initData, reset, modalName, show, onHide, onSubmit]);
 
-    const handleCloseForm = () => {
+    const handleCloseForm = (rerender?: boolean) => {
         reset({
             name: "",
         });
-        onHide && onHide();
+        onHide && onHide(rerender);
     };
 
     const handleSubmitForm: SubmitHandler<IPresentationForm> = async (value) => {
@@ -62,17 +63,17 @@ export default function PresentationModal(props: IPresentationModalProps) {
         // call handling function
         try {
             setIsLoading(true);
-            await onSubmit(value);
+            await onSubmit(value, initData && { ...initData });
 
             setIsLoading(false);
-            handleCloseForm();
+            handleCloseForm(true);
         } catch (_) {
             setIsLoading(false);
         }
     };
 
     return (
-        <Modal show={show} onHide={onHide} backdrop="static" keyboard={false} size="lg" centered>
+        <Modal show={show} onHide={() => handleCloseForm()} backdrop="static" keyboard={false} size="lg" centered>
             <Modal.Body>
                 <Modal.Title className="mb-3">{modalName}</Modal.Title>
 
@@ -103,7 +104,7 @@ export default function PresentationModal(props: IPresentationModalProps) {
                             variant="text-secondary"
                             type="button"
                             className="me-2"
-                            onClick={handleCloseForm}
+                            onClick={() => handleCloseForm()}
                             disabled={isLoading}
                         >
                             Hủy
