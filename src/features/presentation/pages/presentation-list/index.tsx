@@ -18,7 +18,7 @@ import {
     SUCCESS_NOTIFICATION,
 } from "../../../../constants/common-constants";
 import PresentationService from "../../../../services/presentation-service";
-import PresentationModal, { IPresentationForm } from "../../components/presentation-modal";
+import PresentationModal, { IPresentationForm, IPresentationModalProps } from "../../components/presentation-modal";
 import PresentationListTable from "../../components/presentation-list-table";
 moment.locale("vi");
 
@@ -117,13 +117,7 @@ export default function PresentationList() {
     }, [searchObject.limit, searchObject.page, rerender]);
 
     // manage create & edit modal
-    const [presentationModal, setPresentationModal] = useState<{
-        modalName: string;
-        onHide: () => void | undefined;
-        onSubmit?: (formValues: IPresentationForm) => Promise<void>;
-        show: boolean;
-        initData?: IPresentationForm;
-    }>(defaultPresentationModalState);
+    const [presentationModal, setPresentationModal] = useState<IPresentationModalProps>(defaultPresentationModalState);
 
     // processing functions
     const handlePageChange = (newPage: number) => {
@@ -135,12 +129,7 @@ export default function PresentationList() {
         setPresentationType({ label: newValue?.label || "", value: newValue?.value || "" });
     };
 
-    const closePresentationModal = () => {
-        setPresentationModal((prev) => ({
-            ...prev,
-            onHide: defaultPresentationModalState.onHide,
-            show: false,
-        }));
+    const triggerRerender = () => {
         // navigate to page 1 to see the change (last changed item is always the first item in page 1)
         setSearchObject((prev) => ({
             ...prev,
@@ -148,8 +137,13 @@ export default function PresentationList() {
         }));
     };
 
-    const handleDeleteAPresentation = (identifier: string) => {
-        console.log(identifier);
+    const closePresentationModal = (rerender?: boolean) => {
+        setPresentationModal((prev) => ({
+            ...prev,
+            onHide: defaultPresentationModalState.onHide,
+            show: false,
+        }));
+        if (rerender) triggerRerender();
     };
 
     // modal handling functions (resolve the promise to notify the modal to close or reject to keep the modal open)
@@ -173,6 +167,25 @@ export default function PresentationList() {
             Notification.notifyError(ERROR_NOTIFICATION.CREATE_PRESENTATION);
             return Promise.reject();
         }
+    };
+
+    const handleDeleteAPresentation = (identifier: string) => {
+        console.log(identifier);
+    };
+
+    const handleRenameModal = async (value: IPresentationForm, recordToChange?: IPresentationListItem) => {
+        console.log(recordToChange, value);
+        return Promise.reject();
+    };
+
+    const openRenameModal = (record: IPresentationListItem) => {
+        setPresentationModal({
+            modalName: "Đổi tên bài trình bày",
+            show: true,
+            onSubmit: handleRenameModal,
+            onHide: closePresentationModal,
+            initData: record,
+        });
     };
 
     // open an appropriate modal (make sure onSubmit function is a correct funtion to handle the action)
@@ -221,7 +234,10 @@ export default function PresentationList() {
                         <PresentationListTable
                             dataSource={dataSource}
                             pagination={pagination}
-                            action={{ handleDeletePresentation: handleDeleteAPresentation }}
+                            action={{
+                                handleDeletePresentation: handleDeleteAPresentation,
+                                handleOpenRenameModal: openRenameModal,
+                            }}
                         />
 
                         <div className="d-inline-flex justify-content-center w-100 mt-4">
@@ -232,13 +248,7 @@ export default function PresentationList() {
             </DashboardPageSkeleton>
 
             {/* Modal for handling create a new presentation or rename a presentation */}
-            <PresentationModal
-                modalName={presentationModal.modalName}
-                show={presentationModal.show}
-                onHide={presentationModal.onHide}
-                onSubmit={presentationModal.onSubmit}
-                initData={presentationModal.initData}
-            />
+            <PresentationModal {...presentationModal} />
         </>
     );
 }

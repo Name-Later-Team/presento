@@ -10,6 +10,7 @@ import MultipleChoiceSlideComponent from "./components/multiple-choice";
 import ParagraphSlideComponent from "./components/paragraph";
 import "./style.scss";
 import FormatUtil from "../../../../common/utils/format-util";
+import { SUCCESS_NOTIFICATION } from "../../../../constants";
 
 // define all types of slide here
 const slideTypeComponents: { [type: string]: JSX.Element } = {
@@ -23,7 +24,7 @@ export default function PresentationSlide() {
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(`${APP_CONSTANTS.APP_DOMAIN}/${presentationState.voteKey}`);
-        Notification.notifySuccess("Sao chép liên kết thành công!");
+        Notification.notifySuccess(SUCCESS_NOTIFICATION.COPIED_LINK_SUCCESS);
     };
 
     return (
@@ -32,23 +33,25 @@ export default function PresentationSlide() {
                 <Stack className="text-center h-100" gap={3}>
                     {slideState.showInstructionBar && (
                         <>
-                            <div
-                                id="instruction-bar__vote-link"
-                                className="presentation-slide__instruction-bar"
-                                onClick={handleCopyLink}
-                            >
-                                Truy cập
-                                <span className="instruction-bar__vote-link mx-1 fw-bolder text-primary">
-                                    {APP_CONSTANTS.APP_DOMAIN}
-                                </span>
-                                nhập mã
-                                <span className="instruction-bar__vote-link mx-1 fw-bolder text-primary">
-                                    {FormatUtil.formatVotingCodeString(presentationState.votingCode)}
-                                </span>
-                                để bầu chọn
+                            <div className="presentation-slide__instruction-bar">
+                                <div
+                                    className="presentation-slide__instruction-bar__content-wrapper"
+                                    id="instruction-bar__vote-link"
+                                    onClick={handleCopyLink}
+                                >
+                                    Truy cập
+                                    <span className="instruction-bar__vote-link mx-2 fw-bolder text-primary">
+                                        {APP_CONSTANTS.APP_DOMAIN}
+                                    </span>
+                                    nhập mã
+                                    <span className="instruction-bar__vote-link mx-2 fw-bolder text-primary">
+                                        {FormatUtil.formatVotingCodeString(presentationState.votingCode)}
+                                    </span>
+                                    để bầu chọn
+                                </div>
                             </div>
                             <CustomizedTooltip place="bottom" anchorSelect="#instruction-bar__vote-link">
-                                Nhấn để sao chép đường dẫn vào trực tiếp
+                                Nhấn để sao chép đường dẫn bầu chọn
                             </CustomizedTooltip>
                         </>
                     )}

@@ -25,6 +25,7 @@ export const SUCCESS_NOTIFICATION = {
     ADD_SLIDE_SUCCESS: "Thêm trang chiếu mới thành công",
     DELETE_SLIDE_SUCCESS: "Xóa trang chiếu thành công",
     CREATE_PRESENTATION: "Tạo bài trình bày mới thành công",
+    COPIED_LINK_SUCCESS: "Sao chép liên kết thành công",
 };
 
 export const ERROR_NOTIFICATION = {
