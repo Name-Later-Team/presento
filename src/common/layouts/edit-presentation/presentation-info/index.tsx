@@ -8,6 +8,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import CustomizedTooltip from "../../../components/tooltip";
 import { usePresentFeature } from "../../../contexts/present-feature-context";
 import { IBaseComponent } from "../../../interfaces";
+import PresentationService from "../../../../services/presentation-service";
+import { Notification } from "../../../components/notification";
+import { ERROR_NOTIFICATION, RESPONSE_CODE, SUCCESS_NOTIFICATION } from "../../../../constants";
 
 const enum COMPONENT_MODE {
     display,
@@ -51,19 +54,59 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
     });
 
     // contexts
-    const { presentationState } = usePresentFeature();
+    const { presentationState, resetPresentationState } = usePresentFeature();
 
     useEffect(() => {
         if (mode === COMPONENT_MODE.edit) reset({ name: presentationState.name });
     }, [presentationState, mode, reset]);
 
     const handleChangeMode = (newMode: COMPONENT_MODE) => {
-        // TODO: call API to rename the presentation
+        switch (newMode) {
+            case COMPONENT_MODE.display: {
+                doesWhenEditModeOff && doesWhenEditModeOff();
+                break;
+            }
+
+            case COMPONENT_MODE.edit: {
+                doesWhenEditModeOn && doesWhenEditModeOn();
+                break;
+            }
+
+            default: {
+                return;
+            }
+        }
+
         setMode(newMode);
     };
 
     const handleSubmitForm: SubmitHandler<IRenameForm> = async (value) => {
-        console.log(value);
+        try {
+            const res = await PresentationService.updatePresentationAsync(presentationState.id, {
+                name: value.name,
+            });
+
+            if (res.code === 200) {
+                Notification.notifySuccess(SUCCESS_NOTIFICATION.RENAME_PRESENTATION_SUCCESS);
+                handleChangeMode(COMPONENT_MODE.display);
+                resetPresentationState({
+                    ...presentationState,
+                    name: value.name,
+                });
+                return;
+            }
+
+            if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                return;
+            }
+
+            throw new Error("Unhandle error code");
+        } catch (err) {
+            console.error("PresentationModal:", err);
+            Notification.notifyError(ERROR_NOTIFICATION.RENAME_PRESENTATION_FAILED);
+            return Promise.reject();
+        }
     };
 
     const renderBasedOnMode = () => {
@@ -74,10 +117,7 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
                         <p
                             className="mb-0"
                             style={{ fontSize: "1.09rem", fontWeight: 600 }}
-                            onClick={() => {
-                                doesWhenEditModeOn && doesWhenEditModeOn();
-                                handleChangeMode(COMPONENT_MODE.edit);
-                            }}
+                            onClick={() => handleChangeMode(COMPONENT_MODE.edit)}
                         >
                             <span id="presentation-info__rename-trigger" style={{ cursor: "text" }}>
                                 {presentationState.name}
@@ -132,10 +172,7 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
                                 className="ms-1 px-3 py-0 h-100"
                                 variant="secondary"
                                 type="button"
-                                onClick={() => {
-                                    doesWhenEditModeOff && doesWhenEditModeOff();
-                                    handleChangeMode(COMPONENT_MODE.display);
-                                }}
+                                onClick={() => handleChangeMode(COMPONENT_MODE.display)}
                             >
                                 {/* {isLoading && <Spinner animation="border" role="status" size="sm" className="me-2" />} */}
                                 Hủy

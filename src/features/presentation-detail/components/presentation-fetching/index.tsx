@@ -25,7 +25,7 @@ export const PREFETCHING_REDIRECT_CODE = "AQsyfXWrig";
 
 export default function PresentationFetching() {
     const { presentationId } = useParams();
-    const { presentationState, changePresentationState } = usePresentFeature();
+    const { presentationState, resetPresentationState } = usePresentFeature();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -45,8 +45,11 @@ export default function PresentationFetching() {
                                 position: item?.position ?? 1,
                             } as IPresentationSlide)
                     );
-                    changePresentationState({
+                    resetPresentationState({
                         ...presentationState,
+                        id: data?.id ?? "",
+                        ownerId: data?.ownerId ?? "",
+                        slideCount: data?.slideCount ?? 0,
                         name: data.name,
                         ownerDisplayName: data.ownerDisplayName,
                         slides: mappedSlideList,
@@ -90,7 +93,7 @@ export default function PresentationFetching() {
                 // }
                 throw new Error("Unhandle http code");
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         };
         getPresentationDetail();
