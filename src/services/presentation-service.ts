@@ -28,7 +28,7 @@ const mockData = {
                 groupId: null,
             },
             closedForVoting: false,
-            slideCount: 9,
+            slideCount: 4,
             slides: [
                 { id: 24, admin_key: "SsIibypcSLJGwVOgO7eCf", type: "multiple_choice", position: 1 },
                 { id: 25, admin_key: "Kg3cwtJP-tp2R54apMfH8", type: "multiple_choice", position: 2 },
@@ -125,7 +125,7 @@ export default class PresentationService {
     }
 
     static updatePresentationAsync(id: string, data: { name: string }) {
-        return HttpService.put(`/v1/presentations/${id}`, data);
+        return HttpService.put<any>(`/api/presentation/v1/presentations/${id}`, data);
     }
 
     static deletePresentationAsync(id: string) {

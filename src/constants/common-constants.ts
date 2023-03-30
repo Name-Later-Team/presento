@@ -26,6 +26,7 @@ export const SUCCESS_NOTIFICATION = {
     DELETE_SLIDE_SUCCESS: "Xóa trang chiếu thành công",
     CREATE_PRESENTATION: "Tạo bài trình bày mới thành công",
     COPIED_LINK_SUCCESS: "Sao chép liên kết thành công",
+    RENAME_PRESENTATION_SUCCESS: "Đổi tên bài trình bày thành công",
 };
 
 export const ERROR_NOTIFICATION = {
@@ -41,6 +42,7 @@ export const ERROR_NOTIFICATION = {
     FETCH_PRESENTATION_LIST: "Có lỗi xảy ra khi lấy danh sách các bài trình bày",
     VALIDATION_ERROR: "Có lỗi trong yêu cầu đã gửi",
     CREATE_PRESENTATION: "Có lỗi xảy ra khi gửi yêu cầu tạo bài trình bày mới",
+    RENAME_PRESENTATION_FAILED: "Có lỗi xảy ra khi gửi yêu cầu đổi tên bài trình bày",
 };
 
 export const PRESENTATION_TYPE = {

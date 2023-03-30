@@ -163,7 +163,7 @@ export default function PresentationList() {
 
             throw new Error("Unhandle error code");
         } catch (error) {
-            console.log("PresentationList:", error);
+            console.error("PresentationList:", error);
             Notification.notifyError(ERROR_NOTIFICATION.CREATE_PRESENTATION);
             return Promise.reject();
         }
@@ -174,8 +174,29 @@ export default function PresentationList() {
     };
 
     const handleRenameModal = async (value: IPresentationForm, recordToChange?: IPresentationListItem) => {
-        console.log(recordToChange, value);
-        return Promise.reject();
+        if (!recordToChange) return Promise.reject();
+
+        try {
+            const res = await PresentationService.updatePresentationAsync(recordToChange.id.toString(), {
+                name: value.name,
+            });
+
+            if (res.code === 200) {
+                Notification.notifySuccess(SUCCESS_NOTIFICATION.RENAME_PRESENTATION_SUCCESS);
+                return Promise.resolve();
+            }
+
+            if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                return Promise.reject();
+            }
+
+            throw new Error("Unhandle error code");
+        } catch (err) {
+            console.error("PresentationModal:", err);
+            Notification.notifyError(ERROR_NOTIFICATION.RENAME_PRESENTATION_FAILED);
+            return Promise.reject();
+        }
     };
 
     const openRenameModal = (record: IPresentationListItem) => {

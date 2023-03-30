@@ -55,6 +55,9 @@ export default function SidebarSlides() {
                 );
                 resetPresentationState({
                     ...presentationState,
+                    id: data?.id ?? "",
+                    ownerId: data?.ownerId ?? "",
+                    slideCount: data?.slideCount ?? 0,
                     slides: mappedSlideList,
                     name: data.name,
                     ownerDisplayName: data.ownerDisplayName,
@@ -92,7 +95,7 @@ export default function SidebarSlides() {
             // }
             throw new Error("Unhandle http code");
         } catch (error) {
-            console.log(error);
+            console.error(error);
             globalContext.unBlockUI();
         }
     };
@@ -179,7 +182,7 @@ export default function SidebarSlides() {
             // }
             throw new Error("Unhandle http code");
         } catch (error) {
-            console.log(error);
+            console.error(error);
             globalContext.unBlockUI();
         }
     };
@@ -272,7 +275,7 @@ export default function SidebarSlides() {
             // }
             throw new Error("Unhandled http code");
         } catch (error) {
-            console.log(error);
+            console.error(error);
             globalContext.unBlockUI();
         }
     };
