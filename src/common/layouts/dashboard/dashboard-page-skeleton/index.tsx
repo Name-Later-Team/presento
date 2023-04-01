@@ -12,7 +12,7 @@ export default function DashboardPageSkeleton(props: IDashboardPageSkeletonProps
     return (
         <Card>
             <Card.Header>
-                <Card.Title as={"h4"} className="text-uppercase">
+                <Card.Title as={"h4"} className="text-uppercase mb-1">
                     {pageTitle}
                 </Card.Title>
             </Card.Header>

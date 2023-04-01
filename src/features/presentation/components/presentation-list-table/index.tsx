@@ -24,13 +24,6 @@ interface IPresentationListTableProps {
 export default function PresentationListTable(props: IPresentationListTableProps) {
     const { dataSource, pagination, action } = props;
 
-    // display the newest record first
-    const mappedDataSource = dataSource.sort((left, right) => {
-        const leftMoment = moment((left as any).updatedAt);
-        const rightMoment = moment((right as any).updatedAt);
-        return rightMoment.diff(leftMoment);
-    });
-
     const handleDeletePresentation = (identifier: string) => {
         action && action.handleDeletePresentation(identifier);
     };
@@ -66,7 +59,7 @@ export default function PresentationListTable(props: IPresentationListTableProps
                     </tr>
                 </thead>
                 <tbody>
-                    {mappedDataSource.map((presentation, index) => {
+                    {dataSource.map((presentation, index) => {
                         return (
                             <tr key={presentation.id}>
                                 <td>{index + 1 + (pagination.currentPage - 1) * pagination.rowsPerPage}</td>
@@ -130,7 +123,7 @@ export default function PresentationListTable(props: IPresentationListTableProps
                 </tbody>
             </Table>
 
-            {mappedDataSource.length === 0 && (
+            {dataSource.length === 0 && (
                 <div className="text-center py-3 border border-top-0">Không có dữ liệu phù hợp</div>
             )}
         </>
