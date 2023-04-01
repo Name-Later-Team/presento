@@ -45,7 +45,12 @@ export const ERROR_NOTIFICATION = {
     RENAME_PRESENTATION_FAILED: "Có lỗi xảy ra khi gửi yêu cầu đổi tên bài trình bày",
 };
 
-export const PRESENTATION_TYPE = {
+export const PRESENTATION_OWNER_TYPE = {
     OWNER: "owner",
     COLLABORATOR: "collaborator",
+};
+
+export const PRESENTATION_DATE_TYPE = {
+    ASC: "ASC",
+    DESC: "DESC",
 };

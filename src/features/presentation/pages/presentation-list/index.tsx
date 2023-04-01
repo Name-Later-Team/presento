@@ -13,7 +13,8 @@ import DashboardPageSkeleton from "../../../../common/layouts/dashboard/dashboar
 import {
     COMMON_CONSTANTS,
     ERROR_NOTIFICATION,
-    PRESENTATION_TYPE,
+    PRESENTATION_DATE_TYPE,
+    PRESENTATION_OWNER_TYPE,
     RESPONSE_CODE,
     SUCCESS_NOTIFICATION,
 } from "../../../../constants/common-constants";
@@ -23,8 +24,13 @@ import PresentationListTable from "../../components/presentation-list-table";
 moment.locale("vi");
 
 const presentationTypeOption = [
-    { value: PRESENTATION_TYPE.OWNER, label: "Tôi sở hữu" },
+    { value: PRESENTATION_OWNER_TYPE.OWNER, label: "Tôi sở hữu" },
     // { value: PRESENTATION_TYPE.COLLABORATOR, label: "Tôi cộng tác" },
+];
+
+const presentationDateTypeOption = [
+    { value: PRESENTATION_DATE_TYPE.DESC, label: "Ngày sửa gần nhất" },
+    { value: PRESENTATION_DATE_TYPE.ASC, label: "Ngày sửa xa nhất" },
 ];
 
 export interface IPresentationListItem {
@@ -53,6 +59,11 @@ export interface IPresentationListPagination {
 
 const defaultPresentationModalState = { modalName: "", show: false, onHide: () => {} };
 
+const defaultFilter = {
+    ownerType: presentationTypeOption[0],
+    dateType: presentationDateTypeOption[0],
+};
+
 export default function PresentationList() {
     // states
     const [isLoading, setIsLoading] = useState(false);
@@ -65,12 +76,14 @@ export default function PresentationList() {
     const [searchObject, setSearchObject] = useState(() => {
         return {
             page: COMMON_CONSTANTS.pagination.defaultPage,
-            type: PRESENTATION_TYPE.OWNER,
+            type: defaultFilter.ownerType.value,
             limit: COMMON_CONSTANTS.pagination.limit,
+            order: defaultFilter.dateType.value,
         };
     });
-    const [rerender] = useState(false); // use this state to force rerender with the same search object
-    const [presentationType, setPresentationType] = useState(presentationTypeOption[0]);
+    const [rerender, setRerender] = useState(false); // use this state to force rerender with the same search object
+    const [presentationType, setPresentationType] = useState(defaultFilter.ownerType);
+    const [presentationDateType, setPresentationDateType] = useState(defaultFilter.dateType);
 
     // fetch data
     useEffect(() => {
@@ -80,6 +93,9 @@ export default function PresentationList() {
                 const res = await PresentationService.getPresentationListAsync({
                     limit: searchObject.limit,
                     page: searchObject.page,
+                    order: {
+                        updatedAt: searchObject.order,
+                    },
                 });
 
                 if (res.code === 200) {
@@ -114,7 +130,7 @@ export default function PresentationList() {
             }
         };
         fetchPresentationsList();
-    }, [searchObject.limit, searchObject.page, rerender]);
+    }, [searchObject.limit, searchObject.page, searchObject.order, rerender]);
 
     // manage create & edit modal
     const [presentationModal, setPresentationModal] = useState<IPresentationModalProps>(defaultPresentationModalState);
@@ -129,11 +145,26 @@ export default function PresentationList() {
         setPresentationType({ label: newValue?.label || "", value: newValue?.value || "" });
     };
 
+    const handlePresentationDateTypeChange = (newValue: SingleValue<{ label: string; value: string }>) => {
+        setSearchObject({ ...searchObject, order: newValue?.value || "" });
+        setPresentationDateType({ label: newValue?.label || "", value: newValue?.value || "" });
+    };
+
     const triggerRerender = () => {
         // navigate to page 1 to see the change (last changed item is always the first item in page 1)
+        if (searchObject.page === 1) {
+            setRerender((prev) => !prev);
+            setSearchObject((prev) => ({
+                ...prev,
+                order: defaultFilter.dateType.value,
+            }));
+            return;
+        }
+
         setSearchObject((prev) => ({
             ...prev,
             page: 1,
+            order: defaultFilter.dateType.value,
         }));
     };
 
@@ -223,7 +254,11 @@ export default function PresentationList() {
         <>
             <DashboardPageSkeleton pageTitle="Danh sách bài trình bày">
                 <>
-                    <Stack className="mb-3 justify-content-between align-items-center" direction="horizontal">
+                    <Stack
+                        className="mb-3 justify-content-between align-items-center flex-wrap"
+                        direction="horizontal"
+                        gap={3}
+                    >
                         <div>
                             <Button variant="primary" onClick={openCreateNewPresentationModal}>
                                 <FontAwesomeIcon icon={faPlus} className="me-2" />
@@ -232,22 +267,37 @@ export default function PresentationList() {
                         </div>
 
                         {/* filter container */}
-                        <Stack direction="horizontal" gap={3}>
+                        <Stack className="flex-wrap" direction="horizontal" gap={3}>
                             <div className="d-flex justify-content-center align-items-center text-uppercase fw-bold">
                                 <FontAwesomeIcon className="me-2" icon={faFilter} />
                                 Bộ lọc
                             </div>
-                            <BaseSelect
-                                options={presentationTypeOption}
-                                styles={{
-                                    control: (baseStyles, state) => ({
-                                        ...baseStyles,
-                                        minWidth: "200px",
-                                    }),
-                                }}
-                                onChange={handlePresentationTypeChange}
-                                value={presentationType}
-                            />
+
+                            <Stack className="flex-wrap" direction="horizontal" gap={3}>
+                                <BaseSelect
+                                    options={presentationDateTypeOption}
+                                    styles={{
+                                        control: (baseStyles, state) => ({
+                                            ...baseStyles,
+                                            minWidth: "200px",
+                                        }),
+                                    }}
+                                    onChange={handlePresentationDateTypeChange}
+                                    value={presentationDateType}
+                                />
+
+                                <BaseSelect
+                                    options={presentationTypeOption}
+                                    styles={{
+                                        control: (baseStyles, state) => ({
+                                            ...baseStyles,
+                                            minWidth: "200px",
+                                        }),
+                                    }}
+                                    onChange={handlePresentationTypeChange}
+                                    value={presentationType}
+                                />
+                            </Stack>
                         </Stack>
                     </Stack>
 
@@ -261,8 +311,10 @@ export default function PresentationList() {
                             }}
                         />
 
-                        <div className="d-inline-flex justify-content-center w-100 mt-4">
-                            <CustomPagination {...pagination} pageChange={handlePageChange} />
+                        <div className="d-inline-flex w-100 mt-4" style={{ overflowX: "auto" }}>
+                            <div className="mx-auto">
+                                <CustomPagination {...pagination} pageChange={handlePageChange} />
+                            </div>
                         </div>
                     </TableMask>
                 </>
