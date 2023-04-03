@@ -38,10 +38,13 @@ const renameFormSchema = z.object({
         .min(1, { message: "Tên bài trình bày không được bỏ trống" }),
 });
 
+const smallScreenMediaQuery = "(max-width: 520px)";
+
 export default function PresentationInfo(props: IPresentationInfoProps) {
     const { doesWhenEditModeOn, doesWhenEditModeOff } = props;
     // states
     const [mode, setMode] = useState<COMPONENT_MODE>(COMPONENT_MODE.display);
+    const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(smallScreenMediaQuery).matches);
 
     // hooks
     const {
@@ -59,6 +62,15 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
     useEffect(() => {
         if (mode === COMPONENT_MODE.edit) reset({ name: presentationState.name });
     }, [presentationState, mode, reset]);
+
+    useEffect(() => {
+        const onChange = (e: MediaQueryListEvent) => setIsSmallScreen(e.matches);
+        const mediaQueryList = window.matchMedia(smallScreenMediaQuery);
+        mediaQueryList.addEventListener("change", onChange);
+        return () => {
+            mediaQueryList.removeEventListener("change", onChange);
+        };
+    }, []);
 
     const handleChangeMode = (newMode: COMPONENT_MODE) => {
         switch (newMode) {
@@ -82,7 +94,7 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
 
     const handleSubmitForm: SubmitHandler<IRenameForm> = async (value) => {
         try {
-            const res = await PresentationService.updatePresentationAsync(presentationState.id, {
+            const res = await PresentationService.updatePresentationAsync(presentationState.identifier, {
                 name: value.name,
             });
 
@@ -110,6 +122,17 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
     };
 
     const renderBasedOnMode = () => {
+        if (isSmallScreen && mode !== COMPONENT_MODE.edit) {
+            return (
+                <Button
+                    className="px-2 text-primary"
+                    variant="light"
+                    onClick={() => handleChangeMode(COMPONENT_MODE.edit)}
+                >
+                    <FontAwesomeIcon icon={faEdit} />
+                </Button>
+            );
+        }
         switch (mode) {
             case COMPONENT_MODE.display: {
                 return (
@@ -149,8 +172,6 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
                                         onChange={onChange}
                                         type="text"
                                         placeholder={renameFormPlaceholders.name}
-                                        // disabled={isLoading}
-                                        style={{ minWidth: "250px" }}
                                         autoFocus
                                     />
                                 )}
@@ -160,10 +181,6 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
                         </FormGroup>
 
                         <Stack direction="horizontal" className="justify-content-end align-items-center">
-                            {/* <Button className="" variant="primary" type="submit" style={{ display: "none" }}> */}
-                            {/* {isLoading && <Spinner animation="border" role="status" size="sm" className="me-2" />} */}
-                            {/* <FontAwesomeIcon icon={faSave} />
-                            </Button> */}
                             <Button className="ms-1 px-3 py-0 h-100" variant="primary" type="submit">
                                 Lưu
                             </Button>
@@ -174,7 +191,6 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
                                 type="button"
                                 onClick={() => handleChangeMode(COMPONENT_MODE.display)}
                             >
-                                {/* {isLoading && <Spinner animation="border" role="status" size="sm" className="me-2" />} */}
                                 Hủy
                             </Button>
                         </Stack>

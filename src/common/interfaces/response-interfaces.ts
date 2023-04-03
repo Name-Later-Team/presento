@@ -19,20 +19,21 @@ export interface IAccessTokenResponse {
 export interface ISlideDetailResponse {
     question: string;
     questionDescription: string;
-    active: boolean;
+    isActive: boolean;
     hideInstructionBar: boolean;
     textSize: number;
-    type: string;
-    adminKey: string;
-    config: any;
+    slideType: string;
+    extrasConfig: any;
     createdAt: string;
     updatedAt: string;
     questionImageUrl: string | null;
-    questionVideoUrl: string | null;
+    questionVideoEmbedUrl: string | null;
     speakerNotes: string;
     id: string;
-    position: string;
-    presentationId: string;
-    presentationSeriesId: string;
-    choices: { id: string; label: string; position: number; correctAnswer: boolean }[];
+    position: number;
+    presentationId: number;
+    presentationIdentifier: string;
+    options: { key: string; value: string; type: string; position: number; metadata: any }[];
+    result: { key: string; value: number }[];
+    respondents: number;
 }

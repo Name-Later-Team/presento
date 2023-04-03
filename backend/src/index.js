@@ -14,6 +14,7 @@ import { AccessLogStream, Logger } from "./common/utils/logger.js";
 import { APP_CONFIG } from "./configs/index.js";
 import RedisClient from "./connections/redis.js";
 import { router as authRouter } from "./routes/auth.js";
+import { router as presentoRouter } from "./routes/presento.js";
 import { router as apiRouter } from "./routes/index.js";
 
 env.TZ = "Asia/Ho_Chi_Minh";
@@ -73,6 +74,7 @@ app.use(function (req, res, next) {
 app.get("/favicon.ico", (req, res) => res.status(204).end());
 
 // handle API route here
+app.use("/api/presento", presentoRouter);
 app.use("/api/auth", authRouter);
 app.use("/api", apiRouter);
 

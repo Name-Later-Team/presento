@@ -61,7 +61,7 @@ export default function PresentationListTable(props: IPresentationListTableProps
                 <tbody>
                     {dataSource.map((presentation, index) => {
                         return (
-                            <tr key={presentation.id}>
+                            <tr key={presentation.identifier}>
                                 <td>{index + 1 + (pagination.currentPage - 1) * pagination.rowsPerPage}</td>
                                 <td>
                                     <Link to={`/presentation/${presentation.identifier}`}>{presentation.name}</Link>

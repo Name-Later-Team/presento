@@ -10,7 +10,7 @@ const FONT_SIZE_RANGE = {
     MIN: 24,
 };
 
-export default function HeadingCustomizeTab() {
+export default function CustomizeTab() {
     const { slideState, changeSlideState } = usePresentFeature();
 
     return (
@@ -18,18 +18,18 @@ export default function HeadingCustomizeTab() {
             <Stack gap={4}>
                 <Stack gap={2}>
                     <Form.Label>Tùy chỉnh trang trình bày</Form.Label>
-                    {/* <Form.Check
-						checked={slideState.enableVoting}
-						type="switch"
-						id="enableVoting"
-						label="Cho phép bầu chọn"
-						onChange={() =>
-							changeSlideState({
-								...slideState,
-								enableVoting: !slideState.enableVoting,
-							})
-						}
-					/> */}
+                    <Form.Check
+                        checked={slideState.enableVoting}
+                        type="switch"
+                        id="enableVoting"
+                        label="Cho phép bầu chọn"
+                        onChange={() =>
+                            changeSlideState({
+                                ...slideState,
+                                enableVoting: !slideState.enableVoting,
+                            })
+                        }
+                    />
                     <Form.Check
                         checked={slideState.showInstructionBar}
                         type="switch"

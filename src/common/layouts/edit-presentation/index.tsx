@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useEffect, useState } from "react";
 import { Button, Dropdown, Stack } from "react-bootstrap";
 import { Link, Outlet, useNavigate, useParams } from "react-router-dom";
-import { ERROR_NOTIFICATION } from "../../../constants";
+import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../constants";
 import PresentationService from "../../../services/presentation-service";
 import { Notification } from "../../components/notification";
 import CustomizedTooltip from "../../components/tooltip";
@@ -13,10 +13,14 @@ import { usePresentFeature } from "../../contexts/present-feature-context";
 import { IBaseComponent } from "../../interfaces/basic-interfaces";
 import PresentationInfo from "./presentation-info";
 import "./style.scss";
+import SlideService from "../../../services/slide-service";
+import DataMappingUtil from "../../utils/data-mapping-util";
 
 interface IEditPresentationLayout extends IBaseComponent {
     sidebarElement: ReactElement;
 }
+
+const smallScreenMediaQuery = "(max-width: 768px)";
 
 export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
@@ -27,6 +31,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { presentationId, slideId } = useParams();
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
     const [hideSaveBtn, setHideSaveBtn] = useState(false);
+    const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(smallScreenMediaQuery).matches);
     // const [showSelectGroupModal, setShowSelectGroupModal] = useState<boolean>(false);
     const navigate = useNavigate();
 
@@ -44,95 +49,53 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
         };
     }, [isModified]);
 
+    useEffect(() => {
+        const onChange = (e: MediaQueryListEvent) => setIsSmallScreen(e.matches);
+        const mediaQueryList = window.matchMedia(smallScreenMediaQuery);
+        mediaQueryList.addEventListener("change", onChange);
+        return () => {
+            mediaQueryList.removeEventListener("change", onChange);
+        };
+    }, []);
+
+    console.log(isSmallScreen);
+
     // effect that happens when change slide within the edit page
     useEffect(() => {
         const fetchingSlideDetail = async () => {
             globalContext.blockUI("Đang lấy thông tin");
             try {
-                const res = await PresentationService.getSlideDetailAsync(presentationId || "", slideId || "");
+                const res = await SlideService.getSlideDetailAsync(presentationId || "", slideId || "");
+
                 if (res.code === 200) {
-                    const resultRes = await PresentationService.getSlideResultAsync(
-                        presentationId || "",
-                        slideId || ""
-                    );
-                    const resultResData = resultRes?.data;
-                    if (resultRes.code === 200) {
-                        const resData = res.data;
-                        const newVal = { ...slideState };
-                        newVal.question = resData?.question ?? "";
-                        newVal.description = resData?.questionDescription ?? "";
-                        newVal.type = resData?.type ?? "";
-                        newVal.respondents = resultResData?.respondents ?? 0;
-                        const choices = resData?.choices;
-                        const options: { key: string; value: string }[] = [];
-                        const results: { key: string; value: number }[] = [];
-                        if (Array.isArray(choices)) {
-                            const flag = Array.isArray(resultResData?.results);
-                            choices.sort((a, b) => a?.position - b?.position);
-                            let haveCorrectAnswer = false;
-                            choices.forEach((item, idx) => {
-                                options.push({
-                                    key: item?.id ?? idx,
-                                    value: item?.label ?? "",
-                                });
-                                const tempResult = {
-                                    key: item?.id ?? idx,
-                                    value: 0,
-                                };
-                                if (flag) {
-                                    tempResult.value =
-                                        (resultResData?.results as any[]).find((element) => element?.id === item?.id)
-                                            ?.score[0] ?? 0;
-                                }
-                                results.push(tempResult);
-                                if (item?.correctAnswer === true) {
-                                    haveCorrectAnswer = true;
-                                    newVal.selectedOption = item?.id;
-                                }
-                            });
-                            if (!haveCorrectAnswer) newVal.selectedOption = "";
-                            newVal.options = options;
-                            newVal.result = results;
-                        }
-                        newVal.enableVoting = resData?.active ?? true;
-                        newVal.showInstructionBar = !resData?.hideInstructionBar ?? true;
-                        newVal.fontSize = resData?.textSize ?? 32;
-                        newVal.id = resData?.id ?? "";
-                        newVal.adminKey = resData?.adminKey ?? "";
-                        newVal.presentationId = resData?.presentationId ?? "";
-                        newVal.presentationSeriesId = resData?.presentationSeriesId ?? "";
-                        newVal.position = resData?.position ?? "";
-                        newVal.createdAt = resData?.createdAt ?? "";
-                        newVal.config = null;
-                        newVal.updatedAt = resData?.updatedAt ?? "";
-                        newVal.questionImageUrl = resData?.questionImageUrl ?? "";
-                        newVal.questionVideoUrl = resData?.questionVideoUrl ?? "";
-                        resetSlideState(newVal);
+                    const resData = res?.data;
+                    if (!resData) {
                         globalContext.unBlockUI();
                         return;
                     }
-                    Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_RESULT);
+                    const mappedSlideDetail = DataMappingUtil.mapSlideStateFromApiData(slideState, resData);
+                    resetSlideState(mappedSlideDetail);
                     globalContext.unBlockUI();
                     return;
                 }
-                // if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-                // 	Notification.notifyError("Không tìm thấy bài trình chiếu");
-                // 	globalContext.unBlockUI();
-                // 	return;
-                // }
-                // if (res.code === RESPONSE_CODE.SLIDE_NOT_FOUND) {
-                // 	Notification.notifyError("Không tìm thấy trang chiếu");
-                // 	globalContext.unBlockUI();
-                // 	return;
-                // }
-                // if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                // 	Notification.notifyError("Có lỗi xảy ra khi gửi yêu cầu");
-                // 	globalContext.unBlockUI();
-                // 	return;
-                // }
+
                 throw new Error("Unknown http code");
-            } catch (err) {
+            } catch (err: any) {
+                const res = err?.response?.data;
+                if (res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
+                    Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                    globalContext.unBlockUI();
+                    return;
+                }
+
+                if (res.code === RESPONSE_CODE.VALIDATION_ERROR || res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                    Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+                    globalContext.unBlockUI();
+                    return;
+                }
+
                 console.error(err);
+                Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_DETAIL);
                 globalContext.unBlockUI();
             }
         };
@@ -396,52 +359,113 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                 <FontAwesomeIcon className="me-1" icon={faSquarePollVertical} size="lg" /> Xem kết quả
                             </Button> */}
 
-                            {hideSaveBtn ? null : isModified ? (
-                                <div className="mx-2">
-                                    <span className="text-danger me-2" style={{ fontSize: "0.9rem" }}>
-                                        Chưa lưu
-                                    </span>
-                                    <FontAwesomeIcon className=" text-danger" icon={faXmark} size="lg" />
-                                </div>
-                            ) : (
-                                <div className="mx-2">
-                                    <span className="text-muted me-2" style={{ fontSize: "0.9rem" }}>
-                                        Đã lưu
-                                    </span>
-                                    <FontAwesomeIcon className="text-success" icon={faCheck} size="lg" />
-                                </div>
-                            )}
+                            {/* if the screen is big enough */}
+                            {!isSmallScreen &&
+                                (hideSaveBtn ? null : isModified ? (
+                                    <div className="mx-2">
+                                        <span className="text-danger me-2" style={{ fontSize: "0.9rem" }}>
+                                            Chưa lưu
+                                        </span>
+                                        <FontAwesomeIcon className=" text-danger" icon={faXmark} size="lg" />
+                                    </div>
+                                ) : (
+                                    <div className="mx-2">
+                                        <span className="text-muted me-2" style={{ fontSize: "0.9rem" }}>
+                                            Đã lưu
+                                        </span>
+                                        <FontAwesomeIcon className="text-success" icon={faCheck} size="lg" />
+                                    </div>
+                                ))}
 
-                            {hideSaveBtn ? null : (
-                                <Button
-                                    className="mx-2"
-                                    variant="secondary"
-                                    disabled={!isModified}
-                                    onClick={handleSaveSlide}
-                                >
-                                    <FontAwesomeIcon className="me-1" icon={faFloppyDisk} size="lg" /> Lưu
+                            {!isSmallScreen &&
+                                (hideSaveBtn ? null : (
+                                    <Button
+                                        className="mx-2"
+                                        variant="secondary"
+                                        disabled={!isModified}
+                                        onClick={handleSaveSlide}
+                                    >
+                                        <FontAwesomeIcon className="me-1" icon={faFloppyDisk} size="lg" /> Lưu
+                                    </Button>
+                                ))}
+
+                            {!isSmallScreen && (
+                                <Button className="mx-2" variant="primary" onClick={handlePresentSlide}>
+                                    <FontAwesomeIcon className="me-1" icon={faPlay} size="lg" /> Trình chiếu
                                 </Button>
                             )}
 
-                            <Button className="mx-2" variant="primary" onClick={handlePresentSlide}>
-                                <FontAwesomeIcon className="me-1" icon={faPlay} size="lg" /> Trình chiếu
-                            </Button>
+                            {!isSmallScreen && (
+                                <Dropdown>
+                                    <Dropdown.Toggle className="static-header__avatar-dropdown-btn" variant="light">
+                                        <img
+                                            className="static-header__avatar"
+                                            src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
+                                            alt="profile-avatar"
+                                            loading="lazy"
+                                        />
+                                    </Dropdown.Toggle>
 
-                            <Dropdown>
-                                <Dropdown.Toggle className="static-header__avatar-dropdown-btn" variant="light">
-                                    <img
-                                        className="static-header__avatar"
-                                        src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
-                                        alt="profile-avatar"
-                                        loading="lazy"
-                                    />
-                                </Dropdown.Toggle>
+                                    <Dropdown.Menu style={{ margin: 0 }}>
+                                        <Dropdown.Item onClick={() => navigate("/profile")}>
+                                            Hồ sơ cá nhân
+                                        </Dropdown.Item>
+                                        <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
+                                    </Dropdown.Menu>
+                                </Dropdown>
+                            )}
 
-                                <Dropdown.Menu style={{ margin: 0 }}>
-                                    <Dropdown.Item onClick={() => navigate("/profile")}>Hồ sơ cá nhân</Dropdown.Item>
-                                    <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
+                            {/* if the screen is small */}
+                            {isSmallScreen &&
+                                (hideSaveBtn ? null : (
+                                    <Dropdown>
+                                        <Dropdown.Toggle className="text-primary" variant="light">
+                                            Hành động
+                                        </Dropdown.Toggle>
+
+                                        <Dropdown.Menu style={{ margin: 0 }}>
+                                            <Dropdown.Item disabled={!isModified} onClick={handleSaveSlide}>
+                                                <FontAwesomeIcon
+                                                    style={{ width: "1rem" }}
+                                                    className="me-2"
+                                                    icon={faFloppyDisk}
+                                                    size="lg"
+                                                />{" "}
+                                                Lưu
+                                            </Dropdown.Item>
+                                            <Dropdown.Item onClick={handlePresentSlide}>
+                                                <FontAwesomeIcon
+                                                    style={{ width: "1rem" }}
+                                                    className="me-2"
+                                                    icon={faPlay}
+                                                    size="lg"
+                                                />{" "}
+                                                Trình chiếu
+                                            </Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                ))}
+
+                            {isSmallScreen &&
+                                (hideSaveBtn ? null : (
+                                    <Dropdown>
+                                        <Dropdown.Toggle className="static-header__avatar-dropdown-btn" variant="light">
+                                            <img
+                                                className="static-header__avatar"
+                                                src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
+                                                alt="profile-avatar"
+                                                loading="lazy"
+                                            />
+                                        </Dropdown.Toggle>
+
+                                        <Dropdown.Menu style={{ margin: 0 }}>
+                                            <Dropdown.Item onClick={() => navigate("/profile")}>
+                                                Hồ sơ cá nhân
+                                            </Dropdown.Item>
+                                            <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                ))}
                         </div>
                     </div>
                     <div className="main-content__dynamic-content">

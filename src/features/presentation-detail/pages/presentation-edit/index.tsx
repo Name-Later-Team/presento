@@ -57,7 +57,7 @@ export default function EditPresentation() {
         // change the preview icon of the slide
         const newSlides = [...presentationState.slides];
         for (let element of newSlides) {
-            if (element.adminKey === oldSlideState.adminKey) {
+            if (element.id === oldSlideState.adminKey) {
                 element.type = newSlideType?.value || "";
                 changePresentationState({
                     ...presentationState,
@@ -70,10 +70,10 @@ export default function EditPresentation() {
 
     return (
         <Row className="edit-presentation">
-            <Col className="edit-presentation__col edit-presentation__col--left">
+            <Col xxl={9} xl={8} lg={8} md={12} className="edit-presentation__col edit-presentation__col--left">
                 <PresentationSlide />
             </Col>
-            <Col className="edit-presentation__col edit-presentation__col--right">
+            <Col xxl={3} xl={4} lg={4} md={12} className="edit-presentation__col edit-presentation__col--right">
                 <div className="edit-presentation__slide-config">
                     <Stack>
                         <Alert show={showAlert} className="m-0 mb-3" variant="primary">

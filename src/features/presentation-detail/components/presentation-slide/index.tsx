@@ -13,7 +13,8 @@ import FormatUtil from "../../../../common/utils/format-util";
 import { SUCCESS_NOTIFICATION } from "../../../../constants";
 
 // define all types of slide here
-const slideTypeComponents: { [type: string]: JSX.Element } = {
+export type SlideType = "multiple_choice" | "heading" | "paragraph";
+export const slideTypeComponents: Record<SlideType, JSX.Element> = {
     multiple_choice: <MultipleChoiceSlideComponent />,
     heading: <HeadingSlideComponent />,
     paragraph: <ParagraphSlideComponent />,
@@ -23,7 +24,7 @@ export default function PresentationSlide() {
     const { slideState, presentationState } = usePresentFeature();
 
     const handleCopyLink = () => {
-        navigator.clipboard.writeText(`${APP_CONSTANTS.APP_DOMAIN}/${presentationState.voteKey}`);
+        navigator.clipboard.writeText(`${APP_CONSTANTS.VOTE_APP_DOMAIN}/${presentationState.identifier}`);
         Notification.notifySuccess(SUCCESS_NOTIFICATION.COPIED_LINK_SUCCESS);
     };
 
@@ -40,12 +41,20 @@ export default function PresentationSlide() {
                                     onClick={handleCopyLink}
                                 >
                                     Truy cập
-                                    <span className="instruction-bar__vote-link mx-2 fw-bolder text-primary">
-                                        {APP_CONSTANTS.APP_DOMAIN}
+                                    <span
+                                        className="instruction-bar__vote-link fw-bolder text-primary"
+                                        style={{ marginInline: "0.4rem" }}
+                                    >
+                                        {APP_CONSTANTS.VOTE_APP_DOMAIN}
                                     </span>
                                     nhập mã
-                                    <span className="instruction-bar__vote-link mx-2 fw-bolder text-primary">
-                                        {FormatUtil.formatVotingCodeString(presentationState.votingCode)}
+                                    <span
+                                        className="instruction-bar__vote-link fw-bolder text-primary"
+                                        style={{ marginInline: "0.4rem" }}
+                                    >
+                                        {presentationState.votingCode === ""
+                                            ? "?"
+                                            : FormatUtil.formatVotingCodeString(presentationState.votingCode)}
                                     </span>
                                     để bầu chọn
                                 </div>
@@ -57,7 +66,7 @@ export default function PresentationSlide() {
                     )}
 
                     <div className="presentation-slide__slide-component flex-grow-1">
-                        {slideTypeComponents[slideState.type]}
+                        {slideTypeComponents[slideState.type as SlideType]}
                     </div>
 
                     <div className="presentation-slide__footer-placeholder">

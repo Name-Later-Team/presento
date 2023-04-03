@@ -45,4 +45,6 @@ export const APP_CONFIG = {
     },
 
     apiGateway: process.env.API_GATEWAY,
+
+    slug: process.env.SLUG,
 };

@@ -1,5 +1,5 @@
 export const APP_CONSTANTS = {
     API_URL: process.env.REACT_APP_API_URL ?? "http://localhost:3001/api",
 
-    APP_DOMAIN: process.env.REACT_VOTE_APP_DOMAIN ?? "http://presenti.com",
+    VOTE_APP_DOMAIN: process.env.REACT_APP_VOTE_APP_DOMAIN ?? "https://presenti.com",
 };

@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { Button, Nav } from "react-bootstrap";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Notification } from "../../../components/notification";
-import { IPresentationPace, IPresentationSlide, usePresentFeature } from "../../../contexts/present-feature-context";
+import { IPresentationSlide, usePresentFeature } from "../../../contexts/present-feature-context";
 import { useGlobalContext } from "../../../contexts/global-context";
 import CustomSlideNav from "./custom-slide-nav";
 import { AlertBuilder } from "../../../components/alert";
-import { SUCCESS_NOTIFICATION } from "../../../../constants";
+import { ERROR_NOTIFICATION, RESPONSE_CODE, SUCCESS_NOTIFICATION } from "../../../../constants";
 import {
     PREFETCHING_REDIRECT_CODE,
     SLIDE_TYPE,
@@ -17,6 +17,7 @@ import PresentationService from "../../../../services/presentation-service";
 import SlideService from "../../../../services/slide-service";
 import { DragDropContext, Draggable, Droppable, OnDragEndResponder } from "react-beautiful-dnd";
 import "./style.scss";
+import DataMappingUtil from "../../../utils/data-mapping-util";
 
 export interface ISidebarSlideNav {
     slideId: string;
@@ -41,61 +42,33 @@ export default function SidebarSlides() {
             // get slide list and presentation config
             globalContext.blockUI();
             const res = await PresentationService.getPresentationDetailAsync(presentationId);
+
             if (res.code === 200) {
                 const data = res.data as any;
-                const slideList = data?.slides;
-                const mappedSlideList: IPresentationSlide[] = slideList.map(
-                    (item: any) =>
-                        ({
-                            id: item?.id ?? "",
-                            adminKey: item?.admin_key ?? "",
-                            type: item?.type ?? "",
-                            position: item?.position ?? 1,
-                        } as IPresentationSlide)
+                const mappedPresentationState = DataMappingUtil.mapPresentationStateFromApiData(
+                    presentationState,
+                    data
                 );
-                resetPresentationState({
-                    ...presentationState,
-                    id: data?.id ?? "",
-                    ownerId: data?.ownerId ?? "",
-                    slideCount: data?.slideCount ?? 0,
-                    slides: mappedSlideList,
-                    name: data.name,
-                    ownerDisplayName: data.ownerDisplayName,
-                    pace: {
-                        active: data?.pace?.active ?? "",
-                        counter: data?.pace?.counter ?? 0,
-                        mode: data?.pace?.mode ?? "",
-                        state: data?.pace?.state ?? "",
-                        groupId: data?.pace?.groupId ?? null,
-                    } as IPresentationPace,
-                    voteKey: data?.voteKey ?? "",
-                    votingCode: data?.votingCode ?? "",
-                });
+                resetPresentationState(mappedPresentationState);
                 globalContext.unBlockUI();
                 // if last is true, navigate to the last item in slide list (used when creating a new slide), otherwise navigating according to pace field from api
                 navigateToLastItem
-                    ? navigate(`/presentation/${presentationId}/${mappedSlideList.at(-1)?.adminKey}/edit`)
-                    : navigate(`/presentation/${presentationId}/${data?.pace?.active}/edit`);
+                    ? navigate(`/presentation/${presentationId}/${mappedPresentationState.slides.at(-1)?.id}/edit`)
+                    : navigate(`/presentation/${presentationId}/${data?.pace?.active_slide_id}/edit`);
                 return;
             }
-            // if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-            //     const errors = (res.errors as any[]) || null;
-            //     if (errors) {
-            //         const msg = errors[0]?.message;
-            //         Notification.notifyError(msg);
-            //         globalContext.unBlockUI();
-            //         return;
-            //     }
-            //     globalContext.unBlockUI();
-            //     return;
-            // }
-            // if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-            //     Notification.notifyError("Bài trình bày không tồn tại");
-            //     globalContext.unBlockUI();
-            // }
+
             throw new Error("Unhandle http code");
-        } catch (error) {
+        } catch (error: any) {
+            const res = error?.response?.data;
+            if (res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION || res.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                globalContext.unBlockUI();
+                return;
+            }
+
             console.error(error);
+            Notification.notifyError(ERROR_NOTIFICATION.FETCH_PRESENTATION_DETAIL);
             globalContext.unBlockUI();
         }
     };
@@ -120,68 +93,64 @@ export default function SidebarSlides() {
                 getPresentationDetail(true);
                 return;
             }
-            // if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-            //     const errors = (res.errors as any[]) || null;
-            //     if (errors) {
-            //         const msg = errors[0]?.message;
-            //         Notification.notifyError(msg);
-            //         globalContext.unBlockUI();
-            //         return;
-            //     }
-            //     globalContext.unBlockUI();
-            //     return;
-            // }
-            // if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-            //     Notification.notifyError("Bài trình bày không tồn tại");
-            //     globalContext.unBlockUI();
-            //     return;
-            // }
-            // if (res.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
-            //     const handleRequestTurnOffPresenting = async () => {
-            //         globalContext.blockUI(undefined, true);
-            //         try {
-            //             await PresentationService.updatePresentationPaceAsync(presentationId ?? "", "", "quit");
-            //             Notification.notifySuccess("Tắt trang đang chiếu thành công");
-            //         } catch (err) {
-            //             console.error(err);
-            //             Notification.notifyError(
-            //                 "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau"
-            //             );
-            //         }
-            //         globalContext.unBlockUI();
-            //     };
-            //     if (presentationState.permission.presentationRole === "owner") {
-            //         new AlertBuilder()
-            //             .setTitle("Thông báo")
-            //             .setText(
-            //                 "Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?"
-            //             )
-            //             .setAlertType("info")
-            //             .setConfirmBtnText("Đến trang chiếu")
-            //             .setCancelBtnText("Tắt trang chiếu")
-            //             .showCloseButton()
-            //             .preventDismiss()
-            //             .setOnConfirm(() =>
-            //                 navigate(`/presentations/${presentationId}/${presentationState.pace.active}`)
-            //             )
-            //             .setOnCancel(handleRequestTurnOffPresenting)
-            //             .getAlert()
-            //             .fireAlert();
-            //     } else {
-            //         new AlertBuilder()
-            //             .setTitle("Thông báo")
-            //             .setText("Bài này đang được trình chiếu, bạn không được phép thao tác chỉnh sửa trang chiếu")
-            //             .setAlertType("info")
-            //             .setConfirmBtnText("Đã hiểu")
-            //             .showCloseButton()
-            //             .getAlert()
-            //             .fireAlert();
-            //     }
-            //     globalContext.unBlockUI();
-            //     return;
-            // }
+
             throw new Error("Unhandle http code");
-        } catch (error) {
+        } catch (error: any) {
+            const res = error?.response?.data;
+            if (res.code === RESPONSE_CODE.VALIDATION_ERROR || res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                globalContext.unBlockUI();
+                return;
+            }
+
+            if (res.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
+                // manually turn off the presenting presentation
+                // const handleRequestTurnOffPresenting = async () => {
+                //     globalContext.blockUI(undefined, true);
+                //     try {
+                //         await PresentationService.updatePresentationPaceAsync(presentationId ?? "", "", "quit");
+                //         Notification.notifySuccess("Tắt trang đang chiếu thành công");
+                //     } catch (err) {
+                //         console.error(err);
+                //         Notification.notifyError(
+                //             "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau"
+                //         );
+                //     }
+                //     globalContext.unBlockUI();
+                // };
+                // if (presentationState.permission.presentationRole === "owner") {
+                //     new AlertBuilder()
+                //         .setTitle("Thông báo")
+                //         .setText(
+                //             "Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?"
+                //         )
+                //         .setAlertType("info")
+                //         .setConfirmBtnText("Đến trang chiếu")
+                //         .setCancelBtnText("Tắt trang chiếu")
+                //         .showCloseButton()
+                //         .preventDismiss()
+                //         .setOnConfirm(() =>
+                //             navigate(`/presentations/${presentationId}/${presentationState.pace.active}`)
+                //         )
+                //         .setOnCancel(handleRequestTurnOffPresenting)
+                //         .getAlert()
+                //         .fireAlert();
+                // } else {
+                //     new AlertBuilder()
+                //         .setTitle("Thông báo")
+                //         .setText("Bài này đang được trình chiếu, bạn không được phép thao tác chỉnh sửa trang chiếu")
+                //         .setAlertType("info")
+                //         .setConfirmBtnText("Đã hiểu")
+                //         .showCloseButton()
+                //         .getAlert()
+                //         .fireAlert();
+                // }
+                Notification.notifyError(ERROR_NOTIFICATION.PRESENTING_PRESENTATION);
+                globalContext.unBlockUI();
+                return;
+            }
+
+            Notification.notifyError(ERROR_NOTIFICATION.CREATE_NEW_SLIDE);
             console.error(error);
             globalContext.unBlockUI();
         }
@@ -282,33 +251,74 @@ export default function SidebarSlides() {
 
     const dragEnd: OnDragEndResponder = (result) => {
         const { source, destination } = result;
+        if (!destination || source.index === destination.index) return;
 
-        let [src, des] = [-1, -1];
-        const tempSlideData = [...presentationState.slides];
+        const modifiedSlideData: IPresentationSlide[] = [];
+        const sourceItem = presentationState.slides.find((item) => item.position === source.index);
+        if (!sourceItem) return;
 
-        tempSlideData.forEach((item, index) => {
-            if (item.position === source.index) src = index;
-            if (item.position === destination?.index) des = index;
-        });
-
-        if (src === des || src === -1 || des === -1) return;
-
-        // swap position
-        const tempPosition = tempSlideData[src].position;
-        tempSlideData[src].position = tempSlideData[des].position;
-        tempSlideData[des].position = tempPosition;
+        // move item according to the animation
+        if (destination.index > source.index) {
+            presentationState.slides.forEach((item) => {
+                // keep old position
+                if (
+                    item.position < source.index ||
+                    (item.position > source.index && item.position > destination.index)
+                ) {
+                    modifiedSlideData.push(item);
+                }
+                // swap position
+                if (item.position === destination.index) {
+                    modifiedSlideData.push({
+                        ...sourceItem,
+                        position: destination.index,
+                    });
+                }
+                // shift item by 1 position
+                if (item.position > source.index && item.position <= destination.index) {
+                    modifiedSlideData.push({
+                        ...item,
+                        position: item.position - 1,
+                    });
+                }
+            });
+        } else {
+            presentationState.slides.forEach((item) => {
+                // keep old position
+                if (
+                    item.position > source.index ||
+                    (item.position < source.index && item.position < destination.index)
+                ) {
+                    modifiedSlideData.push(item);
+                }
+                // swap position
+                if (item.position === destination.index) {
+                    modifiedSlideData.push({
+                        ...sourceItem,
+                        position: destination.index,
+                    });
+                }
+                // shift item by 1 position
+                if (item.position < source.index && item.position >= destination.index) {
+                    modifiedSlideData.push({
+                        ...item,
+                        position: item.position + 1,
+                    });
+                }
+            });
+        }
 
         changePresentationState({
             ...presentationState,
-            slides: tempSlideData,
+            slides: modifiedSlideData,
         });
     };
 
     const slideNavs: ISidebarSlideNav[] = presentationState.slides.map((item) => ({
-        slideId: item.adminKey,
+        slideId: item.id,
         icon: SLIDE_TYPE[item.type].icon,
         typeLabel: SLIDE_TYPE[item.type].label,
-        path: `/presentation/${presentationId}/${item.adminKey}/edit`,
+        path: `/presentation/${presentationId}/${item.id}/edit`,
         position: item.position,
     }));
 

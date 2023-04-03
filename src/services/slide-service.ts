@@ -1,4 +1,6 @@
-// import { HttpService } from "./http-service";
+import { ISlideDetailResponse } from "../common/interfaces";
+import { SlideType } from "../features/presentation-detail/components/presentation-slide";
+import { HttpService } from "./http-service";
 
 const mockData = {
     newSlide: {
@@ -31,16 +33,60 @@ const mockData = {
         metadata: { createdDate: "2023-03-15T16:01:22.180Z" },
     },
     deleteSlide: { code: 200, message: "OK", metadata: { createdDate: "2023-03-15T16:25:57.739Z" } },
+    slideDetail: {
+        code: 200,
+        message: "OK",
+        data: {
+            id: 53,
+            createdAt: "2023-04-01T10:53:19.794Z",
+            updatedAt: "2023-04-01T10:53:19.794Z",
+            presentationId: 53,
+            presentationIdentifier: "9e3c1073-4037-4670-8486-af7f1cdf9a71",
+            question: "Default question",
+            questionDescription: null,
+            questionImageUrl: null,
+            questionVideoEmbedUrl: null,
+            slideType: "multiple_choice",
+            speakerNotes: null,
+            isActive: true,
+            showResult: true,
+            hideInstructionBar: false,
+            extrasConfig: null,
+            position: 0,
+            respondents: 0,
+            selectedOption: "",
+            options: [
+                {
+                    key: 53,
+                    value: "Lựa chọn 1",
+                    type: "option",
+                    position: 0,
+                    metadata: null,
+                },
+            ],
+            result: [
+                {
+                    key: 53,
+                    value: 0,
+                },
+            ],
+        },
+    },
 };
 
 export default class SlideService {
-    static createSlideAsync(seriesId: string, data: { type: string }) {
-        // return HttpService.post<any>(`/v1/presentations/${seriesId}/slides`, data);
-        return Promise.resolve(mockData.newSlide);
+    static createSlideAsync(identifier: string, data: { type: SlideType }) {
+        return HttpService.post<any>(`/api/presentation/v1/presentations/${identifier}/slides`, data);
     }
 
     static deleteSlideAsync(seriesId: string, adminKey: string) {
         // return HttpService.delete<any>(`/v1/presentations/${seriesId}/slides/${adminKey}`);
         return Promise.resolve(mockData.deleteSlide);
+    }
+
+    static getSlideDetailAsync(presentationIdentifier: string, slideId: string) {
+        return HttpService.get<ISlideDetailResponse>(
+            `/api/presento/v1/presentations/${presentationIdentifier}/slides/${slideId}`
+        );
     }
 }
