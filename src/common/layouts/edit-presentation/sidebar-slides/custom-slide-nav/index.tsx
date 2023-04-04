@@ -46,7 +46,7 @@ const CustomSlideNav = React.forwardRef<HTMLDivElement, ICustomSlideNav>((props,
                             <div className="custom-slide-nav__slide-info w-100">
                                 <span className="custom-slide-nav__slide-number mb-1">{slideNum}</span>
 
-                                {presentationState.pace.active === slideId ? (
+                                {presentationState.pace.active_slide_id === slideId ? (
                                     <span
                                         onClick={(e) => {
                                             e.preventDefault();

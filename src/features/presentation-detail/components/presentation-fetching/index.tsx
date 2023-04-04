@@ -2,13 +2,12 @@ import { faChartSimple, faHeading, faParagraph, IconDefinition } from "@fortawes
 import { useEffect } from "react";
 import { Spinner, Stack } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-    IPresentationPace,
-    IPresentationSlide,
-    usePresentFeature,
-} from "../../../../common/contexts/present-feature-context";
+import { usePresentFeature } from "../../../../common/contexts/present-feature-context";
 import PresentationService from "../../../../services/presentation-service";
 import "./style.scss";
+import DataMappingUtil from "../../../../common/utils/data-mapping-util";
+import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../../constants";
+import { AlertBuilder } from "../../../../common/components/alert";
 
 export const SLIDE_TYPE: {
     [type: string]: {
@@ -30,70 +29,52 @@ export default function PresentationFetching() {
 
     useEffect(() => {
         const getPresentationDetail = async () => {
+            const alert = new AlertBuilder()
+                .reset()
+                .setTitle("Lỗi")
+                .setAlertType("error")
+                .setConfirmBtnText("OK")
+                .setOnConfirm(() => navigate("/dashboard/presentation-list"));
             try {
                 // get slide list and presentation config
                 const res = await PresentationService.getPresentationDetailAsync(presentationId || "");
                 if (res.code === 200) {
                     const data = res.data as any;
-                    const slideList = data.slides;
-                    const mappedSlideList: IPresentationSlide[] = slideList.map(
-                        (item: any) =>
-                            ({
-                                id: item?.id ?? "",
-                                adminKey: item?.admin_key ?? "",
-                                type: item?.type ?? "",
-                                position: item?.position ?? 1,
-                            } as IPresentationSlide)
+                    const mappedPresentationState = DataMappingUtil.mapPresentationStateFromApiData(
+                        presentationState,
+                        data
                     );
-                    resetPresentationState({
-                        ...presentationState,
-                        id: data?.id ?? "",
-                        ownerId: data?.ownerId ?? "",
-                        slideCount: data?.slideCount ?? 0,
-                        name: data.name,
-                        ownerDisplayName: data.ownerDisplayName,
-                        slides: mappedSlideList,
-                        voteKey: data?.voteKey ?? "",
-                        votingCode: data?.votingCode ?? "",
-                        pace: {
-                            active: data?.pace?.active ?? "",
-                            counter: data?.pace?.counter ?? 0,
-                            mode: data?.pace?.mode ?? "",
-                            state: data?.pace?.state ?? "",
-                            groupId: data?.pace?.groupId ?? null,
-                        } as IPresentationPace,
-                    });
+                    resetPresentationState(mappedPresentationState);
                     // navigate to the edit page if there is at least 1 slide in the presentation
-                    slideList.length !== 0 &&
-                        navigate(`/presentation/${presentationId}/${data?.pace?.active}/edit`, {
+                    mappedPresentationState.slides.length !== 0 &&
+                        navigate(`/presentation/${presentationId}/${data?.pace?.active_slide_id}/edit`, {
                             state: { code: PREFETCHING_REDIRECT_CODE },
                             replace: true,
                         });
                     return;
                 }
-                // const alert = new AlertBuilder()
-                // 	.setAlertType("error")
-                // 	.setConfirmBtnText("Quay lại")
-                // 	.preventDismiss()
-                // 	.setOnConfirm(() => navigate(`../`));
-                // if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                // 	const errors = (res.errors as any[]) || null;
-                // 	if (errors) {
-                // 		const msg = errors[0]?.message;
-                // 		alert.setTitle(msg);
-                // 		alert.getAlert().fireAlert();
-                // 		return;
-                // 	}
-                // 	return;
-                // }
-                // if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-                // 	alert.setTitle("Bài trình bày không tồn tại");
-                // 	alert.getAlert().fireAlert();
-                // 	return;
-                // }
+
+                if (
+                    res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION ||
+                    res.code === RESPONSE_CODE.VALIDATION_ERROR
+                ) {
+                    alert.setText(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION).getAlert().fireAlert();
+                    return;
+                }
+
                 throw new Error("Unhandle http code");
-            } catch (error) {
+            } catch (error: any) {
+                const res = error?.response?.data;
+                if (
+                    res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION ||
+                    res.code === RESPONSE_CODE.VALIDATION_ERROR
+                ) {
+                    alert.setText(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION).getAlert().fireAlert();
+                    return;
+                }
+
                 console.error(error);
+                alert.setText(ERROR_NOTIFICATION.FETCH_PRESENTATION_DETAIL).getAlert().fireAlert();
             }
         };
         getPresentationDetail();
@@ -101,25 +82,6 @@ export default function PresentationFetching() {
     }, [presentationId]);
 
     return (
-        // <div className="d-flex h-100 align-items-center justify-content-center">
-        //     <Stack className="app__card py-5 px-4 my-auto text-center" gap={3}>
-        //         <div className="d-flex justify-content-center mb-4">
-        //             <div className="text-start text-primary text-capitalize">
-        //                 <div style={{ fontSize: "2rem" }}>realtime</div>
-        //                 <div className="text-black fw-bolder" style={{ fontSize: "3.5rem" }}>
-        //                     learning platform
-        //                 </div>
-        //                 <div className="text-black fst-italic" style={{ fontSize: "1.9rem" }}>
-        //                     by H2A team
-        //                 </div>
-        //             </div>
-        //         </div>
-
-        //         <div>
-        //             <Spinner animation="grow" variant="primary" />
-        //         </div>
-        //     </Stack>
-        // </div>
         <div className="presentation-fetching">
             <Stack className="presentation-fetching__card py-5 px-4 my-auto text-center" gap={4}>
                 <div className="presentation-fetching__card__app-logo-container">

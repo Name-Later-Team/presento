@@ -36,7 +36,6 @@ const presentationDateTypeOption = [
 export interface IPresentationListItem {
     closedForVoting: boolean;
     createdAt: string;
-    id: number;
     identifier: string;
     name: string;
     ownerDisplayName: string;
@@ -208,7 +207,7 @@ export default function PresentationList() {
         if (!recordToChange) return Promise.reject();
 
         try {
-            const res = await PresentationService.updatePresentationAsync(recordToChange.id.toString(), {
+            const res = await PresentationService.updatePresentationAsync(recordToChange.identifier, {
                 name: value.name,
             });
 

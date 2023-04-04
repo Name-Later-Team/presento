@@ -12,6 +12,9 @@ export const COMMON_CONSTANTS = {
 export const RESPONSE_CODE = {
     // 400: BAD REQUEST
     VALIDATION_ERROR: 4001,
+    CANNOT_FIND_PRESENTATION: 4002,
+    PRESENTING_PRESENTATION: 4003,
+    CANNOT_FIND_SLIDE: 4004,
 
     // 401: UNAUTHORIZED
     LOGIN_EXPIRED: 4011,
@@ -43,6 +46,12 @@ export const ERROR_NOTIFICATION = {
     VALIDATION_ERROR: "Có lỗi trong yêu cầu đã gửi",
     CREATE_PRESENTATION: "Có lỗi xảy ra khi gửi yêu cầu tạo bài trình bày mới",
     RENAME_PRESENTATION_FAILED: "Có lỗi xảy ra khi gửi yêu cầu đổi tên bài trình bày",
+    FETCH_PRESENTATION_DETAIL: "Có lỗi xảy ra khi gửi yêu cầu lấy chi tiết bài trình bày",
+    CANNOT_FIND_PRESENTATION: "Không tìm thấy bài trình bày đã yêu cầu",
+    PRESENTING_PRESENTATION: "Không thể thao tác khi bài trình bày này đang được chiếu",
+    CREATE_NEW_SLIDE: "Có lỗi xảy ra khi tạo trang chiếu mới",
+    CANNOT_FIND_SLIDE: "Không tìm thấy trang chiếu đã yêu cầu",
+    FETCH_SLIDE_DETAIL: "Có lỗi xảy ra khi gửi yêu cầu lấy chi tiết trang chiếu",
 };
 
 export const PRESENTATION_OWNER_TYPE = {

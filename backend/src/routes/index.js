@@ -4,6 +4,7 @@ import { asyncRouteHandler } from "../common/middlewares/async-route.handler.js"
 import { ResponseBuilder } from "../common/utils/builders/response.builder.js";
 import { Logger } from "../common/utils/logger.js";
 import { APP_CONFIG } from "../configs/index.js";
+import moment from "moment";
 
 export const router = express.Router();
 
@@ -11,7 +12,13 @@ router.get(
     "/:service/v1/*",
     asyncRouteHandler((req, res) => {
         const { accessToken, tokenType } = req.session?.user ?? {};
-        const headers = { Authorization: `${tokenType} ${accessToken}` };
+        const headers = {
+            Authorization: `${tokenType} ${accessToken}`,
+            "Client-Id": APP_CONFIG.clientId,
+            "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ss+0000"),
+            "Resource-Uri": req.path,
+            "Service-Slug": APP_CONFIG.slug,
+        };
 
         axios({
             method: req.method,
@@ -40,7 +47,14 @@ router.post(
     "/:service/v1/*",
     asyncRouteHandler((req, res) => {
         const { accessToken, tokenType } = req.session?.user ?? {};
-        const headers = { Authorization: `${tokenType} ${accessToken}` };
+        const headers = {
+            Authorization: `${tokenType} ${accessToken}`,
+            "Content-Type": "application/json+text",
+            "Client-Id": APP_CONFIG.clientId,
+            "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ss+0000"),
+            "Resource-Uri": req.path,
+            "Service-Slug": APP_CONFIG.slug,
+        };
 
         axios({
             method: req.method,
@@ -70,7 +84,14 @@ router.put(
     "/:service/v1/*",
     asyncRouteHandler((req, res) => {
         const { accessToken, tokenType } = req.session?.user ?? {};
-        const headers = { Authorization: `${tokenType} ${accessToken}` };
+        const headers = {
+            Authorization: `${tokenType} ${accessToken}`,
+            "Content-Type": "application/json+text",
+            "Client-Id": APP_CONFIG.clientId,
+            "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ss+0000"),
+            "Resource-Uri": req.path,
+            "Service-Slug": APP_CONFIG.slug,
+        };
 
         axios({
             method: req.method,

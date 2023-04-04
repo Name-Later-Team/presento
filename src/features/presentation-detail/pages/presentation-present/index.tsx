@@ -3,11 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useRef, useState } from "react";
 import { Stack } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
-import {
-    IPresentationPace,
-    IPresentationSlide,
-    usePresentFeature,
-} from "../../../../common/contexts/present-feature-context";
+import { usePresentFeature } from "../../../../common/contexts/present-feature-context";
 import "./style.scss";
 import PresentationSlide from "../../components/presentation-slide";
 import CustomizedTooltip from "../../../../common/components/tooltip";
@@ -15,7 +11,9 @@ import { useGlobalContext } from "../../../../common/contexts";
 import { AlertBuilder } from "../../../../common/components/alert";
 import PresentationService from "../../../../services/presentation-service";
 import { Notification } from "../../../../common/components/notification";
-import { ERROR_NOTIFICATION } from "../../../../constants";
+import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../../constants";
+import DataMappingUtil from "../../../../common/utils/data-mapping-util";
+import SlideService from "../../../../services/slide-service";
 
 export default function PresentPresentation() {
     // contexts
@@ -137,57 +135,6 @@ export default function PresentPresentation() {
     // });
     // ================= end of handling socket section =================
 
-    // process result and choices received from api
-    const handleResultData: (
-        choices: any,
-        resultsData: any
-    ) => {
-        options: { key: string; value: string }[];
-        results: { key: string; value: number }[];
-        selectedOption: string;
-    } = (choices, resultsData) => {
-        const options: { key: string; value: string }[] = [];
-        const results: { key: string; value: number }[] = [];
-        let selectedOption = "";
-
-        if (Array.isArray(choices)) {
-            const flag = Array.isArray(resultsData);
-
-            choices.sort((a, b) => a?.position - b?.position);
-
-            let haveCorrectAnswer = false;
-
-            choices.forEach((item, idx) => {
-                options.push({
-                    key: item?.id ?? idx,
-                    value: item?.label ?? "",
-                });
-                const tempResult = {
-                    key: item?.id ?? idx,
-                    value: 0,
-                };
-
-                if (flag) {
-                    tempResult.value =
-                        (resultsData as any[]).find((element) => element?.id === item?.id)?.score[0] ?? 0;
-                }
-
-                results.push(tempResult);
-                if (item?.correctAnswer === true) {
-                    haveCorrectAnswer = true;
-                    selectedOption = item?.id;
-                }
-            });
-
-            if (!haveCorrectAnswer) selectedOption = "";
-        }
-        return {
-            options: options,
-            results: results,
-            selectedOption: selectedOption,
-        };
-    };
-
     useEffect(() => {
         const fetchingPresentationDetail = async () => {
             globalContext.blockUI("Đang lấy thông tin");
@@ -196,14 +143,15 @@ export default function PresentPresentation() {
                 .setText("Bài trình chiếu này hiện đang không được trình chiếu.")
                 .setAlertType("info")
                 .setConfirmBtnText("OK")
-                .setOnConfirm(() => navigate("/"))
+                .setOnConfirm(() => navigate("/dashboard/presentation-list"))
                 .preventDismiss()
                 .getAlert();
-            // const alertNavigate = new AlertBuilder()
-            //     .setAlertType("error")
-            //     .setConfirmBtnText("Về trang chủ")
-            //     .preventDismiss()
-            //     .setOnConfirm(() => navigate("./"));
+            const alertNavigate = new AlertBuilder()
+                .reset()
+                .setTitle("Lỗi")
+                .setAlertType("error")
+                .setConfirmBtnText("OK")
+                .setOnConfirm(() => navigate("/dashboard/presentation-list"));
             const kickAlert = new AlertBuilder()
                 .setTitle("Thông báo")
                 .setText("Bạn không có quyền truy cập trang này")
@@ -217,127 +165,53 @@ export default function PresentPresentation() {
                 const presentationRes = await PresentationService.getPresentationDetailAsync(presentationId || "");
                 if (presentationRes.code === 200) {
                     const data = presentationRes.data as any;
-                    const slideList = data.slides;
-                    if (data?.permission?.presentationRole === null && data?.permission?.groupRole === null) {
-                        kickAlert.fireAlert();
-                        globalContext.unBlockUI();
-                        return;
-                    }
-                    if (data?.permission?.presentationRole === "collaborator" && data?.permission?.groupRole === null) {
-                        kickAlert.fireAlert();
-                        globalContext.unBlockUI();
-                        return;
-                    }
-                    const mappedSlideList: IPresentationSlide[] = slideList.map(
-                        (item: any) =>
-                            ({
-                                id: item?.id ?? "",
-                                adminKey: item?.admin_key ?? "",
-                                type: item?.type ?? "",
-                                position: item?.position ?? 1,
-                            } as IPresentationSlide)
+                    const mappedPresentationState = DataMappingUtil.mapPresentationStateFromApiData(
+                        presentationState,
+                        data
                     );
-                    resetPresentationState({
-                        ...presentationState,
-                        slides: mappedSlideList,
-                        voteKey: data?.voteKey ?? "",
-                        votingCode: data?.votingCode ?? "",
-                        pace: {
-                            active: data?.pace?.active ?? "",
-                            counter: data?.pace?.counter ?? 0,
-                            mode: data?.pace?.mode ?? "",
-                            state: data?.pace?.state ?? "",
-                            groupId: data?.pace?.groupId ?? null,
-                        } as IPresentationPace,
-                    });
+                    resetPresentationState(mappedPresentationState);
+
                     // if the slide has not been presented yet (user enters the URL directly into the URL bar)
                     if (data?.pace?.state === "idle") {
                         globalContext.unBlockUI();
                         alert.fireAlert();
                         return;
                     }
+
                     // get slide detail
-                    const res = await PresentationService.getSlideDetailAsync(presentationId || "", slideId || "");
+                    const res = await SlideService.getSlideDetailAsync(presentationId || "", slideId || "");
+
                     if (res.code === 200) {
-                        // get slide result
-                        const resultRes = await PresentationService.getSlideResultAsync(
-                            presentationId || "",
-                            slideId || ""
-                        );
-                        const resultResData = resultRes?.data;
-                        if (resultRes.code === 200) {
-                            const resData = res.data;
-                            const newVal = { ...slideState };
-                            newVal.question = resData?.question ?? "";
-                            newVal.description = resData?.questionDescription ?? "";
-                            newVal.type = resData?.type ?? "";
-                            newVal.respondents = resultResData?.respondents ?? 0;
-                            const processedResult = handleResultData(resData?.choices, resultResData?.results);
-                            newVal.selectedOption = processedResult.selectedOption;
-                            newVal.options = processedResult.options;
-                            newVal.result = processedResult.results;
-                            newVal.enableVoting = resData?.active ?? true;
-                            newVal.showInstructionBar = !resData?.hideInstructionBar ?? true;
-                            newVal.fontSize = resData?.textSize ?? 32;
-                            newVal.id = resData?.id ?? "";
-                            newVal.adminKey = resData?.adminKey ?? "";
-                            newVal.presentationId = resData?.presentationId ?? "";
-                            newVal.presentationSeriesId = resData?.presentationSeriesId ?? "";
-                            newVal.position = resData?.position ?? "";
-                            newVal.createdAt = resData?.createdAt ?? "";
-                            newVal.config = null;
-                            newVal.updatedAt = resData?.updatedAt ?? "";
-                            newVal.questionImageUrl = resData?.questionImageUrl ?? "";
-                            newVal.questionVideoUrl = resData?.questionVideoUrl ?? "";
-                            resetSlideState(newVal);
+                        const resData = res?.data;
+                        if (!resData) {
                             globalContext.unBlockUI();
                             return;
                         }
-                        Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_RESULT);
+                        const mappedSlideDetail = DataMappingUtil.mapSlideStateFromApiData(slideState, resData);
+                        resetSlideState(mappedSlideDetail);
                         globalContext.unBlockUI();
                         return;
                     }
-                    //     if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-                    //         alertNavigate.setTitle("Bài trình bày không tồn tại").setText("");
-                    //         alertNavigate.getAlert().fireAlert();
-                    //         globalContext.unBlockUI();
-                    //         return;
-                    //     }
-                    //     if (res.code === RESPONSE_CODE.SLIDE_NOT_FOUND) {
-                    //         alertNavigate.setTitle("Trang chiếu không tồn tại").setText("");
-                    //         alertNavigate.getAlert().fireAlert();
-                    //         globalContext.unBlockUI();
-                    //         return;
-                    //     }
-                    //     if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                    //         Notification.notifyError("Có lỗi xảy ra khi gửi yêu cầu");
-                    //         globalContext.unBlockUI();
-                    //         return;
-                    //     }
-                    //     Notification.notifyError("Có lỗi xảy ra khi lấy chi tiết trang chiếu");
-                    //     globalContext.unBlockUI();
-                    //     return;
                 }
-                // if (presentationRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                //     const errors = (presentationRes.errors as any[]) || null;
-                //     if (errors) {
-                //         const msg = errors[0]?.message;
-                //         alertNavigate.setTitle(msg);
-                //         alertNavigate.getAlert().fireAlert();
-                //         globalContext.unBlockUI();
-                //         return;
-                //     }
-                //     globalContext.unBlockUI();
-                //     return;
-                // }
-                // if (presentationRes.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-                //     alertNavigate.setTitle("Bài trình bày không tồn tại").setText("");
-                //     alertNavigate.getAlert().fireAlert();
-                //     globalContext.unBlockUI();
-                //     return;
-                // }
+
                 throw new Error("Unknown http code");
-            } catch (err) {
+            } catch (err: any) {
+                const res = err?.response?.data;
+                if (
+                    res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION ||
+                    res.code === RESPONSE_CODE.VALIDATION_ERROR
+                ) {
+                    alertNavigate.setText(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION).getAlert().fireAlert();
+                    globalContext.unBlockUI();
+                    return;
+                }
+
+                if (res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                    alertNavigate.setText(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE).getAlert().fireAlert();
+                    globalContext.unBlockUI();
+                    return;
+                }
+
                 console.error(err);
                 if (err === "forbidden") {
                     kickAlert.fireAlert();
@@ -376,7 +250,7 @@ export default function PresentPresentation() {
     };
 
     // find path for next and back slide button
-    thisSlideIndex.current = presentationState.slides.findIndex((slide) => slide.adminKey === slideId);
+    thisSlideIndex.current = presentationState.slides.findIndex((slide) => slide.id === slideId);
 
     const changeSlide = async (next: boolean) => {
         // const targetSlideId = next
