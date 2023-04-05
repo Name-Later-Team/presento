@@ -1,0 +1,25 @@
+.login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.login__card {
+    position: relative;
+    padding: 2rem;
+    margin: 1rem;
+}
+
+.login__back-to-home-btn {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+
+    // customize bootstrap
+    background: transparent !important;
+    color: var(--bs-primary) !important;
+    border: none !important;
+    transform: none !important;
+    padding: 1.1rem !important;
+}
