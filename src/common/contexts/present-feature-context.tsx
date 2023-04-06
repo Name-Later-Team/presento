@@ -120,14 +120,12 @@ export const initSlideState: ISlideState = {
 interface IDataState {
     slideState: ISlideState;
     presentationState: IPresentationState;
-    // isModified: boolean;
 }
 
 export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvider) => {
     const [dataState, setDataState] = useState<IDataState>({
         slideState: initSlideState,
         presentationState: initPresentationState,
-        // isModified: false,
     });
     const originalState = useRef<IDataState>({
         slideState: initSlideState,
@@ -139,7 +137,6 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         setDataState((prevState) => ({
             ...prevState,
             slideState: { ...dataState.slideState, ...newSlideState },
-            // isModified: true,
         }));
     };
 
@@ -148,7 +145,6 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         setDataState((prevState) => ({
             ...prevState,
             presentationState: { ...dataState.presentationState, ...newPresentationState },
-            // isModified: true,
         }));
     };
 
@@ -163,7 +159,6 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
 
                 return {
                     ...prevState,
-                    // isModified: false,
                 };
             });
             return;
@@ -178,7 +173,6 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
             return {
                 ...prevState,
                 slideState: { ...dataState.slideState, ...newSlideState },
-                // isModified: false,
             };
         });
     };
@@ -193,7 +187,6 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
 
                 return {
                     ...prevState,
-                    // isModified: false,
                 };
             });
             return;
@@ -208,12 +201,9 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
             return {
                 ...prevState,
                 presentationState: { ...dataState.presentationState, ...newPresentationState },
-                // isModified: false,
             };
         });
     };
-
-    // console.log(dataState.presentationState, originalState.current.presentationState);
 
     return (
         <PresentFeature.Provider

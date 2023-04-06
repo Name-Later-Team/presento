@@ -25,7 +25,7 @@ const smallScreenMediaQuery = "(max-width: 768px)";
 export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
     const { userInfo, removeUserInfo } = useAuth();
-    const { slideState, isModified, resetSlideState } = usePresentFeature();
+    const { slideState, isModified, resetSlideState, resetPresentationState, presentationState } = usePresentFeature();
     const globalContext = useGlobalContext();
 
     const { presentationId, slideId } = useParams();
@@ -33,6 +33,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const [hideSaveBtn, setHideSaveBtn] = useState(false);
     const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(smallScreenMediaQuery).matches);
     // const [showSelectGroupModal, setShowSelectGroupModal] = useState<boolean>(false);
+
     const navigate = useNavigate();
 
     // add event to alert user to save before leaving
@@ -57,8 +58,6 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
             mediaQueryList.removeEventListener("change", onChange);
         };
     }, []);
-
-    console.log(isSmallScreen);
 
     // effect that happens when change slide within the edit page
     useEffect(() => {
@@ -85,21 +84,44 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                 if (res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
                     Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
                     globalContext.unBlockUI();
-                    return;
+                    return Promise.reject();
                 }
 
                 if (res.code === RESPONSE_CODE.VALIDATION_ERROR || res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
                     Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
                     globalContext.unBlockUI();
-                    return;
+                    return Promise.reject();
                 }
 
                 console.error(err);
                 Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_DETAIL);
                 globalContext.unBlockUI();
+                return Promise.reject();
             }
         };
-        fetchingSlideDetail();
+
+        const fetchVotingCode = async () => {
+            try {
+                const res = await PresentationService.postVotingCodeAsync(presentationId || "");
+
+                if (res.code === 200) {
+                    if (!res.data) return;
+
+                    if (res.data.isValid) {
+                        resetPresentationState({ ...presentationState, votingCode: res.data.code });
+                        return;
+                    }
+                }
+
+                throw new Error("Unknown http code");
+            } catch (err) {
+                console.error(err);
+                Notification.notifyError(ERROR_NOTIFICATION.FETCH_VOTING_CODE_PROCESS);
+            }
+        };
+        fetchingSlideDetail()
+            .then(() => fetchVotingCode())
+            .catch(() => {});
         // eslint-disable-next-line
     }, [presentationId, slideId]);
 

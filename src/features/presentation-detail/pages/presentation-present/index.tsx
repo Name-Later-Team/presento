@@ -175,7 +175,7 @@ export default function PresentPresentation() {
                     if (data?.pace?.state === "idle") {
                         globalContext.unBlockUI();
                         alert.fireAlert();
-                        return;
+                        return Promise.reject();
                     }
 
                     // get slide detail
@@ -203,13 +203,13 @@ export default function PresentPresentation() {
                 ) {
                     alertNavigate.setText(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION).getAlert().fireAlert();
                     globalContext.unBlockUI();
-                    return;
+                    return Promise.reject();
                 }
 
                 if (res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
                     alertNavigate.setText(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE).getAlert().fireAlert();
                     globalContext.unBlockUI();
-                    return;
+                    return Promise.reject();
                 }
 
                 console.error(err);
@@ -217,9 +217,33 @@ export default function PresentPresentation() {
                     kickAlert.fireAlert();
                 }
                 globalContext.unBlockUI();
+                return Promise.reject();
             }
         };
-        fetchingPresentationDetail();
+
+        const fetchVotingCode = async () => {
+            try {
+                const res = await PresentationService.postVotingCodeAsync(presentationId || "");
+
+                if (res.code === 200) {
+                    if (!res.data) return;
+
+                    if (res.data.isValid) {
+                        resetPresentationState({ ...presentationState, votingCode: res.data.code });
+                        return;
+                    }
+                }
+
+                throw new Error("Unknown http code");
+            } catch (err) {
+                console.error(err);
+                Notification.notifyError(ERROR_NOTIFICATION.FETCH_VOTING_CODE_PROCESS);
+            }
+        };
+
+        fetchingPresentationDetail()
+            .then(() => fetchVotingCode())
+            .catch(() => {});
         // eslint-disable-next-line
     }, [slideId]);
 
