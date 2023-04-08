@@ -21,6 +21,9 @@ import {
 import PresentationService from "../../../../services/presentation-service";
 import PresentationModal, { IPresentationForm, IPresentationModalProps } from "../../components/presentation-modal";
 import PresentationListTable from "../../components/presentation-list-table";
+import SharePresentationModal, {
+    ISharePresentationModalProps,
+} from "../../../../common/components/share-presentation-modal";
 moment.locale("vi");
 
 const presentationTypeOption = [
@@ -83,6 +86,13 @@ export default function PresentationList() {
     const [rerender, setRerender] = useState(false); // use this state to force rerender with the same search object
     const [presentationType, setPresentationType] = useState(defaultFilter.ownerType);
     const [presentationDateType, setPresentationDateType] = useState(defaultFilter.dateType);
+    // manage create & edit modal
+    const [presentationModal, setPresentationModal] = useState<IPresentationModalProps>(defaultPresentationModalState);
+    // share presentation modal
+    const [shareModal, setShareModal] = useState<ISharePresentationModalProps>({
+        show: false,
+        onClose: () => {},
+    });
 
     // fetch data
     useEffect(() => {
@@ -130,9 +140,6 @@ export default function PresentationList() {
         };
         fetchPresentationsList();
     }, [searchObject.limit, searchObject.page, searchObject.order, rerender]);
-
-    // manage create & edit modal
-    const [presentationModal, setPresentationModal] = useState<IPresentationModalProps>(defaultPresentationModalState);
 
     // processing functions
     const handlePageChange = (newPage: number) => {
@@ -249,6 +256,19 @@ export default function PresentationList() {
         });
     };
 
+    const openShareModal = (identifier: string) => {
+        setShareModal((prev) => ({
+            show: true,
+            onClose: () =>
+                setShareModal({
+                    ...prev,
+                    show: false,
+                    presentationIdentifier: undefined,
+                }),
+            presentationIdentifier: identifier,
+        }));
+    };
+
     return (
         <>
             <DashboardPageSkeleton pageTitle="Danh sách bài trình bày">
@@ -307,6 +327,7 @@ export default function PresentationList() {
                             action={{
                                 handleDeletePresentation: handleDeleteAPresentation,
                                 handleOpenRenameModal: openRenameModal,
+                                handleOpenShareModal: openShareModal,
                             }}
                         />
 
@@ -321,6 +342,8 @@ export default function PresentationList() {
 
             {/* Modal for handling create a new presentation or rename a presentation */}
             <PresentationModal {...presentationModal} />
+            {/* Share modal */}
+            <SharePresentationModal {...shareModal} />
         </>
     );
 }

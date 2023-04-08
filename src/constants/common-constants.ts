@@ -15,6 +15,7 @@ export const RESPONSE_CODE = {
     CANNOT_FIND_PRESENTATION: 4002,
     PRESENTING_PRESENTATION: 4003,
     CANNOT_FIND_SLIDE: 4004,
+    INVALID_VOTING_CODE: 4005,
 
     // 401: UNAUTHORIZED
     LOGIN_EXPIRED: 4011,
@@ -52,6 +53,8 @@ export const ERROR_NOTIFICATION = {
     CREATE_NEW_SLIDE: "Có lỗi xảy ra khi tạo trang chiếu mới",
     CANNOT_FIND_SLIDE: "Không tìm thấy trang chiếu đã yêu cầu",
     FETCH_SLIDE_DETAIL: "Có lỗi xảy ra khi gửi yêu cầu lấy chi tiết trang chiếu",
+    FETCH_VOTING_CODE_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu lấy mã bầu chọn",
+    INVALID_VOTING_CODE: "Mã bầu chọn không hợp lệ",
 };
 
 export const PRESENTATION_OWNER_TYPE = {

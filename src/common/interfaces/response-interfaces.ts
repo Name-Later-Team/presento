@@ -37,3 +37,9 @@ export interface ISlideDetailResponse {
     result: { key: string; value: number }[];
     respondents: number;
 }
+
+export interface IVotingCodeResponse {
+    code: string;
+    isValid: boolean;
+    expiresAt: string;
+}
