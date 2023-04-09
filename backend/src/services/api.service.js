@@ -110,7 +110,7 @@ export class ApiService {
 
     #generateBaseHeaders(path) {
         return {
-            // "Client-Id": APP_CONFIG.clientId,
+            "Client-Id": APP_CONFIG.clientId,
             "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ssZ"),
             "Resource-Uri": path.replace(/(\?.+)|\?/, ""),
             "Service-Slug": APP_CONFIG.slug,
