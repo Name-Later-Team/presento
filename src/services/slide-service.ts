@@ -86,7 +86,7 @@ export default class SlideService {
 
     static getSlideDetailAsync(presentationIdentifier: string, slideId: string) {
         return HttpService.get<ISlideDetailResponse>(
-            `/api/presento/v1/presentations/${presentationIdentifier}/slides/${slideId}`
+            `/api/presentation/v1/presentations/${presentationIdentifier}/slides/${slideId}`
         );
     }
 }

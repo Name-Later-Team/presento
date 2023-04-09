@@ -1,44 +1,21 @@
-import axios from "axios";
 import * as express from "express";
 import { asyncRouteHandler } from "../common/middlewares/async-route.handler.js";
 import { ResponseBuilder } from "../common/utils/builders/response.builder.js";
-import { Logger } from "../common/utils/logger.js";
-import { APP_CONFIG } from "../configs/index.js";
-import moment from "moment";
+import { ApiService } from "../services/api.service.js";
 
 export const router = express.Router();
 
 router.get(
     "/:service/v1/*",
-    asyncRouteHandler((req, res) => {
+    asyncRouteHandler(async (req, res) => {
         const { accessToken, tokenType } = req.session?.user ?? {};
-        const headers = {
-            Authorization: `${tokenType} ${accessToken}`,
-            "Client-Id": APP_CONFIG.clientId,
-            "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ss+0000"),
-            "Resource-Uri": req.path,
-            "Service-Slug": APP_CONFIG.slug,
-        };
+        const authorization = `${tokenType} ${accessToken}`;
 
-        axios({
-            method: req.method,
-            url: `${APP_CONFIG.apiGateway}${req.originalUrl.replace("/api", "")}`,
-            headers,
-        })
-            .then((response) => res.send(response.data))
+        new ApiService()
+            .getRequestAsync(req.originalUrl.replace("/api", ""), { Authorization: authorization })
+            .then((response) => res.status(response.status).send(response.data))
             .catch((error) => {
-                if (error.response) {
-                    return res.status(error.response.status).send(error.response.data);
-                }
-
-                Logger.error(error);
-
-                // todo: handle error here
-
-                return res.status(504).json({
-                    code: 504,
-                    message: "Gateway Timeout",
-                });
+                res.status(error.status).send(error.data);
             });
     })
 );
@@ -47,35 +24,13 @@ router.post(
     "/:service/v1/*",
     asyncRouteHandler((req, res) => {
         const { accessToken, tokenType } = req.session?.user ?? {};
-        const headers = {
-            Authorization: `${tokenType} ${accessToken}`,
-            "Content-Type": "application/json+text",
-            "Client-Id": APP_CONFIG.clientId,
-            "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ss+0000"),
-            "Resource-Uri": req.path,
-            "Service-Slug": APP_CONFIG.slug,
-        };
+        const authorization = `${tokenType} ${accessToken}`;
 
-        axios({
-            method: req.method,
-            url: `${APP_CONFIG.apiGateway}${req.originalUrl.replace("/api", "")}`,
-            headers,
-            data: req.body,
-        })
-            .then((response) => res.send(response.data))
+        new ApiService()
+            .postJsonRequestAsync(req.originalUrl.replace("/api", ""), req.body, { Authorization: authorization })
+            .then((response) => res.status(response.status).send(response.data))
             .catch((error) => {
-                if (error.response) {
-                    return res.status(error.response.status).send(error.response.data);
-                }
-
-                Logger.error(error);
-
-                // todo: handle error here
-
-                return res.status(504).json({
-                    code: 504,
-                    message: "Gateway Timeout",
-                });
+                res.status(error.status).send(error.data);
             });
     })
 );
@@ -84,35 +39,28 @@ router.put(
     "/:service/v1/*",
     asyncRouteHandler((req, res) => {
         const { accessToken, tokenType } = req.session?.user ?? {};
-        const headers = {
-            Authorization: `${tokenType} ${accessToken}`,
-            "Content-Type": "application/json+text",
-            "Client-Id": APP_CONFIG.clientId,
-            "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ss+0000"),
-            "Resource-Uri": req.path,
-            "Service-Slug": APP_CONFIG.slug,
-        };
+        const authorization = `${tokenType} ${accessToken}`;
 
-        axios({
-            method: req.method,
-            url: `${APP_CONFIG.apiGateway}${req.originalUrl.replace("/api", "")}`,
-            headers,
-            data: req.body,
-        })
-            .then((response) => res.send(response.data))
+        new ApiService()
+            .putJsonRequestAsync(req.originalUrl.replace("/api", ""), req.body, { Authorization: authorization })
+            .then((response) => res.status(response.status).send(response.data))
             .catch((error) => {
-                if (error.response) {
-                    return res.status(error.response.status).send(error.response.data);
-                }
+                res.status(error.status).send(error.data);
+            });
+    })
+);
 
-                Logger.error(error);
+router.delete(
+    "/:service/v1/*",
+    asyncRouteHandler((req, res) => {
+        const { accessToken, tokenType } = req.session?.user ?? {};
+        const authorization = `${tokenType} ${accessToken}`;
 
-                // todo: handle error here
-
-                return res.status(504).json({
-                    code: 504,
-                    message: "Gateway Timeout",
-                });
+        new ApiService()
+            .deleteRequestAsync(req.originalUrl.replace("/api", ""), { Authorization: authorization })
+            .then((response) => res.status(response.status).send(response.data))
+            .catch((error) => {
+                res.status(error.status).send(error.data);
             });
     })
 );
