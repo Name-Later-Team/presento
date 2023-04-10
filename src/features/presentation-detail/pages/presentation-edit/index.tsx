@@ -60,7 +60,6 @@ export default function EditPresentation() {
             if (element.id === oldSlideState.adminKey) {
                 element.type = newSlideType?.value || "";
                 changePresentationState({
-                    ...presentationState,
                     slides: newSlides,
                 });
                 break;

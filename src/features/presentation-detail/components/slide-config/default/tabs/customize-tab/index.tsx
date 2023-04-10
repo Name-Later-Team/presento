@@ -25,7 +25,6 @@ export default function CustomizeTab() {
                         label="Cho phép bầu chọn"
                         onChange={() =>
                             changeSlideState({
-                                ...slideState,
                                 enableVoting: !slideState.enableVoting,
                             })
                         }
@@ -37,7 +36,6 @@ export default function CustomizeTab() {
                         label="Hiện thanh hướng dẫn"
                         onChange={() =>
                             changeSlideState({
-                                ...slideState,
                                 showInstructionBar: !slideState.showInstructionBar,
                             })
                         }
@@ -53,7 +51,6 @@ export default function CustomizeTab() {
                             onClick={() => {
                                 if (slideState.fontSize <= FONT_SIZE_RANGE.MIN) return;
                                 changeSlideState({
-                                    ...slideState,
                                     fontSize: slideState.fontSize - FONT_SIZE_STEP,
                                 });
                             }}
@@ -67,7 +64,6 @@ export default function CustomizeTab() {
                             onClick={() => {
                                 if (slideState.fontSize >= FONT_SIZE_RANGE.MAX) return;
                                 changeSlideState({
-                                    ...slideState,
                                     fontSize: slideState.fontSize + FONT_SIZE_STEP,
                                 });
                             }}

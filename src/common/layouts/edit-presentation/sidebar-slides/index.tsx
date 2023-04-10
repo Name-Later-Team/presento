@@ -1,6 +1,6 @@
 import { faPlus, IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button, Nav } from "react-bootstrap";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Notification } from "../../../components/notification";
@@ -30,7 +30,10 @@ export interface ISidebarSlideNav {
 export default function SidebarSlides() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { presentationId } = useParams();
+    const { presentationId, slideId } = useParams();
+
+    const [scrollToSlideId, setScrollToSlideId] = useState<string | undefined>(undefined);
+
     const { presentationState, changePresentationState, resetPresentationState } = usePresentFeature();
     const globalContext = useGlobalContext();
 
@@ -52,9 +55,14 @@ export default function SidebarSlides() {
                 resetPresentationState(mappedPresentationState);
                 globalContext.unBlockUI();
                 // if last is true, navigate to the last item in slide list (used when creating a new slide), otherwise navigating according to pace field from api
-                navigateToLastItem
-                    ? navigate(`/presentation/${presentationId}/${mappedPresentationState.slides.at(-1)?.id}/edit`)
-                    : navigate(`/presentation/${presentationId}/${data?.pace?.active_slide_id}/edit`);
+                let scrollTo = slideId;
+                if (navigateToLastItem) {
+                    const navigateToSlideId = mappedPresentationState.slides.at(-1)?.id;
+                    navigate(`/presentation/${presentationId}/${navigateToSlideId}/edit`);
+                    scrollTo = navigateToSlideId;
+                }
+
+                setScrollToSlideId(scrollTo);
                 return;
             }
 
@@ -75,13 +83,26 @@ export default function SidebarSlides() {
 
     useEffect(() => {
         if (location.state !== null && location.state !== undefined && presentationState.slides.length !== 0) {
-            if ((location.state as any)?.code === PREFETCHING_REDIRECT_CODE) return;
+            if ((location.state as any)?.code === PREFETCHING_REDIRECT_CODE) {
+                setScrollToSlideId(slideId);
+                return;
+            }
         }
 
         // if user enter url directly into the url bar, fetch slide list and presentation config directly
         getPresentationDetail();
         // eslint-disable-next-line
     }, []);
+
+    useEffect(() => {
+        if (!scrollToSlideId) return;
+        try {
+            document.getElementById(`${scrollToSlideId}`)?.scrollIntoView({ block: "center" } as ScrollIntoViewOptions);
+            setScrollToSlideId(undefined);
+        } catch (err) {
+            console.error(err);
+        }
+    }, [scrollToSlideId]);
 
     // create new slide
     const handleAddNewSlide = async () => {
@@ -309,7 +330,6 @@ export default function SidebarSlides() {
         }
 
         changePresentationState({
-            ...presentationState,
             slides: modifiedSlideData,
         });
     };

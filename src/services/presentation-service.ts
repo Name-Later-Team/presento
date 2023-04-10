@@ -1,4 +1,4 @@
-import { IVotingCodeResponse } from "../common/interfaces";
+import { IPresentationDetailResponse, IVotingCodeResponse } from "../common/interfaces";
 import { HttpService } from "./http-service";
 import queryString from "query-string";
 
@@ -25,7 +25,7 @@ export default class PresentationService {
     }
 
     static getPresentationDetailAsync(identifier: string) {
-        return HttpService.get<any>(`/api/presentation/v1/presentations/${identifier}`);
+        return HttpService.get<IPresentationDetailResponse>(`/api/presentation/v1/presentations/${identifier}`);
     }
 
     static postVotingCodeAsync(identifier: string) {

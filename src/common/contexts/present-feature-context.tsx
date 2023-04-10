@@ -1,5 +1,5 @@
 import { createContext, useContext, useRef, useState } from "react";
-import { IBaseComponent } from "../interfaces";
+import { IBaseComponent, IVotingCodeResponse } from "../interfaces";
 import _ from "lodash";
 
 // interfaces
@@ -41,7 +41,6 @@ export interface IPresentationPace {
 }
 
 export interface IPresentationState {
-    id: string;
     identifier: string;
     name: string;
     ownerDisplayName: string;
@@ -50,7 +49,7 @@ export interface IPresentationState {
     pace: IPresentationPace;
     totalSlides: number;
     updatedAt: string;
-    votingCode: string;
+    votingCode: IVotingCodeResponse;
 }
 
 interface IPresentFeatureContext {
@@ -59,13 +58,13 @@ interface IPresentFeatureContext {
 
     // access and change state that has information relating to a slide
     slideState: ISlideState;
-    changeSlideState: (newSlideState: ISlideState) => void;
-    resetSlideState: (newSlideState?: ISlideState) => void;
+    changeSlideState: (newSlideState: Partial<ISlideState>) => void;
+    resetSlideState: (newSlideState?: Partial<ISlideState>) => void;
 
     // access and change state that has information relating to a presentation
     presentationState: IPresentationState;
-    changePresentationState: (newPresentationState: IPresentationState) => void;
-    resetPresentationState: (newPresentationState?: IPresentationState) => void;
+    changePresentationState: (newPresentationState: Partial<IPresentationState>) => void;
+    resetPresentationState: (newPresentationState?: Partial<IPresentationState>) => void;
 }
 
 // props types for the context provider
@@ -76,7 +75,6 @@ const PresentFeature = createContext<IPresentFeatureContext | null>(null);
 
 // initial states for slide state and presentation state
 export const initPresentationState: IPresentationState = {
-    id: "",
     identifier: "",
     name: "",
     ownerDisplayName: "",
@@ -89,7 +87,11 @@ export const initPresentationState: IPresentationState = {
         state: "",
     },
     totalSlides: 0,
-    votingCode: "",
+    votingCode: {
+        code: "",
+        expiresAt: "",
+        isValid: false,
+    },
     updatedAt: "",
 };
 
@@ -132,24 +134,24 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         presentationState: initPresentationState,
     });
 
-    const changeSlideState = (newSlideState: ISlideState) => {
+    const changeSlideState = (newSlideState: Partial<ISlideState>) => {
         // mark as data has been changed and change data state
         setDataState((prevState) => ({
             ...prevState,
-            slideState: { ...dataState.slideState, ...newSlideState },
+            slideState: { ...prevState.slideState, ...newSlideState },
         }));
     };
 
-    const changePresentationState = (newPresentationState: IPresentationState) => {
+    const changePresentationState = (newPresentationState: Partial<IPresentationState>) => {
         // mark as data has been changed and change data state
         setDataState((prevState) => ({
             ...prevState,
-            presentationState: { ...dataState.presentationState, ...newPresentationState },
+            presentationState: { ...prevState.presentationState, ...newPresentationState },
         }));
     };
 
     // mark as data has not been changed
-    const resetSlideState = (newSlideState?: ISlideState) => {
+    const resetSlideState = (newSlideState?: Partial<ISlideState>) => {
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newSlideState == null) {
             setDataState((prevState) => {
@@ -167,17 +169,17 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         setDataState((prevState) => {
             originalState.current = _.cloneDeep({
                 ...prevState,
-                slideState: { ...dataState.slideState, ...newSlideState },
+                slideState: { ...prevState.slideState, ...newSlideState },
             });
 
             return {
                 ...prevState,
-                slideState: { ...dataState.slideState, ...newSlideState },
+                slideState: { ...prevState.slideState, ...newSlideState },
             };
         });
     };
 
-    const resetPresentationState = (newPresentationState?: IPresentationState) => {
+    const resetPresentationState = (newPresentationState?: Partial<IPresentationState>) => {
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newPresentationState == null) {
             setDataState((prevState) => {
@@ -195,12 +197,12 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         setDataState((prevState) => {
             originalState.current = _.cloneDeep({
                 ...prevState,
-                presentationState: { ...dataState.presentationState, ...newPresentationState },
+                presentationState: { ...prevState.presentationState, ...newPresentationState },
             });
 
             return {
                 ...prevState,
-                presentationState: { ...dataState.presentationState, ...newPresentationState },
+                presentationState: { ...prevState.presentationState, ...newPresentationState },
             };
         });
     };

@@ -3,8 +3,9 @@ import {
     IPresentationSlide,
     IPresentationState,
     ISlideState,
+    initPresentationState,
 } from "../contexts/present-feature-context";
-import { ISlideDetailResponse } from "../interfaces";
+import { IPresentationDetailResponse, ISlideDetailResponse } from "../interfaces";
 
 export default class DataMappingUtil {
     static mapSlideListFromApiData(data: any): IPresentationSlide[] {
@@ -12,29 +13,30 @@ export default class DataMappingUtil {
             (item: any) =>
                 ({
                     id: item?.id ?? "",
-                    adminKey: item?.admin_key ?? "",
                     type: item?.slideType ?? "",
                     position: item?.position ?? 1,
                 } as IPresentationSlide)
         );
     }
 
-    static mapPresentationStateFromApiData(presentationState: IPresentationState, data: any): IPresentationState {
+    static mapPresentationStateFromApiData(
+        presentationState: IPresentationState,
+        data: IPresentationDetailResponse
+    ): IPresentationState {
         const slideList = data.slides;
         const mappedSlideList: IPresentationSlide[] = this.mapSlideListFromApiData(slideList);
 
         return {
             ...presentationState,
-            id: data?.id ?? "",
             identifier: data?.identifier ?? "",
             ownerIdentifier: data?.ownerIdentifier ?? "",
             totalSlides: data?.totalSlides ?? 0,
             name: data?.name ?? "",
             ownerDisplayName: data.ownerDisplayName ?? "",
             slides: mappedSlideList,
-            votingCode: data?.votingCode ?? "",
+            votingCode: initPresentationState.votingCode,
             pace: {
-                active_slide_id: data?.pace?.active_slide_id ?? "",
+                active_slide_id: data?.pace?.active_slide_id.toString() ?? "",
                 counter: data?.pace?.counter ?? 0,
                 mode: data?.pace?.mode ?? "",
                 state: data?.pace?.state ?? "",

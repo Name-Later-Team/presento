@@ -38,6 +38,7 @@ const CustomSlideNav = React.forwardRef<HTMLDivElement, ICustomSlideNav>((props,
             {...draggableProvided.draggableProps}
             {...draggableProvided.dragHandleProps}
             className="custom-slide-nav__container"
+            id={slideId}
         >
             <Nav.Item className="custom-slide-nav__slide">
                 <Nav.Link className="custom-slide-nav__slide-link" onClick={handleOnClick} eventKey={path}>

@@ -38,7 +38,7 @@ export default function PresentationSlide() {
                                 <div
                                     className="presentation-slide__instruction-bar__content-wrapper"
                                     id="instruction-bar__vote-link"
-                                    onClick={() => presentationState.votingCode !== "" && handleCopyLink()}
+                                    onClick={() => presentationState.votingCode.code !== "" && handleCopyLink()}
                                 >
                                     Truy cập
                                     <span className="fw-bolder text-primary" style={{ marginInline: "0.4rem" }}>
@@ -46,20 +46,20 @@ export default function PresentationSlide() {
                                     </span>
                                     nhập mã
                                     <span className="fw-bolder text-primary" style={{ marginInline: "0.4rem" }}>
-                                        {presentationState.votingCode === "" ? (
+                                        {presentationState.votingCode.code === "" ? (
                                             <Spinner
                                                 className="vote-link__voting-code--spinner mx-2"
                                                 animation="border"
                                                 variant="primary"
                                             />
                                         ) : (
-                                            FormatUtil.formatVotingCodeString(presentationState.votingCode)
+                                            FormatUtil.formatVotingCodeString(presentationState.votingCode.code)
                                         )}
                                     </span>
                                     để bầu chọn
                                 </div>
                             </div>
-                            {presentationState.votingCode !== "" && (
+                            {presentationState.votingCode.code !== "" && (
                                 <CustomizedTooltip place="bottom" anchorSelect="#instruction-bar__vote-link">
                                     Nhấn để sao chép đường dẫn bầu chọn
                                 </CustomizedTooltip>

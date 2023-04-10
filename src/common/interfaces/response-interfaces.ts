@@ -43,3 +43,27 @@ export interface IVotingCodeResponse {
     isValid: boolean;
     expiresAt: string;
 }
+
+export interface ISlideListResponseData {
+    id: number;
+    position: number;
+    slideType: string;
+}
+
+export interface IPresentationDetailResponse {
+    closedForVoting: boolean;
+    createdAt: string;
+    identifier: string;
+    name: string;
+    ownerDisplayName: string;
+    ownerIdentifier: string;
+    pace: {
+        mode: string;
+        state: string;
+        active_slide_id: number;
+        counter: number;
+    };
+    slides: ISlideListResponseData[];
+    totalSlides: number;
+    updatedAt: string;
+}

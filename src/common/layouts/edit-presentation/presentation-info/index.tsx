@@ -102,7 +102,6 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
                 Notification.notifySuccess(SUCCESS_NOTIFICATION.RENAME_PRESENTATION_SUCCESS);
                 handleChangeMode(COMPONENT_MODE.display);
                 resetPresentationState({
-                    ...presentationState,
                     name: value.name,
                 });
                 return;
