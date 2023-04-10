@@ -5,7 +5,7 @@ import {
     ISlideState,
     initPresentationState,
 } from "../contexts/present-feature-context";
-import { IPresentationDetailResponse, ISlideDetailResponse } from "../interfaces";
+import { ICreateNewSlideResponse, IPresentationDetailResponse, ISlideDetailResponse } from "../interfaces";
 
 export default class DataMappingUtil {
     static mapSlideListFromApiData(data: any): IPresentationSlide[] {
@@ -17,6 +17,14 @@ export default class DataMappingUtil {
                     position: item?.position ?? 1,
                 } as IPresentationSlide)
         );
+    }
+
+    static mapNewlyCreatedSlideData(data: ICreateNewSlideResponse): IPresentationSlide {
+        return {
+            id: data.id.toString() ?? "",
+            type: data.slideType ?? "",
+            position: data.position ?? 1,
+        } as IPresentationSlide;
     }
 
     static mapPresentationStateFromApiData(

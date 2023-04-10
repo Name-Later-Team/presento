@@ -18,6 +18,7 @@ import SlideService from "../../../../services/slide-service";
 import { DragDropContext, Draggable, Droppable, OnDragEndResponder } from "react-beautiful-dnd";
 import "./style.scss";
 import DataMappingUtil from "../../../utils/data-mapping-util";
+import { ICreateNewSlideResponse } from "../../../interfaces";
 
 export interface ISidebarSlideNav {
     slideId: string;
@@ -32,15 +33,27 @@ export default function SidebarSlides() {
     const navigate = useNavigate();
     const { presentationId, slideId } = useParams();
 
+    // slide id to scroll into view
     const [scrollToSlideId, setScrollToSlideId] = useState<string | undefined>(undefined);
 
+    // contexts
     const { presentationState, changePresentationState, resetPresentationState } = usePresentFeature();
     const globalContext = useGlobalContext();
 
-    const getPresentationDetail = async (navigateToLastItem: boolean = false) => {
+    // Append the new slide data into the slides list and navigate to the newly created slide
+    const handleCreateNewSlideResponse = (data: ICreateNewSlideResponse) => {
+        resetPresentationState({
+            slides: [...presentationState.slides, DataMappingUtil.mapNewlyCreatedSlideData(data)],
+        });
+        navigate(`/presentation/${presentationId}/${data.id}/edit`);
+        setScrollToSlideId(data.id.toString());
+    };
+
+    const getPresentationDetail = async () => {
         if (presentationId == null) {
             return;
         }
+
         try {
             // get slide list and presentation config
             globalContext.blockUI();
@@ -54,15 +67,7 @@ export default function SidebarSlides() {
                 );
                 resetPresentationState(mappedPresentationState);
                 globalContext.unBlockUI();
-                // if last is true, navigate to the last item in slide list (used when creating a new slide), otherwise navigating according to pace field from api
-                let scrollTo = slideId;
-                if (navigateToLastItem) {
-                    const navigateToSlideId = mappedPresentationState.slides.at(-1)?.id;
-                    navigate(`/presentation/${presentationId}/${navigateToSlideId}/edit`);
-                    scrollTo = navigateToSlideId;
-                }
-
-                setScrollToSlideId(scrollTo);
+                setScrollToSlideId(slideId);
                 return;
             }
 
@@ -111,7 +116,9 @@ export default function SidebarSlides() {
             const res = await SlideService.createSlideAsync(presentationId || "", { type: "multiple_choice" });
             if (res.code === 201) {
                 Notification.notifySuccess(SUCCESS_NOTIFICATION.ADD_SLIDE_SUCCESS);
-                getPresentationDetail(true);
+                // getPresentationDetail(true);
+                if (!res.data) return;
+                handleCreateNewSlideResponse(res.data);
                 return;
             }
 

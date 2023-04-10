@@ -67,3 +67,23 @@ export interface IPresentationDetailResponse {
     totalSlides: number;
     updatedAt: string;
 }
+
+export interface ICreateNewSlideResponse {
+    createdAt: string;
+    extrasConfig: any;
+    hideInstructionBar: boolean;
+    id: number;
+    isActive: boolean;
+    position: number;
+    presentationId: number;
+    presentationIdentifier: string;
+    question: string;
+    questionDescription: string;
+    questionImageUrl: string | null;
+    questionVideoEmbedUrl: string | null;
+    showResult: boolean;
+    slideType: string;
+    speakerNotes: string;
+    textSize: number;
+    updatedAt: string;
+}
