@@ -16,6 +16,14 @@ export interface IAccessTokenResponse {
     expiresIn: number;
 }
 
+export interface IOptionsResponse {
+    key: string;
+    value: string;
+    type: string;
+    position: number;
+    metadata: any;
+}
+
 export interface ISlideDetailResponse {
     question: string;
     questionDescription: string;
@@ -33,7 +41,7 @@ export interface ISlideDetailResponse {
     position: number;
     presentationId: number;
     presentationIdentifier: string;
-    options: { key: string; value: string; type: string; position: number; metadata: any }[];
+    options: IOptionsResponse[];
     result: { key: string; value: number }[];
     respondents: number;
 }

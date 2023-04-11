@@ -1,18 +1,21 @@
 import { createContext, useContext, useRef, useState } from "react";
-import { IBaseComponent, IVotingCodeResponse } from "../interfaces";
+import { IBaseComponent, IOptionsResponse, IVotingCodeResponse } from "../interfaces";
 import _ from "lodash";
+import SlideService from "../../services/slide-service";
+import DataMappingUtil from "../utils/data-mapping-util";
+import { ERROR_NOTIFICATION, RESPONSE_CODE, SUCCESS_NOTIFICATION } from "../../constants";
+import { Notification } from "../components/notification";
 
 // interfaces
 export interface ISlideState {
     question: string;
     description: string;
-    options: { key: string; value: string }[];
+    options: IOptionsResponse[];
     selectedOption: string; // contains the key of the correct option in options field
     enableVoting: boolean;
     showInstructionBar: boolean;
     fontSize: number;
     type: string;
-    adminKey: string;
     config: any;
     createdAt: string;
     updatedAt: string;
@@ -65,6 +68,9 @@ interface IPresentFeatureContext {
     presentationState: IPresentationState;
     changePresentationState: (newPresentationState: Partial<IPresentationState>) => void;
     resetPresentationState: (newPresentationState?: Partial<IPresentationState>) => void;
+
+    // save changes by calling api
+    saveChanges: () => Promise<void>;
 }
 
 // props types for the context provider
@@ -104,7 +110,6 @@ export const initSlideState: ISlideState = {
     showInstructionBar: true,
     fontSize: 32,
     type: "",
-    adminKey: "",
     config: null,
     id: "",
     createdAt: "",
@@ -134,6 +139,7 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         presentationState: initPresentationState,
     });
 
+    // processing functions
     const changeSlideState = (newSlideState: Partial<ISlideState>) => {
         // mark as data has been changed and change data state
         setDataState((prevState) => ({
@@ -155,13 +161,9 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newSlideState == null) {
             setDataState((prevState) => {
-                originalState.current = _.cloneDeep({
-                    ...prevState,
-                });
+                originalState.current = _.cloneDeep(prevState);
 
-                return {
-                    ...prevState,
-                };
+                return { ...prevState };
             });
             return;
         }
@@ -183,13 +185,9 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newPresentationState == null) {
             setDataState((prevState) => {
-                originalState.current = _.cloneDeep({
-                    ...prevState,
-                });
+                originalState.current = _.cloneDeep(prevState);
 
-                return {
-                    ...prevState,
-                };
+                return { ...prevState };
             });
             return;
         }
@@ -207,6 +205,59 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         });
     };
 
+    // api-related functions
+    const handleSaveChanges = async () => {
+        const mappedSlideDetail = DataMappingUtil.mapSlideDetailToPut(
+            dataState.presentationState,
+            dataState.slideState
+        );
+        try {
+            const slideRes = await SlideService.putSlideDetailAsync(
+                dataState.presentationState.identifier,
+                dataState.slideState.id,
+                mappedSlideDetail
+            );
+
+            if (slideRes.code === 200) {
+                Notification.notifySuccess(SUCCESS_NOTIFICATION.SAVED_SUCCESS);
+                resetSlideState();
+                return;
+            }
+
+            throw new Error("Unhandled error code");
+        } catch (error: any) {
+            const slideRes = error?.response?.data;
+
+            if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                return;
+            }
+
+            if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+                return;
+            }
+
+            if (slideRes.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.PRESENTING_PRESENTATION);
+                return;
+            }
+
+            if (slideRes.code === RESPONSE_CODE.CANNOT_EDIT_VOTED_SLIDE) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_EDIT_VOTED_SLIDE);
+                return;
+            }
+
+            if (slideRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                return;
+            }
+
+            console.error("PresentationFeatureContextProvider:", error);
+            Notification.notifyError(ERROR_NOTIFICATION.SAVE_PROCESS);
+        }
+    };
+
     return (
         <PresentFeature.Provider
             value={{
@@ -216,6 +267,7 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
                 changePresentationState,
                 resetSlideState,
                 resetPresentationState,
+                saveChanges: handleSaveChanges,
                 isModified: !_.isEqual(dataState, originalState.current),
             }}
         >

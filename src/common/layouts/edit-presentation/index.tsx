@@ -27,7 +27,8 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
     // contexts
     const { userInfo, removeUserInfo } = useAuth();
-    const { slideState, presentationState, isModified, resetSlideState, resetPresentationState } = usePresentFeature();
+    const { slideState, presentationState, isModified, resetSlideState, resetPresentationState, saveChanges } =
+        usePresentFeature();
     const globalContext = useGlobalContext();
 
     // states
@@ -274,6 +275,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
         // 	console.error(error);
         // 	globalContext.unBlockUI();
         // }
+        saveChanges();
     };
 
     const handlePresentSlide = async () => {

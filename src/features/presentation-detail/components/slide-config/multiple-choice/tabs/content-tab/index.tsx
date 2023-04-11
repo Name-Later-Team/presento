@@ -2,12 +2,13 @@ import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button, Form, Stack } from "react-bootstrap";
 import { usePresentFeature } from "../../../../../../../common/contexts/present-feature-context";
+import { IOptionsResponse } from "../../../../../../../common/interfaces";
 
 export default function MultipleChoiceContentTab() {
     const { slideState, changeSlideState } = usePresentFeature();
 
     const handleChangeOptionText = (key: string, newValue: string) => {
-        const newState: { key: string; value: string }[] = [...slideState.options];
+        const newState: IOptionsResponse[] = [...slideState.options];
         for (let item of newState) {
             if (item.key.toString() === key) {
                 item.value = newValue;
@@ -28,11 +29,15 @@ export default function MultipleChoiceContentTab() {
     };
 
     const handleAddNewOption = () => {
-        const newState: { key: string; value: string }[] = [...slideState.options];
-        const newKey = Date.now().toString();
+        const newState: IOptionsResponse[] = [...slideState.options];
+        const newKey = `new-${Date.now().toString()}`;
+        const newPosition = newState.length;
         newState.push({
             key: newKey,
             value: "",
+            type: "option",
+            position: newPosition,
+            metadata: null,
         });
         changeSlideState({
             options: newState,
@@ -45,6 +50,8 @@ export default function MultipleChoiceContentTab() {
             ],
         });
     };
+
+    const sortedOptionsList = [...slideState.options].sort((a, b) => a.position - b.position);
 
     return (
         <Form>
@@ -83,7 +90,7 @@ export default function MultipleChoiceContentTab() {
 
                 <Stack gap={2}>
                     <Form.Label>Các lựa chọn</Form.Label>
-                    {slideState.options.map((option) => (
+                    {sortedOptionsList.map((option) => (
                         <Form.Check key={option.key} className="d-flex p-0">
                             {/* Should remove p-0 class of the above element when using the code below */}
                             {/* <div className="d-flex align-items-center justify-content-center me-2">

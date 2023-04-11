@@ -92,4 +92,11 @@ export default class SlideService {
             `/api/presentation/v1/presentations/${presentationIdentifier}/slides/${slideId}`
         );
     }
+
+    static putSlideDetailAsync(presentationIdentifier: string, slideId: string, data: any) {
+        return HttpService.put<any>(
+            `/api/presentation/v1/presentations/${presentationIdentifier}/slides/${slideId}`,
+            data
+        );
+    }
 }

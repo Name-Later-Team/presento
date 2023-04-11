@@ -5,7 +5,12 @@ import {
     ISlideState,
     initPresentationState,
 } from "../contexts/present-feature-context";
-import { ICreateNewSlideResponse, IPresentationDetailResponse, ISlideDetailResponse } from "../interfaces";
+import {
+    ICreateNewSlideResponse,
+    IOptionsResponse,
+    IPresentationDetailResponse,
+    ISlideDetailResponse,
+} from "../interfaces";
 
 export default class DataMappingUtil {
     static mapSlideListFromApiData(data: any): IPresentationSlide[] {
@@ -60,11 +65,11 @@ export default class DataMappingUtil {
             description: data?.questionDescription ?? "",
             type: data?.slideType ?? "",
             respondents: data?.respondents ?? 0,
-            options: (data?.options as unknown as { key: string; value: string }[]) ?? [],
+            options: (data?.options as unknown as IOptionsResponse[]) ?? [],
             result: (data?.result as unknown as { key: string; value: number }[]) ?? [],
             enableVoting: data?.isActive ?? true,
             showInstructionBar: !data?.hideInstructionBar ?? true,
-            fontSize: 32,
+            fontSize: data?.textSize ?? 32,
             id: data?.id.toString() ?? "",
             presentationId: data?.presentationId.toString() ?? "",
             presentationSeriesId: data?.presentationIdentifier ?? "",
@@ -74,6 +79,40 @@ export default class DataMappingUtil {
             updatedAt: data?.updatedAt ?? "",
             questionImageUrl: data?.questionImageUrl ?? "",
             questionVideoUrl: data?.questionVideoEmbedUrl ?? "",
+        };
+    }
+
+    static mapSlideDetailToPut(presentationState: IPresentationState, slideState: ISlideState) {
+        const mappedChoices = slideState.options.map((item) => {
+            let itemId = item.key;
+            if (itemId.toString().split("new-").length > 1) itemId = "0";
+            const mappedItem = {
+                id: itemId,
+                label: item.value,
+                type: item.type,
+                isCorrectAnswer: item.key === slideState.selectedOption,
+                metadata: item.metadata,
+                position: item.position,
+            };
+            return mappedItem;
+        });
+
+        return {
+            presentationId: slideState.presentationId,
+            presentationIdentifier: presentationState.identifier,
+            question: slideState.question,
+            questionDescription: slideState.description,
+            questionImageUrl: slideState.questionImageUrl || null,
+            questionVideoEmbedUrl: slideState.questionVideoUrl || null,
+            slideType: slideState.type,
+            speakerNotes: slideState.speakerNotes,
+            isActive: slideState.enableVoting,
+            showResult: true,
+            hideInstructionBar: !slideState.showInstructionBar,
+            extrasConfig: slideState.config,
+            position: slideState.position,
+            textSize: slideState.fontSize,
+            choices: mappedChoices,
         };
     }
 }
