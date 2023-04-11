@@ -14,6 +14,7 @@ import { Notification } from "../../../../common/components/notification";
 import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../../constants";
 import DataMappingUtil from "../../../../common/utils/data-mapping-util";
 import SlideService from "../../../../services/slide-service";
+import moment from "moment";
 
 export default function PresentPresentation() {
     // contexts
@@ -32,6 +33,7 @@ export default function PresentPresentation() {
 
     // refs
     const thisSlideIndex = useRef(-1);
+    const gotSlideDetail = useRef(false);
     // const joinedRoom = useRef(false); // keep track of calling join-room
 
     // automatically maximize the screen
@@ -221,6 +223,14 @@ export default function PresentPresentation() {
             }
         };
 
+        gotSlideDetail.current = false;
+        fetchingPresentationDetail()
+            .then(() => (gotSlideDetail.current = true))
+            .catch(() => {});
+        // eslint-disable-next-line
+    }, [slideId]);
+
+    useEffect(() => {
         const fetchVotingCode = async () => {
             try {
                 const res = await PresentationService.postVotingCodeAsync(presentationId || "");
@@ -229,7 +239,7 @@ export default function PresentPresentation() {
                     if (!res.data) return;
 
                     if (res.data.isValid) {
-                        resetPresentationState({ ...presentationState, votingCode: res.data.code });
+                        resetPresentationState({ votingCode: { ...res.data } });
                         return;
                     }
                 }
@@ -241,11 +251,19 @@ export default function PresentPresentation() {
             }
         };
 
-        fetchingPresentationDetail()
-            .then(() => fetchVotingCode())
-            .catch(() => {});
-        // eslint-disable-next-line
-    }, [slideId]);
+        // called voting code api when have got slide detail
+        if (gotSlideDetail.current) {
+            // get voting code if this is none
+            if (presentationState.votingCode.code === "") {
+                fetchVotingCode();
+            }
+
+            // get voting code if the voting code was expired
+            if (moment(presentationState.votingCode.expiresAt).diff(moment()) < 0) {
+                fetchVotingCode();
+            }
+        }
+    });
 
     const handleTurnOffPresentationMode = async (callApi: boolean = true) => {
         try {

@@ -16,6 +16,7 @@ export const RESPONSE_CODE = {
     PRESENTING_PRESENTATION: 4003,
     CANNOT_FIND_SLIDE: 4004,
     INVALID_VOTING_CODE: 4005,
+    CANNOT_EDIT_VOTED_SLIDE: 4007,
 
     // 401: UNAUTHORIZED
     LOGIN_EXPIRED: 4011,
@@ -31,6 +32,7 @@ export const SUCCESS_NOTIFICATION = {
     CREATE_PRESENTATION: "Tạo bài trình bày mới thành công",
     COPIED_LINK_SUCCESS: "Sao chép liên kết thành công",
     RENAME_PRESENTATION_SUCCESS: "Đổi tên bài trình bày thành công",
+    SAVED_SUCCESS: "Lưu thay đổi thành công",
 };
 
 export const ERROR_NOTIFICATION = {
@@ -55,6 +57,8 @@ export const ERROR_NOTIFICATION = {
     FETCH_SLIDE_DETAIL: "Có lỗi xảy ra khi gửi yêu cầu lấy chi tiết trang chiếu",
     FETCH_VOTING_CODE_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu lấy mã bầu chọn",
     INVALID_VOTING_CODE: "Mã bầu chọn không hợp lệ",
+    CANNOT_EDIT_VOTED_SLIDE: "Không thể chỉnh sửa trang chiếu đã có kết quả",
+    SAVE_PROCESS: "Có lỗi xảy ra khi lưu thay đổi",
 };
 
 export const PRESENTATION_OWNER_TYPE = {

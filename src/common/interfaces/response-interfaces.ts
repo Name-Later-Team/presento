@@ -16,6 +16,14 @@ export interface IAccessTokenResponse {
     expiresIn: number;
 }
 
+export interface IOptionsResponse {
+    key: string;
+    value: string;
+    type: string;
+    position: number;
+    metadata: any;
+}
+
 export interface ISlideDetailResponse {
     question: string;
     questionDescription: string;
@@ -33,7 +41,7 @@ export interface ISlideDetailResponse {
     position: number;
     presentationId: number;
     presentationIdentifier: string;
-    options: { key: string; value: string; type: string; position: number; metadata: any }[];
+    options: IOptionsResponse[];
     result: { key: string; value: number }[];
     respondents: number;
 }
@@ -42,4 +50,48 @@ export interface IVotingCodeResponse {
     code: string;
     isValid: boolean;
     expiresAt: string;
+}
+
+export interface ISlideListResponseData {
+    id: number;
+    position: number;
+    slideType: string;
+}
+
+export interface IPresentationDetailResponse {
+    closedForVoting: boolean;
+    createdAt: string;
+    identifier: string;
+    name: string;
+    ownerDisplayName: string;
+    ownerIdentifier: string;
+    pace: {
+        mode: string;
+        state: string;
+        active_slide_id: number;
+        counter: number;
+    };
+    slides: ISlideListResponseData[];
+    totalSlides: number;
+    updatedAt: string;
+}
+
+export interface ICreateNewSlideResponse {
+    createdAt: string;
+    extrasConfig: any;
+    hideInstructionBar: boolean;
+    id: number;
+    isActive: boolean;
+    position: number;
+    presentationId: number;
+    presentationIdentifier: string;
+    question: string;
+    questionDescription: string;
+    questionImageUrl: string | null;
+    questionVideoEmbedUrl: string | null;
+    showResult: boolean;
+    slideType: string;
+    speakerNotes: string;
+    textSize: number;
+    updatedAt: string;
 }

@@ -50,23 +50,23 @@ export default function EditPresentation() {
             id: oldSlideState.id,
             presentationId: oldSlideState.presentationId,
             presentationSeriesId: oldSlideState.presentationSeriesId,
-            adminKey: oldSlideState.adminKey,
             createdAt: oldSlideState.createdAt,
             updatedAt: oldSlideState.updatedAt,
         });
         // change the preview icon of the slide
         const newSlides = [...presentationState.slides];
         for (let element of newSlides) {
-            if (element.id === oldSlideState.adminKey) {
+            if (element.id.toString() === oldSlideState.id.toString()) {
                 element.type = newSlideType?.value || "";
                 changePresentationState({
-                    ...presentationState,
                     slides: newSlides,
                 });
                 break;
             }
         }
     };
+
+    const isChangeSlideTypeDisabled = slideState.result.some((item) => item.value !== 0);
 
     return (
         <Row className="edit-presentation">
@@ -98,7 +98,14 @@ export default function EditPresentation() {
                             }}
                             onChange={handleSlideTypeChange}
                             value={slideType}
+                            isDisabled={isChangeSlideTypeDisabled}
                         />
+
+                        {isChangeSlideTypeDisabled && (
+                            <Alert className="m-0 mt-2" variant="danger">
+                                <p className="m-0">Không được thay đổi loại khi trang trình bày đã có kết quả</p>
+                            </Alert>
+                        )}
 
                         <hr className="my-3" />
 
