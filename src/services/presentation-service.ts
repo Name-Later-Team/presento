@@ -20,8 +20,8 @@ export default class PresentationService {
         return HttpService.put<any>(`/api/presentation/v1/presentations/${identifier}`, data);
     }
 
-    static deletePresentationAsync(id: string) {
-        return HttpService.delete(`/v1/presentations/${id}`);
+    static deletePresentationAsync(identifier: string) {
+        return HttpService.delete<any>(`/api/presentation/v1/presentations/${identifier}`);
     }
 
     static getPresentationDetailAsync(identifier: string) {

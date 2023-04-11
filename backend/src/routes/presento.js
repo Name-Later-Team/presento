@@ -12,20 +12,12 @@ router.get(
         const { accessToken, tokenType } = req.session?.user ?? {};
         const { presentationIdentifier, slideId } = req.params;
 
-        const slideDetailUri = `/presentation/v1/presentations/${presentationIdentifier}/slides/${slideId}`;
-        const slideResultUri = `/presentation/v1/presentations/${presentationIdentifier}/slides/${slideId}/results`;
+        const slideDetailUri = `/presentation/v1/presentations/${presentationIdentifier}/slides/${slideId}?includeResults=true`;
         const slideDetailHeaders = {
             Authorization: `${tokenType} ${accessToken}`,
             "Client-Id": APP_CONFIG.clientId,
             "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ss+0000"),
             "Resource-Uri": slideDetailUri,
-            "Service-Slug": APP_CONFIG.slug,
-        };
-        const slideResultHeaders = {
-            Authorization: `${tokenType} ${accessToken}`,
-            "Client-Id": APP_CONFIG.clientId,
-            "Request-Time": moment().format("YYYY-MM-DDTHH:mm:ss+0000"),
-            "Resource-Uri": slideResultUri,
             "Service-Slug": APP_CONFIG.slug,
         };
 
@@ -36,15 +28,10 @@ router.get(
                 headers: slideDetailHeaders,
             });
 
-            const slideResultPromise = axios({
-                method: "GET",
-                url: `${APP_CONFIG.apiGateway}${slideResultUri}`,
-                headers: slideResultHeaders,
-            });
-            const [slideDetailRes, slideResultRes] = await Promise.all([slideDetailPromise, slideResultPromise]);
+            const slideDetailRes = await slideDetailPromise;
 
             const detailData = slideDetailRes.data?.data;
-            const resultData = slideResultRes.data?.data;
+            const resultData = detailData?.votingResult;
 
             // map data from 2 APIs
             const mappedData = { ...detailData };
@@ -53,7 +40,7 @@ router.get(
             const options = [];
             const results = [];
             if (Array.isArray(choices)) {
-                const flag = Array.isArray(resultData?.results);
+                const isResultsAnArray = Array.isArray(resultData?.results);
                 choices.sort((a, b) => a?.position - b?.position);
                 let haveCorrectAnswer = false;
                 choices.forEach((item, idx) => {
@@ -68,7 +55,7 @@ router.get(
                         key: item?.id ?? idx,
                         value: 0,
                     };
-                    if (flag) {
+                    if (isResultsAnArray) {
                         tempResult.value =
                             resultData?.results?.find((element) => element?.id === item?.id)?.score[0] ?? 0;
                     }

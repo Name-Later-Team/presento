@@ -16,7 +16,7 @@ interface IPresentationListTableProps {
         rowsPerPage: number;
     };
     action?: {
-        handleDeletePresentation: (identifier: string) => void;
+        handleDeletePresentation: (identifier: string) => Promise<void>;
         handleOpenRenameModal: (record: IPresentationListItem) => void;
         handleOpenShareModal: (identifier: string) => void;
     };

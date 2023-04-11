@@ -33,6 +33,7 @@ export const SUCCESS_NOTIFICATION = {
     COPIED_LINK_SUCCESS: "Sao chép liên kết thành công",
     RENAME_PRESENTATION_SUCCESS: "Đổi tên bài trình bày thành công",
     SAVED_SUCCESS: "Lưu thay đổi thành công",
+    DELETE_PRESENTATION_SUCCESS: "Xóa bài trình bày thành công",
 };
 
 export const ERROR_NOTIFICATION = {
@@ -59,6 +60,7 @@ export const ERROR_NOTIFICATION = {
     INVALID_VOTING_CODE: "Mã bầu chọn không hợp lệ",
     CANNOT_EDIT_VOTED_SLIDE: "Không thể chỉnh sửa trang chiếu đã có kết quả",
     SAVE_PROCESS: "Có lỗi xảy ra khi lưu thay đổi",
+    DELETE_PRESENTATION_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu xóa bài trình bày",
 };
 
 export const PRESENTATION_OWNER_TYPE = {
