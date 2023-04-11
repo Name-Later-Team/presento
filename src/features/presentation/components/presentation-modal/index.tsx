@@ -4,8 +4,9 @@ import { z } from "zod";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IPresentationListItem } from "../../pages/presentation-list";
+import { IBaseComponent } from "../../../../common/interfaces";
 
-export interface IPresentationModalProps {
+export interface IPresentationModalProps extends IBaseComponent {
     modalName: string;
     show: boolean;
     onHide: (rerender?: boolean) => void | undefined;

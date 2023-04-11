@@ -1,18 +1,21 @@
 import { createContext, useContext, useRef, useState } from "react";
-import { IBaseComponent } from "../interfaces";
+import { IBaseComponent, IOptionsResponse, IVotingCodeResponse } from "../interfaces";
 import _ from "lodash";
+import SlideService from "../../services/slide-service";
+import DataMappingUtil from "../utils/data-mapping-util";
+import { ERROR_NOTIFICATION, RESPONSE_CODE, SUCCESS_NOTIFICATION } from "../../constants";
+import { Notification } from "../components/notification";
 
 // interfaces
 export interface ISlideState {
     question: string;
     description: string;
-    options: { key: string; value: string }[];
+    options: IOptionsResponse[];
     selectedOption: string; // contains the key of the correct option in options field
     enableVoting: boolean;
     showInstructionBar: boolean;
     fontSize: number;
     type: string;
-    adminKey: string;
     config: any;
     createdAt: string;
     updatedAt: string;
@@ -41,7 +44,6 @@ export interface IPresentationPace {
 }
 
 export interface IPresentationState {
-    id: string;
     identifier: string;
     name: string;
     ownerDisplayName: string;
@@ -50,7 +52,7 @@ export interface IPresentationState {
     pace: IPresentationPace;
     totalSlides: number;
     updatedAt: string;
-    votingCode: string;
+    votingCode: IVotingCodeResponse;
 }
 
 interface IPresentFeatureContext {
@@ -59,13 +61,16 @@ interface IPresentFeatureContext {
 
     // access and change state that has information relating to a slide
     slideState: ISlideState;
-    changeSlideState: (newSlideState: ISlideState) => void;
-    resetSlideState: (newSlideState?: ISlideState) => void;
+    changeSlideState: (newSlideState: Partial<ISlideState>) => void;
+    resetSlideState: (newSlideState?: Partial<ISlideState>) => void;
 
     // access and change state that has information relating to a presentation
     presentationState: IPresentationState;
-    changePresentationState: (newPresentationState: IPresentationState) => void;
-    resetPresentationState: (newPresentationState?: IPresentationState) => void;
+    changePresentationState: (newPresentationState: Partial<IPresentationState>) => void;
+    resetPresentationState: (newPresentationState?: Partial<IPresentationState>) => void;
+
+    // save changes by calling api
+    saveChanges: () => Promise<void>;
 }
 
 // props types for the context provider
@@ -76,7 +81,6 @@ const PresentFeature = createContext<IPresentFeatureContext | null>(null);
 
 // initial states for slide state and presentation state
 export const initPresentationState: IPresentationState = {
-    id: "",
     identifier: "",
     name: "",
     ownerDisplayName: "",
@@ -89,7 +93,11 @@ export const initPresentationState: IPresentationState = {
         state: "",
     },
     totalSlides: 0,
-    votingCode: "",
+    votingCode: {
+        code: "",
+        expiresAt: "",
+        isValid: false,
+    },
     updatedAt: "",
 };
 
@@ -102,7 +110,6 @@ export const initSlideState: ISlideState = {
     showInstructionBar: true,
     fontSize: 32,
     type: "",
-    adminKey: "",
     config: null,
     id: "",
     createdAt: "",
@@ -120,51 +127,43 @@ export const initSlideState: ISlideState = {
 interface IDataState {
     slideState: ISlideState;
     presentationState: IPresentationState;
-    // isModified: boolean;
 }
 
 export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvider) => {
     const [dataState, setDataState] = useState<IDataState>({
         slideState: initSlideState,
         presentationState: initPresentationState,
-        // isModified: false,
     });
     const originalState = useRef<IDataState>({
         slideState: initSlideState,
         presentationState: initPresentationState,
     });
 
-    const changeSlideState = (newSlideState: ISlideState) => {
+    // processing functions
+    const changeSlideState = (newSlideState: Partial<ISlideState>) => {
         // mark as data has been changed and change data state
         setDataState((prevState) => ({
             ...prevState,
-            slideState: { ...dataState.slideState, ...newSlideState },
-            // isModified: true,
+            slideState: { ...prevState.slideState, ...newSlideState },
         }));
     };
 
-    const changePresentationState = (newPresentationState: IPresentationState) => {
+    const changePresentationState = (newPresentationState: Partial<IPresentationState>) => {
         // mark as data has been changed and change data state
         setDataState((prevState) => ({
             ...prevState,
-            presentationState: { ...dataState.presentationState, ...newPresentationState },
-            // isModified: true,
+            presentationState: { ...prevState.presentationState, ...newPresentationState },
         }));
     };
 
     // mark as data has not been changed
-    const resetSlideState = (newSlideState?: ISlideState) => {
+    const resetSlideState = (newSlideState?: Partial<ISlideState>) => {
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newSlideState == null) {
             setDataState((prevState) => {
-                originalState.current = _.cloneDeep({
-                    ...prevState,
-                });
+                originalState.current = _.cloneDeep(prevState);
 
-                return {
-                    ...prevState,
-                    // isModified: false,
-                };
+                return { ...prevState };
             });
             return;
         }
@@ -172,29 +171,23 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         setDataState((prevState) => {
             originalState.current = _.cloneDeep({
                 ...prevState,
-                slideState: { ...dataState.slideState, ...newSlideState },
+                slideState: { ...prevState.slideState, ...newSlideState },
             });
 
             return {
                 ...prevState,
-                slideState: { ...dataState.slideState, ...newSlideState },
-                // isModified: false,
+                slideState: { ...prevState.slideState, ...newSlideState },
             };
         });
     };
 
-    const resetPresentationState = (newPresentationState?: IPresentationState) => {
+    const resetPresentationState = (newPresentationState?: Partial<IPresentationState>) => {
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newPresentationState == null) {
             setDataState((prevState) => {
-                originalState.current = _.cloneDeep({
-                    ...prevState,
-                });
+                originalState.current = _.cloneDeep(prevState);
 
-                return {
-                    ...prevState,
-                    // isModified: false,
-                };
+                return { ...prevState };
             });
             return;
         }
@@ -202,18 +195,68 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         setDataState((prevState) => {
             originalState.current = _.cloneDeep({
                 ...prevState,
-                presentationState: { ...dataState.presentationState, ...newPresentationState },
+                presentationState: { ...prevState.presentationState, ...newPresentationState },
             });
 
             return {
                 ...prevState,
-                presentationState: { ...dataState.presentationState, ...newPresentationState },
-                // isModified: false,
+                presentationState: { ...prevState.presentationState, ...newPresentationState },
             };
         });
     };
 
-    // console.log(dataState.presentationState, originalState.current.presentationState);
+    // api-related functions
+    const handleSaveChanges = async () => {
+        const mappedSlideDetail = DataMappingUtil.mapSlideDetailToPut(
+            dataState.presentationState,
+            dataState.slideState
+        );
+        try {
+            const slideRes = await SlideService.putSlideDetailAsync(
+                dataState.presentationState.identifier,
+                dataState.slideState.id,
+                mappedSlideDetail
+            );
+
+            if (slideRes.code === 200) {
+                Notification.notifySuccess(SUCCESS_NOTIFICATION.SAVED_SUCCESS);
+                resetSlideState();
+                return;
+            }
+
+            throw new Error("Unhandled error code");
+        } catch (error: any) {
+            const slideRes = error?.response?.data;
+
+            if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                return;
+            }
+
+            if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+                return;
+            }
+
+            if (slideRes.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.PRESENTING_PRESENTATION);
+                return;
+            }
+
+            if (slideRes.code === RESPONSE_CODE.CANNOT_EDIT_VOTED_SLIDE) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_EDIT_VOTED_SLIDE);
+                return;
+            }
+
+            if (slideRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                return;
+            }
+
+            console.error("PresentationFeatureContextProvider:", error);
+            Notification.notifyError(ERROR_NOTIFICATION.SAVE_PROCESS);
+        }
+    };
 
     return (
         <PresentFeature.Provider
@@ -224,6 +267,7 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
                 changePresentationState,
                 resetSlideState,
                 resetPresentationState,
+                saveChanges: handleSaveChanges,
                 isModified: !_.isEqual(dataState, originalState.current),
             }}
         >

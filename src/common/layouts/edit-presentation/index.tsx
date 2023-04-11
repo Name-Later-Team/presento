@@ -1,6 +1,6 @@
 import { faBars, faCheck, faChevronLeft, faFloppyDisk, faPlay, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useEffect, useState } from "react";
+import { ReactElement, useEffect, useRef, useState } from "react";
 import { Button, Dropdown, Stack } from "react-bootstrap";
 import { Link, Outlet, useNavigate, useParams } from "react-router-dom";
 import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../constants";
@@ -15,6 +15,7 @@ import PresentationInfo from "./presentation-info";
 import "./style.scss";
 import SlideService from "../../../services/slide-service";
 import DataMappingUtil from "../../utils/data-mapping-util";
+import moment from "moment";
 
 interface IEditPresentationLayout extends IBaseComponent {
     sidebarElement: ReactElement;
@@ -24,15 +25,23 @@ const smallScreenMediaQuery = "(max-width: 768px)";
 
 export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
+    // contexts
     const { userInfo, removeUserInfo } = useAuth();
-    const { slideState, isModified, resetSlideState } = usePresentFeature();
+    const { slideState, presentationState, isModified, resetSlideState, resetPresentationState, saveChanges } =
+        usePresentFeature();
     const globalContext = useGlobalContext();
 
-    const { presentationId, slideId } = useParams();
+    // states
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
     const [hideSaveBtn, setHideSaveBtn] = useState(false);
     const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(smallScreenMediaQuery).matches);
     // const [showSelectGroupModal, setShowSelectGroupModal] = useState<boolean>(false);
+
+    // refs
+    const gotSlideDetail = useRef(false);
+
+    // libs
+    const { presentationId, slideId } = useParams();
     const navigate = useNavigate();
 
     // add event to alert user to save before leaving
@@ -57,8 +66,6 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
             mediaQueryList.removeEventListener("change", onChange);
         };
     }, []);
-
-    console.log(isSmallScreen);
 
     // effect that happens when change slide within the edit page
     useEffect(() => {
@@ -85,23 +92,63 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                 if (res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
                     Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
                     globalContext.unBlockUI();
-                    return;
+                    return Promise.reject();
                 }
 
                 if (res.code === RESPONSE_CODE.VALIDATION_ERROR || res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
                     Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
                     globalContext.unBlockUI();
-                    return;
+                    return Promise.reject();
                 }
 
                 console.error(err);
                 Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_DETAIL);
                 globalContext.unBlockUI();
+                return Promise.reject();
             }
         };
-        fetchingSlideDetail();
+
+        gotSlideDetail.current = false;
+        fetchingSlideDetail()
+            .then(() => (gotSlideDetail.current = true))
+            .catch(() => {});
         // eslint-disable-next-line
     }, [presentationId, slideId]);
+
+    useEffect(() => {
+        const fetchVotingCode = async () => {
+            try {
+                const res = await PresentationService.postVotingCodeAsync(presentationId || "");
+
+                if (res.code === 200) {
+                    if (!res.data) return;
+
+                    if (res.data.isValid) {
+                        resetPresentationState({ votingCode: { ...res.data } });
+                        return;
+                    }
+                }
+
+                throw new Error("Unknown http code");
+            } catch (err) {
+                console.error(err);
+                Notification.notifyError(ERROR_NOTIFICATION.FETCH_VOTING_CODE_PROCESS);
+            }
+        };
+
+        // called voting code api when have got slide detail
+        if (gotSlideDetail.current) {
+            // get voting code if this is none
+            if (presentationState.votingCode.code === "") {
+                fetchVotingCode();
+            }
+
+            // get voting code if the voting code was expired
+            if (moment(presentationState.votingCode.expiresAt).diff(moment()) < 0) {
+                fetchVotingCode();
+            }
+        }
+    });
 
     const handleLogout = () => {
         removeUserInfo();
@@ -228,6 +275,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
         // 	console.error(error);
         // 	globalContext.unBlockUI();
         // }
+        saveChanges();
     };
 
     const handlePresentSlide = async () => {

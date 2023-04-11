@@ -16,8 +16,9 @@ interface IPresentationListTableProps {
         rowsPerPage: number;
     };
     action?: {
-        handleDeletePresentation: (identifier: string) => void;
+        handleDeletePresentation: (identifier: string) => Promise<void>;
         handleOpenRenameModal: (record: IPresentationListItem) => void;
+        handleOpenShareModal: (identifier: string) => void;
     };
 }
 
@@ -30,6 +31,10 @@ export default function PresentationListTable(props: IPresentationListTableProps
 
     const handleOpenRenameModal = (record: IPresentationListItem) => {
         action && action.handleOpenRenameModal(record);
+    };
+
+    const handleOpenShareModal = (identifier: string) => {
+        action && action.handleOpenShareModal(identifier);
     };
 
     const openDeleteConfirm = (identifier: string) => {
@@ -92,7 +97,10 @@ export default function PresentationListTable(props: IPresentationListTableProps
                                                 Sửa tên
                                             </Dropdown.Item>
 
-                                            <Dropdown.Item as="button" onClick={() => {}}>
+                                            <Dropdown.Item
+                                                as="button"
+                                                onClick={() => handleOpenShareModal(presentation.identifier)}
+                                            >
                                                 <FontAwesomeIcon
                                                     style={{ width: "1rem" }}
                                                     className="me-2"

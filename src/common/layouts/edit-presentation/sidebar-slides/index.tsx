@@ -1,6 +1,6 @@
 import { faPlus, IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button, Nav } from "react-bootstrap";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Notification } from "../../../components/notification";
@@ -18,6 +18,7 @@ import SlideService from "../../../../services/slide-service";
 import { DragDropContext, Draggable, Droppable, OnDragEndResponder } from "react-beautiful-dnd";
 import "./style.scss";
 import DataMappingUtil from "../../../utils/data-mapping-util";
+import { ICreateNewSlideResponse } from "../../../interfaces";
 
 export interface ISidebarSlideNav {
     slideId: string;
@@ -30,14 +31,29 @@ export interface ISidebarSlideNav {
 export default function SidebarSlides() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { presentationId } = useParams();
+    const { presentationId, slideId } = useParams();
+
+    // slide id to scroll into view
+    const [scrollToSlideId, setScrollToSlideId] = useState<string | undefined>(undefined);
+
+    // contexts
     const { presentationState, changePresentationState, resetPresentationState } = usePresentFeature();
     const globalContext = useGlobalContext();
 
-    const getPresentationDetail = async (navigateToLastItem: boolean = false) => {
+    // Append the new slide data into the slides list and navigate to the newly created slide
+    const handleCreateNewSlideResponse = (data: ICreateNewSlideResponse) => {
+        resetPresentationState({
+            slides: [...presentationState.slides, DataMappingUtil.mapNewlyCreatedSlideData(data)],
+        });
+        navigate(`/presentation/${presentationId}/${data.id}/edit`);
+        setScrollToSlideId(data.id.toString());
+    };
+
+    const getPresentationDetail = async () => {
         if (presentationId == null) {
             return;
         }
+
         try {
             // get slide list and presentation config
             globalContext.blockUI();
@@ -51,10 +67,7 @@ export default function SidebarSlides() {
                 );
                 resetPresentationState(mappedPresentationState);
                 globalContext.unBlockUI();
-                // if last is true, navigate to the last item in slide list (used when creating a new slide), otherwise navigating according to pace field from api
-                navigateToLastItem
-                    ? navigate(`/presentation/${presentationId}/${mappedPresentationState.slides.at(-1)?.id}/edit`)
-                    : navigate(`/presentation/${presentationId}/${data?.pace?.active_slide_id}/edit`);
+                setScrollToSlideId(slideId);
                 return;
             }
 
@@ -75,13 +88,26 @@ export default function SidebarSlides() {
 
     useEffect(() => {
         if (location.state !== null && location.state !== undefined && presentationState.slides.length !== 0) {
-            if ((location.state as any)?.code === PREFETCHING_REDIRECT_CODE) return;
+            if ((location.state as any)?.code === PREFETCHING_REDIRECT_CODE) {
+                setScrollToSlideId(slideId);
+                return;
+            }
         }
 
         // if user enter url directly into the url bar, fetch slide list and presentation config directly
         getPresentationDetail();
         // eslint-disable-next-line
     }, []);
+
+    useEffect(() => {
+        if (!scrollToSlideId) return;
+        try {
+            document.getElementById(`${scrollToSlideId}`)?.scrollIntoView({ block: "center" } as ScrollIntoViewOptions);
+            setScrollToSlideId(undefined);
+        } catch (err) {
+            console.error(err);
+        }
+    }, [scrollToSlideId]);
 
     // create new slide
     const handleAddNewSlide = async () => {
@@ -90,7 +116,9 @@ export default function SidebarSlides() {
             const res = await SlideService.createSlideAsync(presentationId || "", { type: "multiple_choice" });
             if (res.code === 201) {
                 Notification.notifySuccess(SUCCESS_NOTIFICATION.ADD_SLIDE_SUCCESS);
-                getPresentationDetail(true);
+                // getPresentationDetail(true);
+                if (!res.data) return;
+                handleCreateNewSlideResponse(res.data);
                 return;
             }
 
@@ -309,7 +337,6 @@ export default function SidebarSlides() {
         }
 
         changePresentationState({
-            ...presentationState,
             slides: modifiedSlideData,
         });
     };

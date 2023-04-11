@@ -1,6 +1,6 @@
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Stack } from "react-bootstrap";
+import { Spinner, Stack } from "react-bootstrap";
 import { Notification } from "../../../../common/components/notification";
 import CustomizedTooltip from "../../../../common/components/tooltip";
 import { APP_CONSTANTS } from "../../../../constants/app-constants";
@@ -38,30 +38,32 @@ export default function PresentationSlide() {
                                 <div
                                     className="presentation-slide__instruction-bar__content-wrapper"
                                     id="instruction-bar__vote-link"
-                                    onClick={handleCopyLink}
+                                    onClick={() => presentationState.votingCode.code !== "" && handleCopyLink()}
                                 >
                                     Truy cập
-                                    <span
-                                        className="instruction-bar__vote-link fw-bolder text-primary"
-                                        style={{ marginInline: "0.4rem" }}
-                                    >
+                                    <span className="fw-bolder text-primary" style={{ marginInline: "0.4rem" }}>
                                         {APP_CONSTANTS.VOTE_APP_DOMAIN}
                                     </span>
                                     nhập mã
-                                    <span
-                                        className="instruction-bar__vote-link fw-bolder text-primary"
-                                        style={{ marginInline: "0.4rem" }}
-                                    >
-                                        {presentationState.votingCode === ""
-                                            ? "?"
-                                            : FormatUtil.formatVotingCodeString(presentationState.votingCode)}
+                                    <span className="fw-bolder text-primary" style={{ marginInline: "0.4rem" }}>
+                                        {presentationState.votingCode.code === "" ? (
+                                            <Spinner
+                                                className="vote-link__voting-code--spinner mx-2"
+                                                animation="border"
+                                                variant="primary"
+                                            />
+                                        ) : (
+                                            FormatUtil.formatVotingCodeString(presentationState.votingCode.code)
+                                        )}
                                     </span>
                                     để bầu chọn
                                 </div>
                             </div>
-                            <CustomizedTooltip place="bottom" anchorSelect="#instruction-bar__vote-link">
-                                Nhấn để sao chép đường dẫn bầu chọn
-                            </CustomizedTooltip>
+                            {presentationState.votingCode.code !== "" && (
+                                <CustomizedTooltip place="bottom" anchorSelect="#instruction-bar__vote-link">
+                                    Nhấn để sao chép đường dẫn bầu chọn
+                                </CustomizedTooltip>
+                            )}
                         </>
                     )}
 

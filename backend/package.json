@@ -24,7 +24,6 @@
     "express-session": "^1.17.3",
     "fast-safe-stringify": "^2.1.1",
     "helmet": "^6.0.1",
-    "http-proxy-middleware": "^2.0.6",
     "moment": "^2.29.4",
     "morgan": "^1.10.0",
     "query-string": "^8.1.0",

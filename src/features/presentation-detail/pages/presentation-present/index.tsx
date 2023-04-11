@@ -14,6 +14,7 @@ import { Notification } from "../../../../common/components/notification";
 import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../../constants";
 import DataMappingUtil from "../../../../common/utils/data-mapping-util";
 import SlideService from "../../../../services/slide-service";
+import moment from "moment";
 
 export default function PresentPresentation() {
     // contexts
@@ -32,6 +33,7 @@ export default function PresentPresentation() {
 
     // refs
     const thisSlideIndex = useRef(-1);
+    const gotSlideDetail = useRef(false);
     // const joinedRoom = useRef(false); // keep track of calling join-room
 
     // automatically maximize the screen
@@ -175,7 +177,7 @@ export default function PresentPresentation() {
                     if (data?.pace?.state === "idle") {
                         globalContext.unBlockUI();
                         alert.fireAlert();
-                        return;
+                        return Promise.reject();
                     }
 
                     // get slide detail
@@ -203,13 +205,13 @@ export default function PresentPresentation() {
                 ) {
                     alertNavigate.setText(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION).getAlert().fireAlert();
                     globalContext.unBlockUI();
-                    return;
+                    return Promise.reject();
                 }
 
                 if (res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
                     alertNavigate.setText(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE).getAlert().fireAlert();
                     globalContext.unBlockUI();
-                    return;
+                    return Promise.reject();
                 }
 
                 console.error(err);
@@ -217,11 +219,51 @@ export default function PresentPresentation() {
                     kickAlert.fireAlert();
                 }
                 globalContext.unBlockUI();
+                return Promise.reject();
             }
         };
-        fetchingPresentationDetail();
+
+        gotSlideDetail.current = false;
+        fetchingPresentationDetail()
+            .then(() => (gotSlideDetail.current = true))
+            .catch(() => {});
         // eslint-disable-next-line
     }, [slideId]);
+
+    useEffect(() => {
+        const fetchVotingCode = async () => {
+            try {
+                const res = await PresentationService.postVotingCodeAsync(presentationId || "");
+
+                if (res.code === 200) {
+                    if (!res.data) return;
+
+                    if (res.data.isValid) {
+                        resetPresentationState({ votingCode: { ...res.data } });
+                        return;
+                    }
+                }
+
+                throw new Error("Unknown http code");
+            } catch (err) {
+                console.error(err);
+                Notification.notifyError(ERROR_NOTIFICATION.FETCH_VOTING_CODE_PROCESS);
+            }
+        };
+
+        // called voting code api when have got slide detail
+        if (gotSlideDetail.current) {
+            // get voting code if this is none
+            if (presentationState.votingCode.code === "") {
+                fetchVotingCode();
+            }
+
+            // get voting code if the voting code was expired
+            if (moment(presentationState.votingCode.expiresAt).diff(moment()) < 0) {
+                fetchVotingCode();
+            }
+        }
+    });
 
     const handleTurnOffPresentationMode = async (callApi: boolean = true) => {
         try {

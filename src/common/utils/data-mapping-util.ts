@@ -3,8 +3,14 @@ import {
     IPresentationSlide,
     IPresentationState,
     ISlideState,
+    initPresentationState,
 } from "../contexts/present-feature-context";
-import { ISlideDetailResponse } from "../interfaces";
+import {
+    ICreateNewSlideResponse,
+    IOptionsResponse,
+    IPresentationDetailResponse,
+    ISlideDetailResponse,
+} from "../interfaces";
 
 export default class DataMappingUtil {
     static mapSlideListFromApiData(data: any): IPresentationSlide[] {
@@ -12,29 +18,38 @@ export default class DataMappingUtil {
             (item: any) =>
                 ({
                     id: item?.id ?? "",
-                    adminKey: item?.admin_key ?? "",
                     type: item?.slideType ?? "",
                     position: item?.position ?? 1,
                 } as IPresentationSlide)
         );
     }
 
-    static mapPresentationStateFromApiData(presentationState: IPresentationState, data: any): IPresentationState {
+    static mapNewlyCreatedSlideData(data: ICreateNewSlideResponse): IPresentationSlide {
+        return {
+            id: data.id.toString() ?? "",
+            type: data.slideType ?? "",
+            position: data.position ?? 1,
+        } as IPresentationSlide;
+    }
+
+    static mapPresentationStateFromApiData(
+        presentationState: IPresentationState,
+        data: IPresentationDetailResponse
+    ): IPresentationState {
         const slideList = data.slides;
         const mappedSlideList: IPresentationSlide[] = this.mapSlideListFromApiData(slideList);
 
         return {
             ...presentationState,
-            id: data?.id ?? "",
             identifier: data?.identifier ?? "",
             ownerIdentifier: data?.ownerIdentifier ?? "",
             totalSlides: data?.totalSlides ?? 0,
             name: data?.name ?? "",
             ownerDisplayName: data.ownerDisplayName ?? "",
             slides: mappedSlideList,
-            votingCode: data?.votingCode ?? "",
+            votingCode: initPresentationState.votingCode,
             pace: {
-                active_slide_id: data?.pace?.active_slide_id ?? "",
+                active_slide_id: data?.pace?.active_slide_id.toString() ?? "",
                 counter: data?.pace?.counter ?? 0,
                 mode: data?.pace?.mode ?? "",
                 state: data?.pace?.state ?? "",
@@ -50,11 +65,11 @@ export default class DataMappingUtil {
             description: data?.questionDescription ?? "",
             type: data?.slideType ?? "",
             respondents: data?.respondents ?? 0,
-            options: (data?.options as unknown as { key: string; value: string }[]) ?? [],
+            options: (data?.options as unknown as IOptionsResponse[]) ?? [],
             result: (data?.result as unknown as { key: string; value: number }[]) ?? [],
             enableVoting: data?.isActive ?? true,
             showInstructionBar: !data?.hideInstructionBar ?? true,
-            fontSize: 32,
+            fontSize: data?.textSize ?? 32,
             id: data?.id.toString() ?? "",
             presentationId: data?.presentationId.toString() ?? "",
             presentationSeriesId: data?.presentationIdentifier ?? "",
@@ -64,6 +79,40 @@ export default class DataMappingUtil {
             updatedAt: data?.updatedAt ?? "",
             questionImageUrl: data?.questionImageUrl ?? "",
             questionVideoUrl: data?.questionVideoEmbedUrl ?? "",
+        };
+    }
+
+    static mapSlideDetailToPut(presentationState: IPresentationState, slideState: ISlideState) {
+        const mappedChoices = slideState.options.map((item) => {
+            let itemId = item.key;
+            if (itemId.toString().split("new-").length > 1) itemId = "0";
+            const mappedItem = {
+                id: itemId,
+                label: item.value,
+                type: item.type,
+                isCorrectAnswer: item.key === slideState.selectedOption,
+                metadata: item.metadata,
+                position: item.position,
+            };
+            return mappedItem;
+        });
+
+        return {
+            presentationId: slideState.presentationId,
+            presentationIdentifier: presentationState.identifier,
+            question: slideState.question,
+            questionDescription: slideState.description,
+            questionImageUrl: slideState.questionImageUrl || null,
+            questionVideoEmbedUrl: slideState.questionVideoUrl || null,
+            slideType: slideState.type,
+            speakerNotes: slideState.speakerNotes,
+            isActive: slideState.enableVoting,
+            showResult: true,
+            hideInstructionBar: !slideState.showInstructionBar,
+            extrasConfig: slideState.config,
+            position: slideState.position,
+            textSize: slideState.fontSize,
+            choices: mappedChoices,
         };
     }
 }
