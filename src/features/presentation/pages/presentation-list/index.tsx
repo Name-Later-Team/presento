@@ -24,6 +24,7 @@ import PresentationListTable from "../../components/presentation-list-table";
 import SharePresentationModal, {
     ISharePresentationModalProps,
 } from "../../../../common/components/share-presentation-modal";
+import "./style.scss";
 moment.locale("vi");
 
 const presentationTypeOption = [
@@ -156,22 +157,27 @@ export default function PresentationList() {
         setPresentationDateType({ label: newValue?.label || "", value: newValue?.value || "" });
     };
 
-    const triggerRerender = () => {
-        // navigate to page 1 to see the change (last changed item is always the first item in page 1)
-        if (searchObject.page === 1) {
-            setRerender((prev) => !prev);
+    const triggerRerender = (keepCurrentPage: boolean = false) => {
+        if (!keepCurrentPage) {
+            // navigate to page 1 to see the change (last changed item is always the first item in page 1)
+            if (searchObject.page === 1) {
+                setRerender((prev) => !prev);
+                setSearchObject((prev) => ({
+                    ...prev,
+                    order: defaultFilter.dateType.value,
+                }));
+                return;
+            }
+
             setSearchObject((prev) => ({
                 ...prev,
+                page: 1,
                 order: defaultFilter.dateType.value,
             }));
             return;
         }
 
-        setSearchObject((prev) => ({
-            ...prev,
-            page: 1,
-            order: defaultFilter.dateType.value,
-        }));
+        setRerender((prev) => !prev);
     };
 
     const closePresentationModal = (rerender?: boolean) => {
@@ -206,8 +212,28 @@ export default function PresentationList() {
         }
     };
 
-    const handleDeleteAPresentation = (identifier: string) => {
-        console.log(identifier);
+    const handleDeleteAPresentation = async (identifier: string) => {
+        try {
+            await PresentationService.deletePresentationAsync(identifier);
+            Notification.notifySuccess(SUCCESS_NOTIFICATION.DELETE_PRESENTATION_SUCCESS);
+            triggerRerender(true);
+            return;
+        } catch (error: any) {
+            const res = error?.response?.data;
+
+            if (res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                return;
+            }
+
+            if (res.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.PRESENTING_PRESENTATION);
+                return;
+            }
+
+            console.error("PresentationList:", error);
+            Notification.notifyError(ERROR_NOTIFICATION.DELETE_PRESENTATION_PROCESS);
+        }
     };
 
     const handleRenameModal = async (value: IPresentationForm, recordToChange?: IPresentationListItem) => {
@@ -278,7 +304,7 @@ export default function PresentationList() {
                         direction="horizontal"
                         gap={3}
                     >
-                        <div>
+                        <div className="flex-grow-1 d-flex flex-wrap presentation-list__header__actions">
                             <Button variant="primary" onClick={openCreateNewPresentationModal}>
                                 <FontAwesomeIcon icon={faPlus} className="me-2" />
                                 Tạo mới
@@ -286,14 +312,19 @@ export default function PresentationList() {
                         </div>
 
                         {/* filter container */}
-                        <Stack className="flex-wrap" direction="horizontal" gap={3}>
-                            <div className="d-flex justify-content-center align-items-center text-uppercase fw-bold">
+                        <Stack
+                            className="flex-wrap justify-content-end presentation-list__header__filters"
+                            direction="horizontal"
+                            gap={3}
+                        >
+                            <div className="d-flex justify-content-center align-items-center text-uppercase fw-bold presentation-list__header__filters__filter-text">
                                 <FontAwesomeIcon className="me-2" icon={faFilter} />
                                 Bộ lọc
                             </div>
 
-                            <Stack className="flex-wrap" direction="horizontal" gap={3}>
+                            <Stack className="flex-wrap justify-content-end" direction="horizontal" gap={3}>
                                 <BaseSelect
+                                    className="presentation-list__header__filters__filter-select"
                                     options={presentationDateTypeOption}
                                     styles={{
                                         control: (baseStyles, state) => ({
@@ -306,6 +337,7 @@ export default function PresentationList() {
                                 />
 
                                 <BaseSelect
+                                    className="presentation-list__header__filters__filter-select"
                                     options={presentationTypeOption}
                                     styles={{
                                         control: (baseStyles, state) => ({
