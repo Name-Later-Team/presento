@@ -16,6 +16,7 @@ export const RESPONSE_CODE = {
     PRESENTING_PRESENTATION: 4003,
     CANNOT_FIND_SLIDE: 4004,
     INVALID_VOTING_CODE: 4005,
+    DELETE_ONLY_SLIDE: 4006,
     CANNOT_EDIT_VOTED_SLIDE: 4007,
 
     // 401: UNAUTHORIZED
@@ -61,6 +62,7 @@ export const ERROR_NOTIFICATION = {
     CANNOT_EDIT_VOTED_SLIDE: "Không thể chỉnh sửa trang chiếu đã có kết quả",
     SAVE_PROCESS: "Có lỗi xảy ra khi lưu thay đổi",
     DELETE_PRESENTATION_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu xóa bài trình bày",
+    DELETE_ONLY_SLIDE: "Không thể xóa trang chiếu cuối cùng của bài trình bày",
 };
 
 export const PRESENTATION_OWNER_TYPE = {

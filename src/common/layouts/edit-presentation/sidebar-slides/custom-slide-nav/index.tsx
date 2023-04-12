@@ -14,7 +14,7 @@ import { DraggableProvided } from "react-beautiful-dnd";
 interface ICustomSlideNav extends IBaseComponent, ISidebarSlideNav {
     slideNum?: number;
     actions?: {
-        onDelete: (adminKey: string) => void;
+        onDelete: (slideId: string) => void;
     };
     draggableProvided: DraggableProvided;
 }

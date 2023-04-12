@@ -1,5 +1,5 @@
 import { createContext, useContext, useRef, useState } from "react";
-import { IBaseComponent, IOptionsResponse, IVotingCodeResponse } from "../interfaces";
+import { IBaseComponent, IBaseResponse, IOptionsResponse, IVotingCodeResponse } from "../interfaces";
 import _ from "lodash";
 import SlideService from "../../services/slide-service";
 import DataMappingUtil from "../utils/data-mapping-util";
@@ -56,21 +56,53 @@ export interface IPresentationState {
 }
 
 interface IPresentFeatureContext {
-    // state to indicate that data has been changed or not
+    /**
+     * State to indicate that GENERAL data has been changed or not
+     */
     isModified: boolean;
+    /**
+     * State to indicate that EACH data has been changed or not
+     */
+    isModifiedDetail: {
+        isSlidesListModified: boolean;
+        isSlideDetailModified: boolean;
+    };
 
-    // access and change state that has information relating to a slide
+    /**
+     * Access and change state that has information relating to a slide
+     */
     slideState: ISlideState;
+    /**
+     * Change slide state and set the modified indicator to true
+     * @returns void
+     */
     changeSlideState: (newSlideState: Partial<ISlideState>) => void;
+    /**
+     * Change slide state and reset the modified indicator to false, if there is no argument was passed, the function will keep the old state and only reset the modified indicator
+     * @returns void
+     */
     resetSlideState: (newSlideState?: Partial<ISlideState>) => void;
 
-    // access and change state that has information relating to a presentation
+    /**
+     * Access and change state that has information relating to a presentation
+     */
     presentationState: IPresentationState;
+    /**
+     * Change presentation state and set the modified indicator to true
+     * @returns void
+     */
     changePresentationState: (newPresentationState: Partial<IPresentationState>) => void;
+    /**
+     * Change presentation state and reset the modified indicator to false, if there is no argument was passed, the function will keep the old state and only reset the modified indicator
+     * @returns void
+     */
     resetPresentationState: (newPresentationState?: Partial<IPresentationState>) => void;
 
-    // save changes by calling api
-    saveChanges: () => Promise<void>;
+    /**
+     * Function which automatically checks modified in order to saves only changed parts using appropriate APIs
+     * @returns void
+     */
+    saveChanges: () => void;
 }
 
 // props types for the context provider
@@ -139,6 +171,13 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         presentationState: initPresentationState,
     });
 
+    // check modified states
+    const isSlidesListModified = !_.isEqual(
+        dataState.presentationState.slides,
+        originalState.current.presentationState.slides
+    );
+    const isSlideDetailModified = !_.isEqual(dataState.slideState, originalState.current.slideState);
+
     // processing functions
     const changeSlideState = (newSlideState: Partial<ISlideState>) => {
         // mark as data has been changed and change data state
@@ -206,17 +245,11 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
     };
 
     // api-related functions
-    const handleSaveChanges = async () => {
-        const mappedSlideDetail = DataMappingUtil.mapSlideDetailToPut(
-            dataState.presentationState,
-            dataState.slideState
-        );
+    const handleSaveSlideChanges = async (promise: Promise<IBaseResponse<any>>) => {
+        if (!promise) return;
+
         try {
-            const slideRes = await SlideService.putSlideDetailAsync(
-                dataState.presentationState.identifier,
-                dataState.slideState.id,
-                mappedSlideDetail
-            );
+            const slideRes = await promise;
 
             if (slideRes.code === 200) {
                 Notification.notifySuccess(SUCCESS_NOTIFICATION.SAVED_SUCCESS);
@@ -258,6 +291,40 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         }
     };
 
+    const handleSaveSlidesListChanges = async (promise: Promise<IBaseResponse<any>>) => {
+        if (!promise) return;
+
+        // TODO: handle save slides list api response
+        console.log(promise);
+    };
+
+    // this function has to be at the bottom of the 'api-related functions' section
+    // function to check and save only changed parts
+    const handleSaveAppropriateChanges = () => {
+        if (isSlideDetailModified) {
+            const mappedSlideDetail = DataMappingUtil.mapSlideDetailToPut(
+                dataState.presentationState,
+                dataState.slideState
+            );
+
+            const promise = SlideService.putSlideDetailAsync(
+                dataState.presentationState.identifier,
+                dataState.slideState.id,
+                mappedSlideDetail
+            );
+
+            handleSaveSlideChanges(promise);
+        }
+
+        if (isSlidesListModified) {
+            const promise = new Promise<IBaseResponse<any>>((resolve, reject) =>
+                resolve({ code: 200, message: "Placeholder" } as IBaseResponse<any>)
+            );
+
+            handleSaveSlidesListChanges(promise);
+        }
+    };
+
     return (
         <PresentFeature.Provider
             value={{
@@ -267,8 +334,12 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
                 changePresentationState,
                 resetSlideState,
                 resetPresentationState,
-                saveChanges: handleSaveChanges,
-                isModified: !_.isEqual(dataState, originalState.current),
+                saveChanges: handleSaveAppropriateChanges,
+                isModifiedDetail: {
+                    isSlidesListModified: isSlidesListModified,
+                    isSlideDetailModified: isSlideDetailModified,
+                },
+                isModified: isSlidesListModified || isSlideDetailModified,
             }}
         >
             {props.children}
