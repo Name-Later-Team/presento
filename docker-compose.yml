@@ -1,0 +1,33 @@
+version: '3'
+
+networks:
+  local_network:
+    external: true
+
+services:
+  presento:
+    image: group1sechcmus/presento
+    container_name: presento
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: unless-stopped
+    ports:
+      - 3005:3001
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    env_file:
+      - ../presento/backend/.env.production
+    volumes:
+      - ./presento/logs:/usr/src/presento/src/logs
+    networks:
+      - local_network
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    networks:
+      - local_network
