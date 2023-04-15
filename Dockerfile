@@ -7,7 +7,7 @@ WORKDIR /app
 RUN npm install --quite typescript -g
 COPY ./public ./public
 COPY ./src ./src
-COPY ./.env ./
+COPY ./.env.frontend ./.env
 COPY ./package.json ./
 COPY ./package-lock.json ./
 COPY ./tsconfig.json ./
