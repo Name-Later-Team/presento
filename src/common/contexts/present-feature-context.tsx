@@ -1,10 +1,11 @@
-import { createContext, useContext, useRef, useState } from "react";
-import { IBaseComponent, IBaseResponse, IOptionsResponse, IVotingCodeResponse } from "../interfaces";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { IBaseComponent, IBaseResponse, IOptionsResponse, IVotingCodeResponse, TExtraConfigs } from "../interfaces";
 import _ from "lodash";
 import SlideService from "../../services/slide-service";
 import DataMappingUtil from "../utils/data-mapping-util";
-import { ERROR_NOTIFICATION, RESPONSE_CODE, SUCCESS_NOTIFICATION } from "../../constants";
+import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../constants";
 import { Notification } from "../components/notification";
+import PresentationService from "../../services/presentation-service";
 
 // interfaces
 export interface ISlideState {
@@ -16,7 +17,7 @@ export interface ISlideState {
     showInstructionBar: boolean;
     fontSize: number;
     type: string;
-    config: any;
+    config: TExtraConfigs;
     createdAt: string;
     updatedAt: string;
     questionImageUrl: string;
@@ -55,17 +56,36 @@ export interface IPresentationState {
     votingCode: IVotingCodeResponse;
 }
 
+export enum ErrorState {
+    none,
+    save_error,
+}
+
 interface IPresentFeatureContext {
-    /**
-     * State to indicate that GENERAL data has been changed or not
-     */
-    isModified: boolean;
-    /**
-     * State to indicate that EACH data has been changed or not
-     */
-    isModifiedDetail: {
-        isSlidesListModified: boolean;
-        isSlideDetailModified: boolean;
+    indicators: {
+        /**
+         * State to indicate that there was an error that had occured
+         */
+        error: ErrorState;
+        /**
+         * State to indicate that there is result in the data
+         */
+        hasResult: boolean;
+        /**
+         * State to indicate that GENERAL data has been changed or not
+         */
+        isModified: boolean;
+        /**
+         * State to indicate that EACH data has been changed or not
+         */
+        isModifiedDetail: {
+            isSlidesListModified: boolean;
+            isSlideDetailModified: boolean;
+        };
+        /**
+         * Indicator for saving state
+         */
+        isSaving: boolean;
     };
 
     /**
@@ -142,7 +162,7 @@ export const initSlideState: ISlideState = {
     showInstructionBar: true,
     fontSize: 32,
     type: "",
-    config: null,
+    config: {},
     id: "",
     createdAt: "",
     updatedAt: "",
@@ -166,10 +186,16 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         slideState: initSlideState,
         presentationState: initPresentationState,
     });
+    const [autoSave] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<ErrorState>(ErrorState.none);
+
+    // refs
     const originalState = useRef<IDataState>({
         slideState: initSlideState,
         presentationState: initPresentationState,
     });
+    const timeoutId = useRef<NodeJS.Timeout | null>(null);
 
     // check modified states
     const isSlidesListModified = !_.isEqual(
@@ -200,7 +226,7 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newSlideState == null) {
             setDataState((prevState) => {
-                originalState.current = _.cloneDeep(prevState);
+                originalState.current.slideState = _.cloneDeep(prevState.slideState);
 
                 return { ...prevState };
             });
@@ -209,7 +235,7 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
 
         setDataState((prevState) => {
             originalState.current = _.cloneDeep({
-                ...prevState,
+                ...originalState.current,
                 slideState: { ...prevState.slideState, ...newSlideState },
             });
 
@@ -224,7 +250,7 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newPresentationState == null) {
             setDataState((prevState) => {
-                originalState.current = _.cloneDeep(prevState);
+                originalState.current.presentationState = _.cloneDeep(prevState.presentationState);
 
                 return { ...prevState };
             });
@@ -233,7 +259,7 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
 
         setDataState((prevState) => {
             originalState.current = _.cloneDeep({
-                ...prevState,
+                ...originalState.current,
                 presentationState: { ...prevState.presentationState, ...newPresentationState },
             });
 
@@ -245,15 +271,15 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
     };
 
     // api-related functions
-    const handleSaveSlideChanges = async (promise: Promise<IBaseResponse<any>>) => {
+    const handleSaveSlideChanges = useCallback(async (promise: Promise<IBaseResponse<any>>) => {
         if (!promise) return;
 
         try {
             const slideRes = await promise;
 
             if (slideRes.code === 200) {
-                Notification.notifySuccess(SUCCESS_NOTIFICATION.SAVED_SUCCESS);
                 resetSlideState();
+                setError(ErrorState.none);
                 return;
             }
 
@@ -263,44 +289,76 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
 
             if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
                 Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                setError(ErrorState.save_error);
                 return;
             }
 
             if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
                 Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+                setError(ErrorState.save_error);
                 return;
             }
 
             if (slideRes.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
                 Notification.notifyError(ERROR_NOTIFICATION.PRESENTING_PRESENTATION);
+                setError(ErrorState.save_error);
                 return;
             }
 
             if (slideRes.code === RESPONSE_CODE.CANNOT_EDIT_VOTED_SLIDE) {
                 Notification.notifyError(ERROR_NOTIFICATION.CANNOT_EDIT_VOTED_SLIDE);
+                setError(ErrorState.save_error);
                 return;
             }
 
             if (slideRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
                 Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                setError(ErrorState.save_error);
                 return;
             }
 
-            console.error("PresentationFeatureContextProvider:", error);
-            Notification.notifyError(ERROR_NOTIFICATION.SAVE_PROCESS);
+            setError(ErrorState.save_error);
+            console.error("PresentFeatureContextProvider:", error);
+            Notification.notifyError(ERROR_NOTIFICATION.SAVE_SLIDE_DETAIL_PROCESS);
         }
-    };
+    }, []);
 
-    const handleSaveSlidesListChanges = async (promise: Promise<IBaseResponse<any>>) => {
+    const handleSaveSlidesListChanges = useCallback(async (promise: Promise<IBaseResponse<any>>) => {
         if (!promise) return;
 
-        // TODO: handle save slides list api response
-        console.log(promise);
-    };
+        // handle save slides list api response
+        try {
+            const presentationRes = await promise;
+
+            if (presentationRes.code === 200) {
+                resetPresentationState();
+                setError(ErrorState.none);
+                return;
+            }
+
+            throw new Error("Unhandled error code");
+        } catch (error: any) {
+            const presentationRes = error?.response?.data;
+
+            if (presentationRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                setError(ErrorState.save_error);
+                return;
+            }
+
+            setError(ErrorState.save_error);
+            console.error("PresentFeatureContextProvider:", error);
+            Notification.notifyError(ERROR_NOTIFICATION.SAVE_SLIDE_DETAIL_PROCESS);
+        }
+    }, []);
 
     // this function has to be at the bottom of the 'api-related functions' section
     // function to check and save only changed parts
-    const handleSaveAppropriateChanges = () => {
+    const handleSaveAppropriateChanges = useCallback(async () => {
+        // prepare promises
+        let saveSlideChangesPromise: Promise<void> | null = null;
+        let saveSlidesListChangesPromise: Promise<void> | null = null;
+
         if (isSlideDetailModified) {
             const mappedSlideDetail = DataMappingUtil.mapSlideDetailToPut(
                 dataState.presentationState,
@@ -313,33 +371,69 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
                 mappedSlideDetail
             );
 
-            handleSaveSlideChanges(promise);
+            saveSlideChangesPromise = handleSaveSlideChanges(promise);
         }
 
         if (isSlidesListModified) {
-            const promise = new Promise<IBaseResponse<any>>((resolve, reject) =>
-                resolve({ code: 200, message: "Placeholder" } as IBaseResponse<any>)
-            );
+            try {
+                const mappedSlidesList = dataState.presentationState.slides.map((slide) => ({
+                    id: parseInt(slide.id),
+                    position: slide.position,
+                }));
 
-            handleSaveSlidesListChanges(promise);
+                const promise = PresentationService.updatePresentationAsync(dataState.presentationState.identifier, {
+                    slides: mappedSlidesList,
+                });
+
+                saveSlidesListChangesPromise = handleSaveSlidesListChanges(promise);
+            } catch (error) {
+                console.error("PresentFeatureContextProvider:", error);
+                Notification.notifyError(ERROR_NOTIFICATION.SAVE_SLIDE_LIST_PROCESS);
+            }
         }
-    };
+
+        // call APIs
+        setIsSaving(true);
+        try {
+            const promisesList: Promise<void>[] = [];
+            if (saveSlideChangesPromise !== null) promisesList.push(saveSlideChangesPromise);
+            if (saveSlidesListChangesPromise !== null) promisesList.push(saveSlidesListChangesPromise);
+            await Promise.all(promisesList);
+        } catch (err) {
+            console.error("PresentFeatureContextProvider:", err);
+        }
+        setIsSaving(false);
+    }, [isSlideDetailModified, isSlidesListModified, dataState, handleSaveSlideChanges, handleSaveSlidesListChanges]);
+
+    useEffect(() => {
+        if (!autoSave) return;
+
+        if (isSlideDetailModified || isSlidesListModified) {
+            if (timeoutId.current !== null) clearTimeout(timeoutId.current);
+            timeoutId.current = setTimeout(handleSaveAppropriateChanges, 500);
+        }
+    }, [isSlideDetailModified, isSlidesListModified, autoSave, handleSaveAppropriateChanges]);
 
     return (
         <PresentFeature.Provider
             value={{
                 slideState: dataState.slideState,
                 presentationState: dataState.presentationState,
+                indicators: {
+                    isModified: isSlidesListModified || isSlideDetailModified,
+                    isModifiedDetail: {
+                        isSlidesListModified: isSlidesListModified,
+                        isSlideDetailModified: isSlideDetailModified,
+                    },
+                    error: error,
+                    hasResult: dataState.slideState.result.some((item) => item.value !== 0),
+                    isSaving: isSaving,
+                },
                 changeSlideState,
                 changePresentationState,
                 resetSlideState,
                 resetPresentationState,
                 saveChanges: handleSaveAppropriateChanges,
-                isModifiedDetail: {
-                    isSlidesListModified: isSlidesListModified,
-                    isSlideDetailModified: isSlideDetailModified,
-                },
-                isModified: isSlidesListModified || isSlideDetailModified,
             }}
         >
             {props.children}

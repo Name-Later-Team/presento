@@ -121,6 +121,9 @@
 
     height: 100%;
     border-radius: 0.5rem;
+}
+
+.static-header__menu-btn-container--sm {
     display: none !important;
 }
 
@@ -170,8 +173,15 @@
         background-color: rgb(0, 0, 0, 0.35);
     }
 
-    .static-header__menu-btn,
     .sidebar-container__close-btn {
+        display: unset !important;
+    }
+
+    .static-header__menu-btn-container--lg {
+        display: none !important;
+    }
+
+    .static-header__menu-btn-container--sm {
         display: unset !important;
     }
 }

@@ -6,7 +6,7 @@ export default function ParagraphSlideComponent() {
 
     return (
         <div className="d-flex flex-column justify-content-center align-items-center h-100">
-            <div className="paragraph-component__title mb-3">
+            <div className="paragraph-component__title">
                 <span
                     style={{
                         fontSize: `min(calc(${slideState.fontSize + 12}vw * 0.1), ${slideState.fontSize + 12}px)`,

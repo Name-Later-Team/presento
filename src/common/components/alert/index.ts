@@ -10,9 +10,9 @@ class Alert {
     _confirmButtonText?: string;
     _cancelButtonText?: string;
     _showCloseButton?: boolean;
-    _onConfirm?: Function;
-    _onCancel?: Function;
-    _onClose?: Function;
+    _onConfirm?: () => void;
+    _onCancel?: () => void;
+    _onClose?: () => void;
     _cannotDismiss?: boolean;
 
     constructor() {
@@ -102,17 +102,17 @@ export class AlertBuilder {
         return this;
     }
 
-    setOnConfirm(fun: Function) {
+    setOnConfirm(fun: () => void) {
         this._sweetAlert._onConfirm = fun;
         return this;
     }
 
-    setOnCancel(fun: Function) {
+    setOnCancel(fun: () => void) {
         this._sweetAlert._onCancel = fun;
         return this;
     }
 
-    setOnClose(fun: Function) {
+    setOnClose(fun: () => void) {
         this._sweetAlert._onClose = fun;
         return this;
     }
