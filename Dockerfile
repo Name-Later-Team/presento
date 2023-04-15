@@ -7,11 +7,13 @@ WORKDIR /app
 RUN npm install --quite typescript -g
 COPY ./public ./public
 COPY ./src ./src
+COPY ./.env ./
 COPY ./package.json ./
 COPY ./package-lock.json ./
+COPY ./tsconfig.json ./
 
 # install frontend packages
-RUN npm ci
+RUN npm install
 
 # build frontend app
 RUN npm run build
@@ -28,9 +30,6 @@ COPY --from=builder /app/client-build ./presento/client-build
 COPY ./backend/src ./presento/src
 COPY ./backend/package.json ./presento
 COPY ./backend/package-lock.json ./presento
-
-# COPY backend env to presento folder
-COPY ./.env.backend.production ./.env
 
 RUN cd ./presento && npm ci
 
