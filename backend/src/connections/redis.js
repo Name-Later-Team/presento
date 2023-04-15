@@ -5,6 +5,7 @@ import { APP_CONFIG } from "../configs/index.js";
 const clients = {};
 
 function initRedisConnectionAsync() {
+    console.log({ url: `redis://${APP_CONFIG.redis.host}:${APP_CONFIG.redis.port}` });
     const redisClient = createClient({ url: `redis://${APP_CONFIG.redis.host}:${APP_CONFIG.redis.port}` });
 
     redisClient.connect();
