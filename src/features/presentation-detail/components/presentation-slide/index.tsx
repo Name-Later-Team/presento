@@ -31,7 +31,7 @@ export default function PresentationSlide() {
     return (
         <div className="presentation-slide__slide-wrapper">
             <div className="presentation-slide__slide text-break">
-                <Stack className="text-center h-100" gap={3}>
+                <Stack className="presentation-slide__slide__slide-stack text-center h-100">
                     {slideState.showInstructionBar && (
                         <>
                             <div className="presentation-slide__instruction-bar">
@@ -41,11 +41,11 @@ export default function PresentationSlide() {
                                     onClick={() => presentationState.votingCode.code !== "" && handleCopyLink()}
                                 >
                                     Truy cập
-                                    <span className="fw-bolder text-primary" style={{ marginInline: "0.4rem" }}>
+                                    <span className="fw-bolder text-primary" style={{ marginInline: "0.5vw" }}>
                                         {APP_CONSTANTS.VOTE_APP_DOMAIN}
                                     </span>
                                     nhập mã
-                                    <span className="fw-bolder text-primary" style={{ marginInline: "0.4rem" }}>
+                                    <span className="fw-bolder text-primary" style={{ marginInline: "0.5vw" }}>
                                         {presentationState.votingCode.code === "" ? (
                                             <Spinner
                                                 className="vote-link__voting-code--spinner mx-2"
@@ -85,8 +85,8 @@ export default function PresentationSlide() {
 
                             {/* Display the number of people who voted on this question */}
                             <div id="footer__total-respondents">
-                                {slideState.respondents}
-                                <FontAwesomeIcon className="footer__total-respondents-logo ms-2" icon={faUser} />
+                                <span>{slideState.respondents}</span>
+                                <FontAwesomeIcon className="footer__total-respondents-logo" icon={faUser} />
                             </div>
                             <CustomizedTooltip
                                 place="left"

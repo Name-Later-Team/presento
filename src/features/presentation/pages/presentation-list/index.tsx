@@ -249,13 +249,15 @@ export default function PresentationList() {
                 return Promise.resolve();
             }
 
+            throw new Error("Unhandle error code");
+        } catch (err: any) {
+            const res = err?.response?.data;
+
             if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
                 Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
                 return Promise.reject();
             }
 
-            throw new Error("Unhandle error code");
-        } catch (err) {
             console.error("PresentationModal:", err);
             Notification.notifyError(ERROR_NOTIFICATION.RENAME_PRESENTATION_FAILED);
             return Promise.reject();

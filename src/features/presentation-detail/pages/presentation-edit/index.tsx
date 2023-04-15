@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Alert, Button, Col, Row, Stack } from "react-bootstrap";
+import { Alert, Col, Row, Stack } from "react-bootstrap";
 import { SingleValue } from "react-select";
 import { BaseSelect } from "../../../../common/components/select";
 import { initSlideState, usePresentFeature } from "../../../../common/contexts/present-feature-context";
@@ -8,6 +7,8 @@ import HeadingConfig from "../../components/slide-config/heading";
 import MultipleChoiceConfig from "../../components/slide-config/multiple-choice";
 import ParagraphConfig from "../../components/slide-config/paragraph";
 import "./style.scss";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSquarePollVertical } from "@fortawesome/free-solid-svg-icons";
 
 interface ISlideTypeOption {
     value: string;
@@ -20,7 +21,7 @@ const slideTypeLabels: { [type: string]: string } = {
     paragraph: "Đoạn văn",
 };
 
-const slideTypeComponents: { [type: string]: JSX.Element } = {
+const slideTypeConfigComponents: { [type: string]: JSX.Element } = {
     multiple_choice: <MultipleChoiceConfig />,
     heading: <HeadingConfig />,
     paragraph: <ParagraphConfig />,
@@ -33,8 +34,7 @@ const slideTypeOptions: ISlideTypeOption[] = [
 ];
 
 export default function EditPresentation() {
-    const { slideState, presentationState, changeSlideState, changePresentationState } = usePresentFeature();
-    const [showAlert, setShowAlert] = useState(true);
+    const { slideState, presentationState, indicators, changeSlideState, resetPresentationState } = usePresentFeature();
 
     const slideType: ISlideTypeOption = {
         value: slideState.type,
@@ -58,7 +58,7 @@ export default function EditPresentation() {
         for (let element of newSlides) {
             if (element.id.toString() === oldSlideState.id.toString()) {
                 element.type = newSlideType?.value || "";
-                changePresentationState({
+                resetPresentationState({
                     slides: newSlides,
                 });
                 break;
@@ -66,25 +66,28 @@ export default function EditPresentation() {
         }
     };
 
-    const isChangeSlideTypeDisabled = slideState.result.some((item) => item.value !== 0);
-
     return (
         <Row className="edit-presentation">
             <Col xxl={9} xl={8} lg={8} md={12} className="edit-presentation__col edit-presentation__col--left">
+                {indicators.hasResult && (
+                    <Alert className="d-flex m-0 mb-3" variant="primary">
+                        <p className="m-0 me-2">
+                            <FontAwesomeIcon icon={faSquarePollVertical} size="lg" />
+                        </p>
+                        <p className="m-0">
+                            Một số tùy chọn thay đổi nội dung bị hạn chế do trang trình bày đã có kết quả
+                        </p>
+                    </Alert>
+                )}
+
                 <PresentationSlide />
             </Col>
             <Col xxl={3} xl={4} lg={4} md={12} className="edit-presentation__col edit-presentation__col--right">
                 <div className="edit-presentation__slide-config">
                     <Stack>
-                        <Alert show={showAlert} className="m-0 mb-3" variant="primary">
-                            <p className="m-0 mb-2 fw-bolder text-uppercase">Nhắc nhở</p>
-                            <p className="m-0 mb-3">Bấm lưu trước khi chuyển trang chiếu hoặc chuyển trang</p>
-                            <div className="d-flex justify-content-end">
-                                <Button size="sm" onClick={() => setShowAlert(false)} variant="outline-primary">
-                                    Đã hiểu
-                                </Button>
-                            </div>
-                        </Alert>
+                        <h4 className="text-uppercase fw-bold text-primary m-0 mt-1 mb-3">Nội dung</h4>
+
+                        <hr className="m-0 mb-3" />
 
                         <p className="m-0 mb-2">Loại trang trình bày</p>
 
@@ -98,18 +101,12 @@ export default function EditPresentation() {
                             }}
                             onChange={handleSlideTypeChange}
                             value={slideType}
-                            isDisabled={isChangeSlideTypeDisabled}
+                            isDisabled={indicators.hasResult}
                         />
-
-                        {isChangeSlideTypeDisabled && (
-                            <Alert className="m-0 mt-2" variant="danger">
-                                <p className="m-0">Không được thay đổi loại khi trang trình bày đã có kết quả</p>
-                            </Alert>
-                        )}
 
                         <hr className="my-3" />
 
-                        {slideTypeComponents[slideState.type]}
+                        {slideTypeConfigComponents[slideState.type]}
                     </Stack>
                 </div>
             </Col>

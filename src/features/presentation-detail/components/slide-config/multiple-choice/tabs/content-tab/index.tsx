@@ -2,10 +2,10 @@ import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button, Form, Stack } from "react-bootstrap";
 import { usePresentFeature } from "../../../../../../../common/contexts/present-feature-context";
-import { IOptionsResponse } from "../../../../../../../common/interfaces";
+import { IMultipleChoiceExtraConfigs, IOptionsResponse } from "../../../../../../../common/interfaces";
 
 export default function MultipleChoiceContentTab() {
-    const { slideState, changeSlideState } = usePresentFeature();
+    const { slideState, indicators, changeSlideState } = usePresentFeature();
 
     const handleChangeOptionText = (key: string, newValue: string) => {
         const newState: IOptionsResponse[] = [...slideState.options];
@@ -22,6 +22,7 @@ export default function MultipleChoiceContentTab() {
     };
 
     const handleDeleteOption = (key: string) => {
+        if (indicators.hasResult) return;
         changeSlideState({
             options: slideState.options.filter((item) => item.key !== key),
             result: slideState.result.filter((item) => item.key !== key),
@@ -68,6 +69,7 @@ export default function MultipleChoiceContentTab() {
                         }
                         maxLength={150}
                         placeholder="Nhập câu hỏi"
+                        autoComplete="off"
                     />
                 </Form.Group>
 
@@ -83,8 +85,9 @@ export default function MultipleChoiceContentTab() {
                             })
                         }
                         maxLength={250}
-                        rows={3}
+                        rows={4}
                         placeholder="Nhập mô tả câu hỏi"
+                        autoComplete="off"
                     />
                 </Form.Group>
 
@@ -116,12 +119,14 @@ export default function MultipleChoiceContentTab() {
                                         value={option.value}
                                         maxLength={50}
                                         placeholder="Nhập lựa chọn"
+                                        autoComplete="off"
                                     />
                                     <Button
                                         variant="light"
                                         className="text-danger ms-2 p-2 h-100"
                                         title="Xóa lựa chọn"
                                         onClick={() => handleDeleteOption(option.key)}
+                                        disabled={indicators.hasResult}
                                     >
                                         <FontAwesomeIcon icon={faTrash} />
                                     </Button>
@@ -135,6 +140,28 @@ export default function MultipleChoiceContentTab() {
                     </Button>
 
                     {/* <Form.Text muted>Tích chọn để đánh dấu đáp án đúng</Form.Text> */}
+                </Stack>
+
+                <Stack gap={2}>
+                    <Form.Label>Tùy chỉnh</Form.Label>
+                    <Form.Check
+                        checked={(slideState.config as IMultipleChoiceExtraConfigs)?.enableMultipleAnswers || false}
+                        type="switch"
+                        id="enableMultipleAnswers"
+                        label="Cho phép chọn nhiều lựa chọn"
+                        onChange={() => {
+                            const newConfig = {
+                                ...slideState.config,
+                                enableMultipleAnswers: (slideState.config as IMultipleChoiceExtraConfigs)
+                                    ?.enableMultipleAnswers
+                                    ? !(slideState.config as IMultipleChoiceExtraConfigs)?.enableMultipleAnswers
+                                    : true,
+                            };
+                            changeSlideState({
+                                config: newConfig,
+                            });
+                        }}
+                    />
                 </Stack>
             </Stack>
         </Form>

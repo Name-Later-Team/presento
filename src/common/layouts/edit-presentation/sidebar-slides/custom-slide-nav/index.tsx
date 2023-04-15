@@ -10,6 +10,7 @@ import "./style.scss";
 import CustomizedTooltip from "../../../../components/tooltip";
 import React from "react";
 import { DraggableProvided } from "react-beautiful-dnd";
+import { AlertBuilder } from "../../../../components/alert";
 
 interface ICustomSlideNav extends IBaseComponent, ISidebarSlideNav {
     slideNum?: number;
@@ -20,12 +21,28 @@ interface ICustomSlideNav extends IBaseComponent, ISidebarSlideNav {
 }
 
 const CustomSlideNav = React.forwardRef<HTMLDivElement, ICustomSlideNav>((props, ref) => {
-    const { presentationState } = usePresentFeature();
+    const { presentationState, indicators } = usePresentFeature();
     const { icon, typeLabel, path, slideId, slideNum, actions, draggableProvided } = props;
     const navigate = useNavigate();
 
     const handleOnClick = () => {
-        navigate(path);
+        const goTo = () => navigate(path);
+        if (indicators.isModifiedDetail.isSlideDetailModified) {
+            new AlertBuilder()
+                .setTitle("Cảnh báo")
+                .setAlertType("warning")
+                .setText("Dữ liệu trang chiếu vừa thay đổi của bạn sẽ mất nếu chưa được lưu, vẫn muốn chuyển trang?")
+                .setConfirmBtnText("Đồng ý")
+                .setCancelBtnText("Không")
+                .setOnConfirm(goTo)
+                .preventDismiss()
+                .getAlert()
+                .fireAlert();
+        } else {
+            goTo();
+        }
+
+        // navigate(path);
     };
 
     const handleDeleteSlide = (slideId: string) => {
@@ -47,7 +64,7 @@ const CustomSlideNav = React.forwardRef<HTMLDivElement, ICustomSlideNav>((props,
                             <div className="custom-slide-nav__slide-info w-100">
                                 <span className="custom-slide-nav__slide-number mb-1">{slideNum}</span>
 
-                                {presentationState.pace.active_slide_id === slideId ? (
+                                {presentationState.pace.active_slide_id.toString() === slideId.toString() ? (
                                     <span
                                         onClick={(e) => {
                                             e.preventDefault();

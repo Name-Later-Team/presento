@@ -19,6 +19,7 @@ export default function ParagraphContentTab() {
                         }
                         maxLength={150}
                         placeholder="Nhập tiêu đề"
+                        autoComplete="off"
                     />
                 </Form.Group>
 
@@ -36,6 +37,7 @@ export default function ParagraphContentTab() {
                         maxLength={800}
                         rows={10}
                         placeholder="Nhập văn bản"
+                        autoComplete="off"
                     />
                 </Form.Group>
             </Stack>

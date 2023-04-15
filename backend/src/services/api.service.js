@@ -51,6 +51,7 @@ export class ApiService {
             headers: {
                 ...headers,
                 ...baseHeaders,
+                "User-Agent": APP_CONFIG.slug,
             },
         });
         return result;
@@ -69,6 +70,7 @@ export class ApiService {
                 ...headers,
                 ...baseHeaders,
                 "Content-Type": "application/json+text",
+                "User-Agent": APP_CONFIG.slug,
             },
         });
         return result;
@@ -87,6 +89,7 @@ export class ApiService {
                 ...headers,
                 ...baseHeaders,
                 "Content-Type": "application/json+text",
+                "User-Agent": APP_CONFIG.slug,
             },
         });
         return result;
@@ -103,6 +106,7 @@ export class ApiService {
             headers: {
                 ...headers,
                 ...baseHeaders,
+                "User-Agent": APP_CONFIG.slug,
             },
         });
         return result;
