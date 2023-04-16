@@ -15,6 +15,10 @@ COPY ./tsconfig.json ./
 # install frontend packages
 RUN npm install
 
+ENV GENERATE_SOURCEMAP=false
+ENV BUILD_PATH=./client-build
+ENV REACT_APP_VOTE_APP_DOMAIN=http://presenti.com
+
 # build frontend app
 RUN npm run build
 
