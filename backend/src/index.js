@@ -40,18 +40,18 @@ app.use(
 
 app.use(morgan("combined", { stream: new AccessLogStream() }));
 
-// RedisClient.initRedisConnectionAsync();
+RedisClient.initRedisConnectionAsync();
 
-// const redisStore = new RedisStore({
-//     client: RedisClient.getRedisClient(),
-//     prefix: "presento",
-// });
+const redisStore = new RedisStore({
+    client: RedisClient.getRedisClient(),
+    prefix: "presento",
+});
 
 console.log({ APP_CONFIG });
 
 app.use(
     session({
-        // store: redisStore,
+        store: redisStore,
         secret: APP_CONFIG.cookie.secret,
         name: APP_CONFIG.cookie.name,
         resave: false,
