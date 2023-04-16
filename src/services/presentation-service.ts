@@ -42,6 +42,10 @@ export default class PresentationService {
         return HttpService.get<IVotingCodeResponse>(`/api/presentation/v1/presentations/${identifier}/votingCodes`);
     }
 
+    static resetPresentationResult(identifier: string) {
+        return HttpService.post<any>(`/api/presentation/v1/presentations/${identifier}/results/reset`, {});
+    }
+
     static updatePresentationPaceAsync(
         presentationId: string,
         slideId: string,
