@@ -1,9 +1,9 @@
 import { faBars, faCheck, faChevronLeft, faList, faPlay, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ReactElement, useEffect, useRef, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import { Button, Dropdown, Spinner, Stack } from "react-bootstrap";
 import { Link, Outlet, useNavigate, useParams } from "react-router-dom";
-import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../constants";
+import { ERROR_NOTIFICATION } from "../../../constants";
 import PresentationService from "../../../services/presentation-service";
 import { Notification } from "../../components/notification";
 import CustomizedTooltip from "../../components/tooltip";
@@ -13,9 +13,6 @@ import { ErrorState, usePresentFeature } from "../../contexts/present-feature-co
 import { IBaseComponent } from "../../interfaces/basic-interfaces";
 import PresentationInfo from "./presentation-info";
 import "./style.scss";
-import SlideService from "../../../services/slide-service";
-import DataMappingUtil from "../../utils/data-mapping-util";
-import moment from "moment";
 
 interface IEditPresentationLayout extends IBaseComponent {
     sidebarElement: ReactElement;
@@ -27,7 +24,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
     // contexts
     const { userInfo, removeUserInfo } = useAuth();
-    const { slideState, presentationState, indicators, resetSlideState, resetPresentationState } = usePresentFeature();
+    const { indicators } = usePresentFeature();
     const globalContext = useGlobalContext();
 
     // states
@@ -35,9 +32,6 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const [hideHeaderRight, setHideHeaderRight] = useState(false);
     const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(smallScreenMediaQuery).matches);
     // const [showSelectGroupModal, setShowSelectGroupModal] = useState<boolean>(false);
-
-    // refs
-    const gotSlideDetail = useRef(false);
 
     // libs
     const { presentationId, slideId } = useParams();
@@ -65,89 +59,6 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
             mediaQueryList.removeEventListener("change", onChange);
         };
     }, []);
-
-    // effect that happens when change slide within the edit page
-    useEffect(() => {
-        const fetchingSlideDetail = async () => {
-            globalContext.blockUI("Đang lấy thông tin");
-            try {
-                const res = await SlideService.getSlideDetailAsync(presentationId || "", slideId || "");
-
-                if (res.code === 200) {
-                    const resData = res?.data;
-                    if (!resData) {
-                        globalContext.unBlockUI();
-                        return;
-                    }
-                    const mappedSlideDetail = DataMappingUtil.mapSlideStateFromApiData(slideState, resData);
-                    resetSlideState(mappedSlideDetail);
-                    globalContext.unBlockUI();
-                    return;
-                }
-
-                throw new Error("Unknown http code");
-            } catch (err: any) {
-                const res = err?.response?.data;
-                if (res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
-                    Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
-                    globalContext.unBlockUI();
-                    return Promise.reject();
-                }
-
-                if (res.code === RESPONSE_CODE.VALIDATION_ERROR || res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
-                    Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
-                    globalContext.unBlockUI();
-                    return Promise.reject();
-                }
-
-                console.error(err);
-                Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_DETAIL);
-                globalContext.unBlockUI();
-                return Promise.reject();
-            }
-        };
-
-        gotSlideDetail.current = false;
-        fetchingSlideDetail()
-            .then(() => (gotSlideDetail.current = true))
-            .catch(() => {});
-        // eslint-disable-next-line
-    }, [presentationId, slideId]);
-
-    useEffect(() => {
-        const fetchVotingCode = async () => {
-            try {
-                const res = await PresentationService.postVotingCodeAsync(presentationId || "");
-
-                if (res.code === 200) {
-                    if (!res.data) return;
-
-                    if (res.data.isValid) {
-                        resetPresentationState({ votingCode: { ...res.data } });
-                        return;
-                    }
-                }
-
-                throw new Error("Unknown http code");
-            } catch (err) {
-                console.error(err);
-                Notification.notifyError(ERROR_NOTIFICATION.FETCH_VOTING_CODE_PROCESS);
-            }
-        };
-
-        // called voting code api when have got slide detail
-        if (gotSlideDetail.current) {
-            // get voting code if this is none
-            if (presentationState.votingCode.code === "") {
-                fetchVotingCode();
-            }
-
-            // get voting code if the voting code was expired
-            if (moment(presentationState.votingCode.expiresAt).diff(moment()) < 0) {
-                fetchVotingCode();
-            }
-        }
-    });
 
     const handleLogout = () => {
         removeUserInfo();

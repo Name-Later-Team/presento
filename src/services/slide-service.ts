@@ -28,4 +28,11 @@ export default class SlideService {
             data
         );
     }
+
+    static resetSlideResult(presentationIdentifier: string, slideId: string) {
+        return HttpService.post<any>(
+            `/api/presentation/v1/presentations/${presentationIdentifier}/slides/${slideId}/results/reset`,
+            {}
+        );
+    }
 }

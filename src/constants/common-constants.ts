@@ -36,6 +36,7 @@ export const SUCCESS_NOTIFICATION = {
     RENAME_PRESENTATION_SUCCESS: "Đổi tên bài trình bày thành công",
     SAVED_SUCCESS: "Lưu thay đổi thành công",
     DELETE_PRESENTATION_SUCCESS: "Xóa bài trình bày thành công",
+    RESET_RESULT_SUCCESS: "Làm mới kết quả thành công",
 };
 
 export const ERROR_NOTIFICATION = {
@@ -66,6 +67,7 @@ export const ERROR_NOTIFICATION = {
     DELETE_PRESENTATION_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu xóa bài trình bày",
     DELETE_ONLY_SLIDE: "Không thể xóa trang chiếu cuối cùng của bài trình bày",
     SAVE_SLIDE_LIST_PROCESS: "Có lỗi xảy ra khi lưu thay đổi vị trí trang chiếu",
+    RESET_RESULT_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu làm mới kết quả",
 };
 
 export const PRESENTATION_OWNER_TYPE = {
