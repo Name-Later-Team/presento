@@ -5,7 +5,14 @@ WORKDIR /app
 
 # Install typescript with --quite and -g modes.
 RUN npm install --quite typescript -g
-COPY . .
+
+# Copy frontend source to build
+COPY ./public ./public
+COPY ./src ./src
+COPY ./.env ./.env
+COPY ./package.json ./
+COPY ./package-lock.json ./
+COPY ./tsconfig.json ./
 
 # install frontend packages
 RUN npm install
