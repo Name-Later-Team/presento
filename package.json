@@ -41,7 +41,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "start:dev": "concurrently --kill-others \"npm start\" \"cd backend && npm run start:dev\"",
-    "start-app": "node backend/src/index.js"
+    "start-app": "node backend/src/index.js",
+    "install-backend": "cd backend && npm ci"
   },
   "eslintConfig": {
     "extends": [

@@ -62,6 +62,6 @@ RUN mkdir -p ./backend/client-build
 
 # COPY app/client-build app/backend/client-build
 
-RUN cd ./backend && npm ci
+RUN npm run install-bakcend
 
 CMD npm run start-app
