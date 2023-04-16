@@ -1,5 +1,9 @@
 import * as dotenv from "dotenv";
-dotenv.config();
+console.log(process.env);
+
+dotenv.config({ path: "../../../.env" });
+
+console.log(process.env);
 
 export const APP_CONFIG = {
     appEnvironment: process.env.APP_ENV || "development",
@@ -31,7 +35,7 @@ export const APP_CONFIG = {
 
     authz: {
         baseUrl: process.env.AUTHZ_URL,
-        application:process.env.AUTHZ_APPLICATION,
+        application: process.env.AUTHZ_APPLICATION,
         redirectUri: process.env.AUTHZ_REDIRECT_URI,
         scope: process.env.AUTHZ_SCOPE,
         endpoints: {
