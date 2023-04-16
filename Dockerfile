@@ -34,3 +34,24 @@ COPY ./backend/package-lock.json ./presento
 RUN cd ./presento && npm ci
 
 CMD cd presento && npm start
+
+# FROM node:16-alpine
+
+# WORKDIR /app
+
+# RUN npm install --quite typescript -g
+
+# COPY . .
+
+# RUN npm install
+
+# # # build frontend app
+# RUN npm run build
+
+# RUN mkdir -p ./backend/client-build
+
+# COPY ./client-build ./backend/client-build
+
+# RUN cd ./backend && npm ci
+
+# CMD cd backend && npm start
