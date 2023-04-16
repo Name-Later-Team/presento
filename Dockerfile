@@ -58,10 +58,10 @@ RUN npm install
 # # build frontend app
 RUN npm run build
 
-RUN mkdir -p ./backend/client-build
+# RUN mkdir -p ./backend/client-build
 
 # COPY app/client-build app/backend/client-build
 
-RUN npm run install-bakcend
+RUN npm run install-backend
 
 CMD npm run start-app
