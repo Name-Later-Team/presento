@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 console.log(process.env);
 
-dotenv.config({ path: "../../../.env" });
+dotenv.config();
 
 console.log(process.env);
 
