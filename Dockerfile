@@ -64,4 +64,4 @@ RUN mkdir -p ./backend/client-build
 
 RUN cd ./backend && npm ci
 
-CMD cd backend && npm start
+CMD npm run start-app
