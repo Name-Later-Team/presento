@@ -44,9 +44,41 @@ export default function SidebarSlides() {
     const handleCreateNewSlideResponse = (data: ICreateNewSlideResponse) => {
         resetPresentationState({
             slides: [...presentationState.slides, DataMappingUtil.mapNewlyCreatedSlideData(data)],
+            totalSlides: presentationState.totalSlides + 1,
         });
         navigate(`/presentation/${presentationId}/${data.id}/edit`);
         setScrollToSlideId(data.id.toString());
+    };
+
+    // Omit the deleted slide in the slides list and navigate if needed
+    const handleDeleteSlideResponse = (deletedSlideId: string) => {
+        // navigate to the previous slide if the deleted slide is the currently viewing slide
+        if (deletedSlideId.toString() === slideId?.toString()) {
+            const previousSlideIndex =
+                presentationState.slides.findIndex((item) => item.id.toString() === deletedSlideId.toString()) - 1;
+            previousSlideIndex > -1 &&
+                navigate(`/presentation/${presentationId}/${presentationState.slides[previousSlideIndex].id}/edit`);
+        }
+
+        // shift position and get rid of the deleted slide in state
+        const newSlidesList: IPresentationSlide[] = [];
+        presentationState.slides.forEach((item) => {
+            if (item.id > deletedSlideId) {
+                newSlidesList.push({
+                    ...item,
+                    position: item.position - 1,
+                });
+            }
+            if (item.id < deletedSlideId) {
+                newSlidesList.push({
+                    ...item,
+                });
+            }
+        });
+        resetPresentationState({
+            slides: newSlidesList,
+            totalSlides: presentationState.totalSlides - 1,
+        });
     };
 
     const getPresentationDetail = async () => {
@@ -132,47 +164,6 @@ export default function SidebarSlides() {
             }
 
             if (res.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
-                // manually turn off the presenting presentation
-                // const handleRequestTurnOffPresenting = async () => {
-                //     globalContext.blockUI(undefined, true);
-                //     try {
-                //         await PresentationService.updatePresentationPaceAsync(presentationId ?? "", "", "quit");
-                //         Notification.notifySuccess("Tắt trang đang chiếu thành công");
-                //     } catch (err) {
-                //         console.error(err);
-                //         Notification.notifyError(
-                //             "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau"
-                //         );
-                //     }
-                //     globalContext.unBlockUI();
-                // };
-                // if (presentationState.permission.presentationRole === "owner") {
-                //     new AlertBuilder()
-                //         .setTitle("Thông báo")
-                //         .setText(
-                //             "Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?"
-                //         )
-                //         .setAlertType("info")
-                //         .setConfirmBtnText("Đến trang chiếu")
-                //         .setCancelBtnText("Tắt trang chiếu")
-                //         .showCloseButton()
-                //         .preventDismiss()
-                //         .setOnConfirm(() =>
-                //             navigate(`/presentations/${presentationId}/${presentationState.pace.active}`)
-                //         )
-                //         .setOnCancel(handleRequestTurnOffPresenting)
-                //         .getAlert()
-                //         .fireAlert();
-                // } else {
-                //     new AlertBuilder()
-                //         .setTitle("Thông báo")
-                //         .setText("Bài này đang được trình chiếu, bạn không được phép thao tác chỉnh sửa trang chiếu")
-                //         .setAlertType("info")
-                //         .setConfirmBtnText("Đã hiểu")
-                //         .showCloseButton()
-                //         .getAlert()
-                //         .fireAlert();
-                // }
                 Notification.notifyError(ERROR_NOTIFICATION.PRESENTING_PRESENTATION);
                 globalContext.unBlockUI();
                 return;
@@ -185,93 +176,43 @@ export default function SidebarSlides() {
     };
 
     // delete a slide
-    const handleDeleteSlide = async (adminKey: string) => {
+    const handleDeleteSlide = async (slideId: string) => {
         if (presentationState.slides.length <= 1) {
             new AlertBuilder()
                 .setTitle("Cảnh báo")
                 .setAlertType("warning")
                 .setConfirmBtnText("OK")
-                .setText("Bạn không thể xóa trang chiếu cuối cùng của 1 bài trình chiếu")
+                .setText("Bạn không thể xóa trang chiếu cuối cùng của 1 bài trình bày")
                 .getAlert()
                 .fireAlert();
             return;
         }
         try {
             globalContext.blockUI();
-            const res = await SlideService.deleteSlideAsync(presentationId || "", adminKey || "");
+            const res = await SlideService.deleteSlideAsync(presentationId || "", slideId || "");
             if (res.code === 200) {
                 globalContext.unBlockUI();
                 Notification.notifySuccess(SUCCESS_NOTIFICATION.DELETE_SLIDE_SUCCESS);
-                getPresentationDetail();
+                handleDeleteSlideResponse(slideId);
                 return;
             }
-            // if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-            //     const errors = (res.errors as any[]) || null;
-            //     if (errors) {
-            //         const msg = errors[0]?.message;
-            //         Notification.notifyError(msg);
-            //         globalContext.unBlockUI();
-            //         return;
-            //     }
-            //     globalContext.unBlockUI();
-            //     return;
-            // }
-            // if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-            //     Notification.notifyError("Bài trình bày không tồn tại");
-            //     globalContext.unBlockUI();
-            //     return;
-            // }
-            // if (res.code === RESPONSE_CODE.SLIDE_NOT_FOUND) {
-            //     Notification.notifyError("Trang chiếu không tồn tại");
-            //     globalContext.unBlockUI();
-            //     return;
-            // }
-            // if (res.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
-            //     const handleRequestTurnOffPresenting = async () => {
-            //         globalContext.blockUI(undefined, true);
-            //         try {
-            //             await PresentationService.updatePresentationPaceAsync(presentationId ?? "", "", "quit");
-            //             Notification.notifySuccess("Tắt trang đang chiếu thành công");
-            //         } catch (err) {
-            //             console.error(err);
-            //             Notification.notifyError(
-            //                 "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau"
-            //             );
-            //         }
-            //         globalContext.unBlockUI();
-            //     };
-            //     if (presentationState.permission.presentationRole === "owner") {
-            //         new AlertBuilder()
-            //             .setTitle("Thông báo")
-            //             .setText(
-            //                 "Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?"
-            //             )
-            //             .setAlertType("info")
-            //             .setConfirmBtnText("Đến trang chiếu")
-            //             .setCancelBtnText("Tắt trang chiếu")
-            //             .showCloseButton()
-            //             .preventDismiss()
-            //             .setOnConfirm(() =>
-            //                 navigate(`/presentations/${presentationId}/${presentationState.pace.active}`)
-            //             )
-            //             .setOnCancel(handleRequestTurnOffPresenting)
-            //             .getAlert()
-            //             .fireAlert();
-            //     } else {
-            //         new AlertBuilder()
-            //             .setTitle("Thông báo")
-            //             .setText("Bài này đang được trình chiếu, bạn không được phép thao tác chỉnh sửa trang chiếu")
-            //             .setAlertType("info")
-            //             .setConfirmBtnText("Đã hiểu")
-            //             .showCloseButton()
-            //             .getAlert()
-            //             .fireAlert();
-            //     }
-            //     globalContext.unBlockUI();
-            //     return;
-            // }
+
             throw new Error("Unhandled http code");
-        } catch (error) {
+        } catch (error: any) {
+            const res = error?.response?.data;
+
+            if (res.code === RESPONSE_CODE.DELETE_ONLY_SLIDE) {
+                globalContext.unBlockUI();
+                Notification.notifyError(ERROR_NOTIFICATION.DELETE_ONLY_SLIDE);
+                return;
+            }
+
+            if (res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                globalContext.unBlockUI();
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+                return;
+            }
+
             console.error(error);
             globalContext.unBlockUI();
         }

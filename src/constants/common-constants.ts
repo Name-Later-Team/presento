@@ -16,7 +16,9 @@ export const RESPONSE_CODE = {
     PRESENTING_PRESENTATION: 4003,
     CANNOT_FIND_SLIDE: 4004,
     INVALID_VOTING_CODE: 4005,
+    DELETE_ONLY_SLIDE: 4006,
     CANNOT_EDIT_VOTED_SLIDE: 4007,
+    NOT_MATCH_SLIDE_LIST: 4008,
 
     // 401: UNAUTHORIZED
     LOGIN_EXPIRED: 4011,
@@ -34,9 +36,11 @@ export const SUCCESS_NOTIFICATION = {
     RENAME_PRESENTATION_SUCCESS: "Đổi tên bài trình bày thành công",
     SAVED_SUCCESS: "Lưu thay đổi thành công",
     DELETE_PRESENTATION_SUCCESS: "Xóa bài trình bày thành công",
+    RESET_RESULT_SUCCESS: "Làm mới kết quả thành công",
 };
 
 export const ERROR_NOTIFICATION = {
+    SYSTEM_ERROR: "Có lỗi xảy ra với hệ thống, vui lòng liên hệ admin",
     LOGIN_PROCESS: "Có lỗi xảy ra trong quá trình đăng nhập",
     SINGUP_PROCESS: "Có lỗi xảy ra trong quá trình đăng ký",
     MISSING_AUTHORIZATION_CODE: "Thông tin để xử lý đăng nhập bị thiếu",
@@ -59,8 +63,11 @@ export const ERROR_NOTIFICATION = {
     FETCH_VOTING_CODE_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu lấy mã bầu chọn",
     INVALID_VOTING_CODE: "Mã bầu chọn không hợp lệ",
     CANNOT_EDIT_VOTED_SLIDE: "Không thể chỉnh sửa trang chiếu đã có kết quả",
-    SAVE_PROCESS: "Có lỗi xảy ra khi lưu thay đổi",
+    SAVE_SLIDE_DETAIL_PROCESS: "Có lỗi xảy ra khi lưu thay đổi",
     DELETE_PRESENTATION_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu xóa bài trình bày",
+    DELETE_ONLY_SLIDE: "Không thể xóa trang chiếu cuối cùng của bài trình bày",
+    SAVE_SLIDE_LIST_PROCESS: "Có lỗi xảy ra khi lưu thay đổi vị trí trang chiếu",
+    RESET_RESULT_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu làm mới kết quả",
 };
 
 export const PRESENTATION_OWNER_TYPE = {

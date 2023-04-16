@@ -6,7 +6,7 @@ export default function HeadingSlideComponent() {
 
     return (
         <div className="d-flex flex-column justify-content-center align-items-center h-100">
-            <div className="heading-component__heading mb-3">
+            <div className="heading-component__heading">
                 <span
                     style={{
                         fontSize: `min(calc(${slideState.fontSize + 15}vw * 0.1), ${slideState.fontSize + 15}px)`,

@@ -72,6 +72,12 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
         };
     }, []);
 
+    useEffect(() => {
+        if (errors.name?.message) {
+            Notification.notifyError(errors.name.message);
+        }
+    }, [errors]);
+
     const handleChangeMode = (newMode: COMPONENT_MODE) => {
         switch (newMode) {
             case COMPONENT_MODE.display: {
@@ -107,16 +113,18 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
                 return;
             }
 
+            throw new Error("Unhandle error code");
+        } catch (err: any) {
+            const res = err?.response?.data;
+
             if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
                 Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
                 return;
             }
 
-            throw new Error("Unhandle error code");
-        } catch (err) {
             console.error("PresentationModal:", err);
             Notification.notifyError(ERROR_NOTIFICATION.RENAME_PRESENTATION_FAILED);
-            return Promise.reject();
+            return;
         }
     };
 
@@ -175,8 +183,6 @@ export default function PresentationInfo(props: IPresentationInfoProps) {
                                     />
                                 )}
                             />
-
-                            <Form.Text className="text-danger">{errors?.name?.message}</Form.Text>
                         </FormGroup>
 
                         <Stack direction="horizontal" className="justify-content-end align-items-center">
