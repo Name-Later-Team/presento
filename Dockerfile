@@ -49,9 +49,9 @@ COPY ./backend ./backend
 
 RUN npm install --quite typescript -g
 
-ENV GENERATE_SOURCEMAP=false
-ENV BUILD_PATH=./backend/client-build
-ENV REACT_APP_VOTE_APP_DOMAIN=http://presenti.com
+# ENV GENERATE_SOURCEMAP=false
+# ENV BUILD_PATH=./backend/client-build
+# ENV REACT_APP_VOTE_APP_DOMAIN=http://presenti.com
 
 RUN npm install
 
