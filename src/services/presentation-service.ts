@@ -48,15 +48,12 @@ export default class PresentationService {
 
     static updatePresentationPaceAsync(
         presentationId: string,
-        slideId: string,
-        action: PRESENTATION_PACE_ACTIONS,
-        data: any = {}
+        slideId: string | null,
+        action: PRESENTATION_PACE_ACTIONS
     ) {
-        // return HttpService.post(`/v1/presentations/${presentationId}`, {
-        //     ...data,
-        //     action,
-        //     admin_key: slideId === "" ? undefined : slideId,
-        // });
-        return Promise.resolve("OK");
+        return HttpService.post<any>(`/api/presentation/v1/presentations/${presentationId}/present`, {
+            slideId: slideId,
+            action: action,
+        });
     }
 }
