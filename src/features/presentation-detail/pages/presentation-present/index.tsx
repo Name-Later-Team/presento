@@ -26,6 +26,8 @@ export default function PresentPresentation() {
     // const [showChatbox, setShowChatbox] = useState(false);
     // const [showQA, setShowQA] = useState(false);
     const [unreadMsg] = useState(0);
+    // use this state to temporary disable actions in this page (block calling APIs)
+    const [allowInteraction] = useState(true);
 
     // others
     const { presentationId, slideId } = useParams();
@@ -34,7 +36,11 @@ export default function PresentPresentation() {
     // refs
     const thisSlideIndex = useRef(-1);
     const gotSlideDetail = useRef(false);
+    const isInitialRender = useRef(true);
     // const joinedRoom = useRef(false); // keep track of calling join-room
+
+    // find path for next and back slide button
+    thisSlideIndex.current = presentationState.slides.findIndex((slide) => slide.id.toString() === slideId?.toString());
 
     // automatically maximize the screen
     useEffect(() => {
@@ -140,6 +146,7 @@ export default function PresentPresentation() {
     useEffect(() => {
         const fetchingPresentationDetail = async () => {
             globalContext.blockUI("Đang lấy thông tin");
+
             const alert = new AlertBuilder()
                 .setTitle("Thông báo")
                 .setText("Bài trình chiếu này hiện đang không được trình chiếu.")
@@ -152,16 +159,10 @@ export default function PresentPresentation() {
                 .reset()
                 .setTitle("Lỗi")
                 .setAlertType("error")
+                .setText("Có lỗi xảy ra khi lấy thông tin trang chiếu")
                 .setConfirmBtnText("OK")
                 .setOnConfirm(() => navigate("/dashboard/presentation-list"));
-            const kickAlert = new AlertBuilder()
-                .setTitle("Thông báo")
-                .setText("Bạn không có quyền truy cập trang này")
-                .setAlertType("error")
-                .setConfirmBtnText("OK")
-                .setOnConfirm(() => navigate("/", { replace: true }))
-                .preventDismiss()
-                .getAlert();
+
             try {
                 // get presentation detail
                 const presentationRes = await PresentationService.getPresentationDetailAsync(presentationId || "");
@@ -171,6 +172,9 @@ export default function PresentPresentation() {
                         presentationState,
                         data
                     );
+
+                    if (!isInitialRender.current)
+                        mappedPresentationState.votingCode = { ...presentationState.votingCode };
                     resetPresentationState(mappedPresentationState);
 
                     // if the slide has not been presented yet (user enters the URL directly into the URL bar)
@@ -215,9 +219,6 @@ export default function PresentPresentation() {
                 }
 
                 console.error(err);
-                if (err === "forbidden") {
-                    kickAlert.fireAlert();
-                }
                 globalContext.unBlockUI();
                 return Promise.reject();
             }
@@ -225,8 +226,11 @@ export default function PresentPresentation() {
 
         gotSlideDetail.current = false;
         fetchingPresentationDetail()
-            .then(() => (gotSlideDetail.current = true))
-            .catch(() => {});
+            .then(() => {
+                gotSlideDetail.current = true;
+                isInitialRender.current = false;
+            })
+            .catch(() => (isInitialRender.current = false));
         // eslint-disable-next-line
     }, [slideId]);
 
@@ -265,61 +269,57 @@ export default function PresentPresentation() {
         }
     });
 
-    const handleTurnOffPresentationMode = async (callApi: boolean = true) => {
+    const handleTurnOffPresentationMode = async () => {
+        if (!allowInteraction) return;
+        const handleNavigate = () => navigate(`/presentation/${presentationId}/${slideId}/edit`);
         try {
-            if (callApi) await PresentationService.updatePresentationPaceAsync(presentationId ?? "", "", "quit");
-            // if (
-            // 	presentationState.permission.presentationRole === "owner" ||
-            // 	presentationState.permission.presentationRole === "collaborator"
-            // ) {
-            // 	navigate(`/presentations/${presentationId}/${slideId}/edit`);
-            // 	return;
-            // }
-            // if (
-            // 	presentationState.permission.groupRole === "owner" ||
-            // 	presentationState.permission.groupRole === "co-owner"
-            // ) {
-            // 	presentationState.pace.groupId !== null
-            // 		? navigate(`/groups/group-list/${presentationState.pace.groupId}`)
-            // 		: navigate("/");
-            // 	return;
-            // }
-            navigate(`/presentation/${presentationId}/${slideId}/edit`);
-        } catch (err) {
+            await PresentationService.updatePresentationPaceAsync(presentationId || "", null, "quit");
+
+            handleNavigate();
+        } catch (err: any) {
+            const res = err?.response?.data;
+
+            if (res.code === RESPONSE_CODE.QUIT_SLIDE_PERMISSION) {
+                handleNavigate();
+                return;
+            }
+
             console.error(err);
-            Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_STATE);
+            Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_PACE_PROCESS);
         }
     };
 
-    // find path for next and back slide button
-    thisSlideIndex.current = presentationState.slides.findIndex((slide) => slide.id === slideId);
-
     const changeSlide = async (next: boolean) => {
-        // const targetSlideId = next
-        // 	? presentationState.slides[thisSlideIndex.current + 1].adminKey
-        // 	: presentationState.slides[thisSlideIndex.current - 1].adminKey;
-        // try {
-        // 	const updatePaceRes = await PresentationService.updatePresentationPaceAsync(
-        // 		presentationId ?? "",
-        // 		targetSlideId ?? "",
-        // 		"change_slide",
-        // 	);
-        // 	if (updatePaceRes.code === RESPONSE_CODE.CHANGE_SLIDE_PERMISSION) {
-        // 		new AlertBuilder()
-        // 			.setTitle("Thông báo")
-        // 			.setText("Bài trình chiếu này hiện đang không được trình chiếu.")
-        // 			.setAlertType("info")
-        // 			.setConfirmBtnText("OK")
-        // 			.setOnConfirm(() => navigate("/"))
-        // 			.preventDismiss()
-        // 			.getAlert()
-        // 			.fireAlert();
-        // 		return;
-        // 	}
-        // } catch (updatePaceErr) {
-        // 	Notification.notifyError("Có lỗi xảy ra khi cập nhật trạng thái trình chiếu");
-        // 	console.error(updatePaceErr);
-        // }
+        if (!allowInteraction) return;
+        const targetSlideId = next
+            ? presentationState.slides[thisSlideIndex.current + 1].id
+            : presentationState.slides[thisSlideIndex.current - 1].id;
+        try {
+            await PresentationService.updatePresentationPaceAsync(
+                presentationId || "",
+                targetSlideId || "",
+                "change_slide"
+            );
+
+            navigate(`/presentation/${presentationId}/${targetSlideId}`);
+        } catch (error: any) {
+            const res = error?.response?.data;
+
+            if (res.code === RESPONSE_CODE.CHANGE_SLIDE_PERMISSION) {
+                new AlertBuilder()
+                    .setTitle("Thông báo")
+                    .setText("Bài trình chiếu này hiện đang không được trình chiếu.")
+                    .setAlertType("info")
+                    .setConfirmBtnText("OK")
+                    .setOnConfirm(() => navigate("/dashboard/presentation-list"))
+                    .preventDismiss()
+                    .getAlert()
+                    .fireAlert();
+                return;
+            }
+            Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_PACE_PROCESS);
+            console.error(error);
+        }
     };
 
     const toggleFullscreen = async () => {

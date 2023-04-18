@@ -3,16 +3,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useEffect, useState } from "react";
 import { Button, Dropdown, Spinner, Stack } from "react-bootstrap";
 import { Link, Outlet, useNavigate, useParams } from "react-router-dom";
-import { ERROR_NOTIFICATION } from "../../../constants";
+import { ERROR_NOTIFICATION, RESPONSE_CODE, SUCCESS_NOTIFICATION } from "../../../constants";
 import PresentationService from "../../../services/presentation-service";
 import { Notification } from "../../components/notification";
 import CustomizedTooltip from "../../components/tooltip";
 import { useAuth } from "../../contexts/auth-context";
-import { useGlobalContext } from "../../contexts/global-context";
 import { ErrorState, usePresentFeature } from "../../contexts/present-feature-context";
 import { IBaseComponent } from "../../interfaces/basic-interfaces";
 import PresentationInfo from "./presentation-info";
 import "./style.scss";
+import { AlertBuilder } from "../../components/alert";
 
 interface IEditPresentationLayout extends IBaseComponent {
     sidebarElement: ReactElement;
@@ -24,8 +24,7 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
     // contexts
     const { userInfo, removeUserInfo } = useAuth();
-    const { indicators } = usePresentFeature();
-    const globalContext = useGlobalContext();
+    const { indicators, presentationState } = usePresentFeature();
 
     // states
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
@@ -66,67 +65,62 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
 
     const handlePresentSlide = async () => {
         try {
-            globalContext.blockUI(undefined, true);
-            await PresentationService.updatePresentationPaceAsync(presentationId ?? "", slideId ?? "", "present", {
-                scope: "public",
-                groupId: null,
-            });
-            // if (
-            // 	res.code === RESPONSE_CODE.MY_PRESENTATION_IN_GROUP ||
-            // 	res.code === RESPONSE_CODE.PRESENTING_SLIDE_PERMISSION
-            // ) {
-            // 	const handleRequestTurnOffPresenting = async () => {
-            // 		globalContext.blockUI(undefined, true);
-            // 		try {
-            // 			await PresentationService.updatePresentationPaceAsync(
-            // 				presentationId ?? "",
-            // 				slideId ?? "",
-            // 				"quit",
-            // 			);
-            // 			Notification.notifySuccess("Tắt trang đang chiếu thành công");
-            // 		} catch (err) {
-            // 			console.error(err);
-            // 			Notification.notifyError(
-            // 				"Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
-            // 			);
-            // 		}
-            // 		globalContext.unBlockUI();
-            // 	};
-            // 	new AlertBuilder()
-            // 		.setTitle("Thông báo")
-            // 		.setText(
-            // 			"Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?",
-            // 		)
-            // 		.setAlertType("info")
-            // 		.setConfirmBtnText("Đến trang chiếu")
-            // 		.setCancelBtnText("Tắt trang chiếu")
-            // 		.showCloseButton()
-            // 		.preventDismiss()
-            // 		.setOnConfirm(() => navigate(`/presentations/${presentationId}/${presentationState.pace.active}`))
-            // 		.setOnCancel(handleRequestTurnOffPresenting)
-            // 		.getAlert()
-            // 		.fireAlert();
-            // 	globalContext.unBlockUI();
-            // 	return;
-            // }
-            // if (res.code === RESPONSE_CODE.OTHER_PRESENTATION_IN_GROUP) {
-            // 	new AlertBuilder()
-            // 		.setTitle("Thông báo")
-            // 		.setText("Bạn không được phép trình chiếu do nhóm này đang có người khác đang trình chiếu")
-            // 		.setAlertType("info")
-            // 		.setConfirmBtnText("Đã hiểu")
-            // 		.showCloseButton()
-            // 		.getAlert()
-            // 		.fireAlert();
-            // 	globalContext.unBlockUI();
-            // 	return;
-            // }
-            globalContext.unBlockUI();
+            await PresentationService.updatePresentationPaceAsync(presentationId || "", slideId ?? "", "present");
+
             navigate(`/presentation/${presentationId}/${slideId}`);
-        } catch (updatePaceErr) {
-            console.error(updatePaceErr);
-            Notification.notifyError(ERROR_NOTIFICATION.PRESENT_FAILED);
-            globalContext.unBlockUI();
+        } catch (error: any) {
+            const res = error?.response?.data;
+
+            if (res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                return;
+            }
+
+            if (res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+                return;
+            }
+
+            if (res.code === RESPONSE_CODE.PRESENT_SLIDE_PERMISSION) {
+                const handleRequestTurnOffPresenting = async () => {
+                    try {
+                        await PresentationService.updatePresentationPaceAsync(presentationId || "", null, "quit");
+
+                        Notification.notifySuccess(SUCCESS_NOTIFICATION.QUIT_SLIDE_SUCCESS);
+                    } catch (err: any) {
+                        const res = err?.response?.data;
+
+                        if (res.code === RESPONSE_CODE.QUIT_SLIDE_PERMISSION) {
+                            Notification.notifySuccess(SUCCESS_NOTIFICATION.QUIT_SLIDE_SUCCESS);
+                            return;
+                        }
+
+                        console.error(err);
+                        Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_PACE_PROCESS);
+                    }
+                };
+
+                new AlertBuilder()
+                    .setTitle("Thông báo")
+                    .setText(
+                        "Bài trình bày này đang được trình chiếu, bạn muốn đi đến trang đang chiếu hay buộc tắt trang đang được chiếu?"
+                    )
+                    .setAlertType("info")
+                    .setConfirmBtnText("Đến trang chiếu")
+                    .setCancelBtnText("Buộc tắt")
+                    .showCloseButton()
+                    .preventDismiss()
+                    .setOnConfirm(() =>
+                        navigate(`/presentation/${presentationId}/${presentationState.pace.active_slide_id}`)
+                    )
+                    .setOnCancel(handleRequestTurnOffPresenting)
+                    .getAlert()
+                    .fireAlert();
+                return;
+            }
+
+            console.error(error);
+            Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_PACE_PROCESS);
             return;
         }
     };
