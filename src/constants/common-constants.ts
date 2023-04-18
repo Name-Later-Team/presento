@@ -25,6 +25,9 @@ export const RESPONSE_CODE = {
     LOGIN_FAILED: 4012,
 
     // 403: FORBIDDEN
+    PRESENT_SLIDE_PERMISSION: 4032,
+    CHANGE_SLIDE_PERMISSION: 4033,
+    QUIT_SLIDE_PERMISSION: 4034,
     INVALID_RESOURCE_PERMISSION: 4038,
 };
 
@@ -37,6 +40,7 @@ export const SUCCESS_NOTIFICATION = {
     SAVED_SUCCESS: "Lưu thay đổi thành công",
     DELETE_PRESENTATION_SUCCESS: "Xóa bài trình bày thành công",
     RESET_RESULT_SUCCESS: "Làm mới kết quả thành công",
+    QUIT_SLIDE_SUCCESS: "Tắt trang đang chiếu thành công",
 };
 
 export const ERROR_NOTIFICATION = {
@@ -49,7 +53,6 @@ export const ERROR_NOTIFICATION = {
     FETCH_USER_INFO_PROCESS: "Có lỗi xảy ra khi lấy thông tin người dùng",
     PRESENT_FAILED: "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
     FETCH_SLIDE_RESULT: "Có lỗi xảy ra khi lấy kết quả",
-    UPDATE_PRESENTATION_STATE: "Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
     FETCH_PRESENTATION_LIST: "Có lỗi xảy ra khi lấy danh sách các bài trình bày",
     VALIDATION_ERROR: "Có lỗi trong yêu cầu đã gửi",
     CREATE_PRESENTATION: "Có lỗi xảy ra khi gửi yêu cầu tạo bài trình bày mới",
@@ -68,6 +71,7 @@ export const ERROR_NOTIFICATION = {
     DELETE_ONLY_SLIDE: "Không thể xóa trang chiếu cuối cùng của bài trình bày",
     SAVE_SLIDE_LIST_PROCESS: "Có lỗi xảy ra khi lưu thay đổi vị trí trang chiếu",
     RESET_RESULT_PROCESS: "Có lỗi xảy ra khi gửi yêu cầu làm mới kết quả",
+    UPDATE_PRESENTATION_PACE_PROCESS: "Có lỗi xảy ra khi cập nhật trạng thái bài trình bày, vui lòng thử lại sau",
 };
 
 export const PRESENTATION_OWNER_TYPE = {

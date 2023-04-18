@@ -4,10 +4,11 @@ import "react-toastify/dist/ReactToastify.css";
 
 const reactToastifyConfigs: ToastContainerProps = {
     position: "top-center",
-    closeOnClick: true,
+    closeOnClick: false,
     limit: 5,
     hideProgressBar: true,
     theme: "colored",
+    draggable: false,
 };
 
 export default function NotificationContainer() {
