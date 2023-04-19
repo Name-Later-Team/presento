@@ -4,9 +4,9 @@ describe("PS51", () => {
 
         cy.visit("/login");
         cy.get(".btn-primary").click();
-        cy.get("#input").type("huudanh2802");
+        cy.get("#input").type("admin");
         cy.get("#normal_login_password").clear();
-        cy.get("#normal_login_password").type("28022001");
+        cy.get("#normal_login_password").type("123");
         cy.get(".ant-btn").click();
         cy.get(".ant-btn").should("not.exist");
     });
