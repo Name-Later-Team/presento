@@ -51,12 +51,12 @@ describe("PS51", () => {
         cy.get("form").click();
         cy.get(".form-control").click();
         cy.get(".form-control").clear();
-        cy.get(".form-control").type("      ");
+        cy.get(".form-control").type("8rTMN0lHWo9iXKSsVrUig4lXB10PiWTqC938yGnvdl5sbeDQpUGuAruzbgA5qGtOUtxL7aO8Vvrlkyd6yUfRYEEXoDZfEjQ8TIom1");
         cy.get(".justify-content-end > .btn-primary").click();
 
         /* ==== Generated with Cypress Studio ==== */
-        cy.get(".mb-3 > .text-danger").should("contain", "Tên bài trình bày không được bỏ trống");
         /* ==== End Cypress Studio ==== */
+        cy.get(".Toastify").should("contain","Có lỗi xảy ra khi gửi yêu cầu tạo bài trình bày mới");
     });
     it("TC004", () => {
         cy.get(".mb-3 > :nth-child(1) > .btn > .svg-inline--fa").click();
