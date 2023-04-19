@@ -1,12 +1,20 @@
 import { Button, Stack } from "react-bootstrap";
 import DashboardPageSkeleton from "../../../common/layouts/dashboard/dashboard-page-skeleton";
 import useSocket from "../../../common/hooks/use-socket";
+import { useEffect } from "react";
 
 export default function Demo() {
-    const { methods } = useSocket();
+    const { socket, status, methods } = useSocket();
+    console.log(status);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on("present", (data) => console.log(data));
+    }, [socket]);
 
     const initSocket = () => {
-        methods.initSocket();
+        methods.initSocket("/presentation");
     };
 
     const closeSocket = () => {
@@ -14,7 +22,7 @@ export default function Demo() {
     };
 
     const test = async () => {
-        console.log("Clicked test button");
+        socket?.emit("join-room", "977949fe-6fff-4388-9641-7426c9daa5fb");
     };
 
     return (
