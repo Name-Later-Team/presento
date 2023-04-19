@@ -19,6 +19,7 @@ export default function HeadingContentTab() {
                         }
                         maxLength={150}
                         placeholder="Nhập tiêu đề"
+                        autoComplete="off"
                     />
                 </Form.Group>
 
@@ -36,6 +37,7 @@ export default function HeadingContentTab() {
                         maxLength={500}
                         rows={5}
                         placeholder="Nhập tiêu đề phụ"
+                        autoComplete="off"
                     />
                 </Form.Group>
             </Stack>

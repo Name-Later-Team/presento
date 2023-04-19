@@ -16,7 +16,10 @@ export default class PresentationService {
         return HttpService.post<any>("/api/presentation/v1/presentations", data);
     }
 
-    static updatePresentationAsync(identifier: string, data: { name: string }) {
+    static updatePresentationAsync(
+        identifier: string,
+        data: Partial<{ name: string; closedForVoting: boolean; slides: Array<{ id: number; position: number }> }>
+    ) {
         return HttpService.put<any>(`/api/presentation/v1/presentations/${identifier}`, data);
     }
 
@@ -39,17 +42,18 @@ export default class PresentationService {
         return HttpService.get<IVotingCodeResponse>(`/api/presentation/v1/presentations/${identifier}/votingCodes`);
     }
 
+    static resetPresentationResult(identifier: string) {
+        return HttpService.post<any>(`/api/presentation/v1/presentations/${identifier}/results/reset`, {});
+    }
+
     static updatePresentationPaceAsync(
         presentationId: string,
-        slideId: string,
-        action: PRESENTATION_PACE_ACTIONS,
-        data: any = {}
+        slideId: string | null,
+        action: PRESENTATION_PACE_ACTIONS
     ) {
-        // return HttpService.post(`/v1/presentations/${presentationId}`, {
-        //     ...data,
-        //     action,
-        //     admin_key: slideId === "" ? undefined : slideId,
-        // });
-        return Promise.resolve("OK");
+        return HttpService.post<any>(`/api/presentation/v1/presentations/${presentationId}/present`, {
+            slideId: slideId,
+            action: action,
+        });
     }
 }

@@ -19,7 +19,7 @@
     // other rules
     --slide-padding: 1rem;
     background-color: white;
-    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 10px 0px;
     padding: var(--slide-padding);
     cursor: default;
 }
@@ -33,6 +33,10 @@
 .presentation-slide__instruction-bar__content-wrapper {
     cursor: pointer;
     font-size: 1.45vw;
+}
+
+.presentation-slide__slide__slide-stack {
+    gap: 0.5rem;
 }
 
 .presentation-slide__footer,
@@ -80,14 +84,26 @@
 
 #footer__total-respondents {
     font-size: 0.93vw;
+    display: flex;
+    align-items: center;
 }
 
 .footer__total-respondents-logo {
     font-size: 1vw;
+    margin-left: 0.5vw;
 }
 
 .vote-link__voting-code--spinner {
     font-size: 1rem !important;
     width: 1.45vw !important;
     height: 1.45vw !important;
+}
+
+// responsive code
+@import "../../../../assets/scss/mixins/common";
+
+@include responsiveMin($breakpoint-lg) {
+    .presentation-slide__slide__slide-stack {
+        gap: 1rem;
+    }
 }

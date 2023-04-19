@@ -31,7 +31,7 @@ export interface ISlideDetailResponse {
     hideInstructionBar: boolean;
     textSize: number;
     slideType: string;
-    extrasConfig: any;
+    extrasConfig: string;
     createdAt: string;
     updatedAt: string;
     questionImageUrl: string | null;

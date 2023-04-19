@@ -8,12 +8,12 @@ import { APP_CONFIG } from "../configs/index.js";
  * - Current solution supports access token request only
  * - TODO: add rsa request utils if needed
  */
-export class ApiService {
+export class SocketService {
     #axiosInstance;
 
     constructor() {
         this.#axiosInstance = axios.create({
-            baseURL: APP_CONFIG.apiGateway,
+            baseURL: APP_CONFIG.socketService,
         });
 
         this.#axiosInstance.interceptors.response.use(

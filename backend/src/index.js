@@ -16,6 +16,7 @@ import RedisClient from "./connections/redis.js";
 import { router as authRouter } from "./routes/auth.js";
 import { router as apiRouter } from "./routes/index.js";
 import { router as presentationRouter } from "./routes/presentation.js";
+import { router as socketRouter } from "./routes/socket.js";
 
 env.TZ = "Asia/Ho_Chi_Minh";
 
@@ -76,6 +77,7 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
 // handle API route here
 app.use("/api/auth", authRouter);
 app.use("/api/presentation", presentationRouter);
+app.use("/api/socket", socketRouter);
 app.use("/api", apiRouter);
 
 // serve react app in production mode here

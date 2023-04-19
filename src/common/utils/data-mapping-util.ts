@@ -10,6 +10,7 @@ import {
     IOptionsResponse,
     IPresentationDetailResponse,
     ISlideDetailResponse,
+    TExtraConfigs,
 } from "../interfaces";
 
 export default class DataMappingUtil {
@@ -59,6 +60,12 @@ export default class DataMappingUtil {
     }
 
     static mapSlideStateFromApiData(slideState: ISlideState, data: ISlideDetailResponse): ISlideState {
+        let slideConfig: TExtraConfigs = {};
+        try {
+            slideConfig = JSON.parse(data?.extrasConfig);
+        } catch (err) {
+            console.error("DataMappingUtil:", err);
+        }
         return {
             ...slideState,
             question: data?.question ?? "",
@@ -75,7 +82,7 @@ export default class DataMappingUtil {
             presentationSeriesId: data?.presentationIdentifier ?? "",
             position: data?.position.toString() ?? "",
             createdAt: data?.createdAt ?? "",
-            config: data?.extrasConfig,
+            config: slideConfig,
             updatedAt: data?.updatedAt ?? "",
             questionImageUrl: data?.questionImageUrl ?? "",
             questionVideoUrl: data?.questionVideoEmbedUrl ?? "",
@@ -110,7 +117,6 @@ export default class DataMappingUtil {
             showResult: true,
             hideInstructionBar: !slideState.showInstructionBar,
             extrasConfig: slideState.config,
-            position: slideState.position,
             textSize: slideState.fontSize,
             choices: mappedChoices,
         };
