@@ -54,7 +54,7 @@ describe("PS111", () => {
     });
     const mockChoice=[
         "Lựa chọn 2",
-        "Lua chon 2",
+        "2",
         "212123123",
         "!@#$%^&*()_+",
         " Lua Chon 2  ",
