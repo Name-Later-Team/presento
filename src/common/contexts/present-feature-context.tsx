@@ -205,24 +205,24 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
     const isSlideDetailModified = !_.isEqual(dataState.slideState, originalState.current.slideState);
 
     // processing functions
-    const changeSlideState = (newSlideState: Partial<ISlideState>) => {
+    const changeSlideState = useCallback((newSlideState: Partial<ISlideState>) => {
         // mark as data has been changed and change data state
         setDataState((prevState) => ({
             ...prevState,
             slideState: { ...prevState.slideState, ...newSlideState },
         }));
-    };
+    }, []);
 
-    const changePresentationState = (newPresentationState: Partial<IPresentationState>) => {
+    const changePresentationState = useCallback((newPresentationState: Partial<IPresentationState>) => {
         // mark as data has been changed and change data state
         setDataState((prevState) => ({
             ...prevState,
             presentationState: { ...prevState.presentationState, ...newPresentationState },
         }));
-    };
+    }, []);
 
     // mark as data has not been changed
-    const resetSlideState = (newSlideState?: Partial<ISlideState>) => {
+    const resetSlideState = useCallback((newSlideState?: Partial<ISlideState>) => {
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newSlideState == null) {
             setDataState((prevState) => {
@@ -244,9 +244,9 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
                 slideState: { ...prevState.slideState, ...newSlideState },
             };
         });
-    };
+    }, []);
 
-    const resetPresentationState = (newPresentationState?: Partial<IPresentationState>) => {
+    const resetPresentationState = useCallback((newPresentationState?: Partial<IPresentationState>) => {
         // only reset data state to the unchanged state (do not pass any argument to the function)
         if (newPresentationState == null) {
             setDataState((prevState) => {
@@ -268,89 +268,95 @@ export const PresentFeatureContextProvider = (props: IPresentFeatureContextProvi
                 presentationState: { ...prevState.presentationState, ...newPresentationState },
             };
         });
-    };
+    }, []);
 
     // api-related functions
-    const handleSaveSlideChanges = useCallback(async (promise: Promise<IBaseResponse<any>>) => {
-        if (!promise) return;
+    const handleSaveSlideChanges = useCallback(
+        async (promise: Promise<IBaseResponse<any>>) => {
+            if (!promise) return;
 
-        try {
-            const slideRes = await promise;
+            try {
+                const slideRes = await promise;
 
-            if (slideRes.code === 200) {
-                resetSlideState();
-                setError(ErrorState.none);
-                return;
-            }
+                if (slideRes.code === 200) {
+                    resetSlideState();
+                    setError(ErrorState.none);
+                    return;
+                }
 
-            throw new Error("Unhandled error code");
-        } catch (error: any) {
-            const slideRes = error?.response?.data;
+                throw new Error("Unhandled error code");
+            } catch (error: any) {
+                const slideRes = error?.response?.data;
 
-            if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
-                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
+                    Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                    setError(ErrorState.save_error);
+                    return;
+                }
+
+                if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                    Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+                    setError(ErrorState.save_error);
+                    return;
+                }
+
+                if (slideRes.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
+                    Notification.notifyError(ERROR_NOTIFICATION.PRESENTING_PRESENTATION);
+                    setError(ErrorState.save_error);
+                    return;
+                }
+
+                if (slideRes.code === RESPONSE_CODE.CANNOT_EDIT_VOTED_SLIDE) {
+                    Notification.notifyError(ERROR_NOTIFICATION.CANNOT_EDIT_VOTED_SLIDE);
+                    setError(ErrorState.save_error);
+                    return;
+                }
+
+                if (slideRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                    Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                    setError(ErrorState.save_error);
+                    return;
+                }
+
                 setError(ErrorState.save_error);
-                return;
+                console.error("PresentFeatureContextProvider:", error);
+                Notification.notifyError(ERROR_NOTIFICATION.SAVE_SLIDE_DETAIL_PROCESS);
             }
+        },
+        [resetSlideState]
+    );
 
-            if (slideRes.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
-                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+    const handleSaveSlidesListChanges = useCallback(
+        async (promise: Promise<IBaseResponse<any>>) => {
+            if (!promise) return;
+
+            // handle save slides list api response
+            try {
+                const presentationRes = await promise;
+
+                if (presentationRes.code === 200) {
+                    resetPresentationState();
+                    setError(ErrorState.none);
+                    return;
+                }
+
+                throw new Error("Unhandled error code");
+            } catch (error: any) {
+                const presentationRes = error?.response?.data;
+
+                if (presentationRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
+                    Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
+                    setError(ErrorState.save_error);
+                    return;
+                }
+
                 setError(ErrorState.save_error);
-                return;
+                console.error("PresentFeatureContextProvider:", error);
+                Notification.notifyError(ERROR_NOTIFICATION.SAVE_SLIDE_DETAIL_PROCESS);
             }
-
-            if (slideRes.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
-                Notification.notifyError(ERROR_NOTIFICATION.PRESENTING_PRESENTATION);
-                setError(ErrorState.save_error);
-                return;
-            }
-
-            if (slideRes.code === RESPONSE_CODE.CANNOT_EDIT_VOTED_SLIDE) {
-                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_EDIT_VOTED_SLIDE);
-                setError(ErrorState.save_error);
-                return;
-            }
-
-            if (slideRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
-                setError(ErrorState.save_error);
-                return;
-            }
-
-            setError(ErrorState.save_error);
-            console.error("PresentFeatureContextProvider:", error);
-            Notification.notifyError(ERROR_NOTIFICATION.SAVE_SLIDE_DETAIL_PROCESS);
-        }
-    }, []);
-
-    const handleSaveSlidesListChanges = useCallback(async (promise: Promise<IBaseResponse<any>>) => {
-        if (!promise) return;
-
-        // handle save slides list api response
-        try {
-            const presentationRes = await promise;
-
-            if (presentationRes.code === 200) {
-                resetPresentationState();
-                setError(ErrorState.none);
-                return;
-            }
-
-            throw new Error("Unhandled error code");
-        } catch (error: any) {
-            const presentationRes = error?.response?.data;
-
-            if (presentationRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                Notification.notifyError(ERROR_NOTIFICATION.VALIDATION_ERROR);
-                setError(ErrorState.save_error);
-                return;
-            }
-
-            setError(ErrorState.save_error);
-            console.error("PresentFeatureContextProvider:", error);
-            Notification.notifyError(ERROR_NOTIFICATION.SAVE_SLIDE_DETAIL_PROCESS);
-        }
-    }, []);
+        },
+        [resetPresentationState]
+    );
 
     // this function has to be at the bottom of the 'api-related functions' section
     // function to check and save only changed parts

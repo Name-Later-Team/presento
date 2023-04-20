@@ -89,6 +89,7 @@ export default function MultipleChoiceContentTab() {
                         placeholder="Nhập mô tả câu hỏi"
                         autoComplete="off"
                     />
+                    <Form.Text muted>Phần mô tả sẽ được hiển thị khi tham gia bầu chọn</Form.Text>
                 </Form.Group>
 
                 <Stack gap={2}>

@@ -4,15 +4,17 @@ import { APP_CONSTANTS } from "../../constants/app-constants";
 import { useAuth } from "../contexts/auth-context";
 import SocketService from "../../services/socket-service";
 import { Notification } from "../components/notification";
-import { SOCKET_ERROR_MESSAGE, SOCKET_NAME_SPACE } from "../../constants";
+import { SOCKET_ERROR_MESSAGE, SOCKET_NAMESPACE } from "../../constants";
 import { Button } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotateRight } from "@fortawesome/free-solid-svg-icons";
 
 // define all available socket status
 export enum SOCKET_STATUS {
+    notInitialized,
     isConnecting,
     isConnected,
+    isClosed,
     isRetrying,
     maxRetryingAttempt,
 }
@@ -58,7 +60,7 @@ const defaultStates = {
     ticket: null,
     namespace: "",
     retryNo: 0,
-    socketStatus: SOCKET_STATUS.isConnecting,
+    socketStatus: SOCKET_STATUS.notInitialized,
 };
 
 export default function useSocket(): IUseSocket {
@@ -89,6 +91,7 @@ export default function useSocket(): IUseSocket {
     }, []);
 
     const initConnectSocket = useCallback(() => {
+        setSocketStatus(SOCKET_STATUS.isConnecting);
         setRetryNo(defaultStates.retryNo);
         getAuthTicket();
     }, [getAuthTicket]);
@@ -99,6 +102,7 @@ export default function useSocket(): IUseSocket {
         socket.on("connect", () => {
             // determine socket state
             setSocketStatus(SOCKET_STATUS.isConnected);
+            console.log("Socket opened");
         });
 
         socket.on("connect_error", (error) => {
@@ -109,6 +113,7 @@ export default function useSocket(): IUseSocket {
 
         return () => {
             socket?.close();
+            console.log("Socket cleaned up");
         };
     }, [socket]);
 
@@ -120,6 +125,7 @@ export default function useSocket(): IUseSocket {
 
             setSocket((oldSocket) => {
                 oldSocket?.close();
+
                 return newSocket;
             });
         }
@@ -154,18 +160,22 @@ export default function useSocket(): IUseSocket {
     }, [retryNo, getAuthTicket, initConnectSocket]);
 
     // handling functions
-    const createSocket = async (namespace: string = SOCKET_NAME_SPACE.default) => {
-        setNamespace(namespace);
-        initConnectSocket();
-    };
+    const createSocket = useCallback(
+        (namespace: string = SOCKET_NAMESPACE.default) => {
+            setNamespace(namespace);
+            initConnectSocket();
+        },
+        [initConnectSocket]
+    );
 
-    const closeSocket = () => {
+    const closeSocket = useCallback(() => {
         socket?.close();
-    };
+        setSocketStatus(SOCKET_STATUS.isClosed);
+    }, [socket]);
 
-    const forceReconnect = () => {
+    const forceReconnect = useCallback(() => {
         initConnectSocket();
-    };
+    }, [initConnectSocket]);
 
     // determine socket state
     if (retryNo < MAX_RETRY_CONNECT && retryNo > 0 && socketStatus !== SOCKET_STATUS.isRetrying) {
