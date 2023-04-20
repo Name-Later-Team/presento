@@ -19,6 +19,8 @@ export default defineConfig({
       })
     },
     experimentalStudio: true,
+    chromeWebSecurity: false,
+    experimentalModifyObstructiveThirdPartyCode: true,
 
   },
 });
