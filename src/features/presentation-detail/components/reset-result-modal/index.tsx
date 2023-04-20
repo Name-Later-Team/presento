@@ -108,8 +108,8 @@ export default function ResetResultModal(props: IResetResultModalProps) {
                     <Stack>
                         <p className="m-0 mb-4 fst-italic">
                             Bạn có thể chọn trình chiếu bài trình bày này với kết quả hiện tại hoặc tiến hành làm mới
-                            kết quả để thực hiện một phiên trình bày mới. Hãy chắc chắn rằng bạn đã xuất kết quả ra tập
-                            tin PDF trước khi làm mới nếu bạn có nhu cầu lưu trữ kết quả hiện tại.
+                            kết quả để thực hiện một phiên trình bày mới. Sau khi làm mới bạn sẽ không thể xem lại kết
+                            quả hiện tại, hãy chắc chắn rằng bạn đã hiểu trước khi tiếp tục.
                         </p>
 
                         <div className="custom-form-check__container mb-3">

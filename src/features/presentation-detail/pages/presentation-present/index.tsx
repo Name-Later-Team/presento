@@ -1,6 +1,6 @@
 import { faChevronLeft, faChevronRight, faExpand, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Stack } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
 import { usePresentFeature } from "../../../../common/contexts/present-feature-context";
@@ -11,23 +11,33 @@ import { useGlobalContext } from "../../../../common/contexts";
 import { AlertBuilder } from "../../../../common/components/alert";
 import PresentationService from "../../../../services/presentation-service";
 import { Notification } from "../../../../common/components/notification";
-import { ERROR_NOTIFICATION, RESPONSE_CODE } from "../../../../constants";
+import {
+    ERROR_NOTIFICATION,
+    RESPONSE_CODE,
+    SOCKET_EMIT_EVENT,
+    SOCKET_LISTEN_EVENT,
+    SOCKET_NAMESPACE,
+} from "../../../../constants";
 import DataMappingUtil from "../../../../common/utils/data-mapping-util";
 import SlideService from "../../../../services/slide-service";
 import moment from "moment";
+import useSocket, { SOCKET_STATUS } from "../../../../common/hooks/use-socket";
+import { IAudienceVoteSocketMsg, IChangeSlideSocketMsg, IQuitSlideSocketMsg } from "../../../../common/interfaces";
+import _ from "lodash";
 
 export default function PresentPresentation() {
     // contexts
     const globalContext = useGlobalContext();
     const { presentationState, slideState, resetPresentationState, resetSlideState } = usePresentFeature();
-    // const { socket, initNewSocket, closeCurrentSocket } = useSocket();
+    // custom hooks
+    const { socket, status, methods } = useSocket();
 
     // states
     // const [showChatbox, setShowChatbox] = useState(false);
     // const [showQA, setShowQA] = useState(false);
     const [unreadMsg] = useState(0);
     // use this state to temporary disable actions in this page (block calling APIs)
-    const [allowInteraction] = useState(true);
+    // const [allowInteraction, setAllowInteraction] = useState(false);
 
     // others
     const { presentationId, slideId } = useParams();
@@ -36,8 +46,11 @@ export default function PresentPresentation() {
     // refs
     const thisSlideIndex = useRef(-1);
     const gotSlideDetail = useRef(false);
+    const gotVotingCode = useRef(false);
     const isInitialRender = useRef(true);
-    // const joinedRoom = useRef(false); // keep track of calling join-room
+    const joinedRoom = useRef(false); // keep track of calling join-room
+    const allowInteraction = useRef(false);
+    const calledQuit = useRef(false);
 
     // find path for next and back slide button
     thisSlideIndex.current = presentationState.slides.findIndex((slide) => slide.id.toString() === slideId?.toString());
@@ -68,79 +81,94 @@ export default function PresentPresentation() {
     }, []);
 
     // ================= handle socket section =================
+    const handleChangeSlideFromSocket = useCallback(
+        (data: IChangeSlideSocketMsg) => {
+            if (data?.presentationIdentifier !== presentationId) return;
+            if (data?.pace?.active_slide_id?.toString() === slideId?.toString()) return;
+
+            navigate(`/presentation/${presentationId}/${data.pace.active_slide_id}`);
+        },
+        [presentationId, slideId, navigate]
+    );
+
+    const handleQuitSlideFromSocket = useCallback(
+        (data: IQuitSlideSocketMsg) => {
+            if (data?.presentationIdentifier !== presentationId) return;
+            if (calledQuit.current) return;
+
+            allowInteraction.current = false;
+
+            new AlertBuilder()
+                .setTitle("Thông báo")
+                .setText("Phiên trình chiếu đã kết thúc")
+                .setAlertType("info")
+                .setConfirmBtnText("OK")
+                .setOnConfirm(() => navigate("/dashboard/presentation-list"))
+                .preventDismiss()
+                .getAlert()
+                .fireAlert();
+        },
+        [presentationId, navigate]
+    );
+
+    const handleAudienceVoteFromSocket = useCallback(
+        (data: IAudienceVoteSocketMsg) => {
+            if (data?.slideId?.toString() !== slideId?.toString()) return;
+
+            const dataResults = data?.results;
+            if (!Array.isArray(dataResults)) return;
+
+            const modifiedResults = _.cloneDeep(slideState.result);
+
+            dataResults.forEach((dataItem) => {
+                modifiedResults.every((item) => {
+                    if (item.key.toString() === dataItem.id.toString()) {
+                        item.value = dataItem.score[0] || item.value;
+                        return false;
+                    }
+                    return true;
+                });
+            });
+
+            resetSlideState({ result: modifiedResults, respondents: data?.respondents });
+        },
+        [slideState, slideId, resetSlideState]
+    );
+
     // handle events
-    // const doActionFromSocket = (data: any) => {
-    // 	if (data?.action === "change_slide") {
-    // 		navigate(`/presentations/${data?.seriesId}/${data?.pace?.active}`);
-    // 		return;
-    // 	}
+    useEffect(() => {
+        if (!socket) return;
 
-    // 	if (data?.action === "quit") {
-    // 		handleTurnOffPresentationMode(false);
-    // 		return;
-    // 	}
-    // };
+        // reset all event listeners
+        socket.removeAllListeners(SOCKET_LISTEN_EVENT.change_slide);
+        socket.removeAllListeners(SOCKET_LISTEN_EVENT.quit_slide);
+        socket.removeAllListeners(SOCKET_LISTEN_EVENT.audience_vote);
 
-    // const changeResultFromSocket = (data: any) => {
-    // 	if (data?.slideAdminKey === slideState.adminKey) {
-    // 		const choices: any = [];
-    // 		slideState.options.forEach((option, idx) => {
-    // 			choices?.push({
-    // 				id: option.key,
-    // 				label: option.value,
-    // 				position: idx,
-    // 				correctAnswer: option.key === slideState.selectedOption,
-    // 			});
-    // 		});
+        // init all event listeners
+        socket.on(SOCKET_LISTEN_EVENT.change_slide, (data: IChangeSlideSocketMsg) => handleChangeSlideFromSocket(data));
+        socket.on(SOCKET_LISTEN_EVENT.quit_slide, (data: IQuitSlideSocketMsg) => handleQuitSlideFromSocket(data));
+        socket.on(SOCKET_LISTEN_EVENT.audience_vote, (data: IAudienceVoteSocketMsg) =>
+            handleAudienceVoteFromSocket(data)
+        );
+    }, [socket, handleChangeSlideFromSocket, handleQuitSlideFromSocket, handleAudienceVoteFromSocket]);
 
-    // 		const processedResult = handleResultData(choices, JSON.parse(data?.results));
-    // 		changeSlideState({
-    // 			...slideState,
-    // 			respondents: data?.respondents,
-    // 			options: processedResult.options,
-    // 			result: processedResult.results,
-    // 			selectedOption: processedResult.selectedOption,
-    // 		});
-    // 	}
-    // };
+    useEffect(() => {
+        // init a new websocket when have gotten all the slide detail and the socket is not initialized
+        if (gotSlideDetail.current && gotVotingCode.current && status === SOCKET_STATUS.notInitialized) {
+            methods.initSocket(SOCKET_NAMESPACE.presentation);
+        }
 
-    // effect that runs 1 time
-    // useEffect(() => {
-    // 	const pageSocket = initNewSocket(SOCKET_NAMESPACES.PRESENT);
+        // join room only 1 time when socket was connected
+        if (!joinedRoom.current && socket && status === SOCKET_STATUS.isConnected) {
+            socket.emit(SOCKET_EMIT_EVENT.join_room, presentationId);
+            joinedRoom.current = true;
+        }
 
-    // 	// init events
-    // 	pageSocket.on(SOCKET_LISTEN_EVENTS.PRESENT, doActionFromSocket);
-    // 	pageSocket.on(SOCKET_LISTEN_EVENTS.VOTE, changeResultFromSocket);
-
-    // 	return () => {
-    // 		closeCurrentSocket();
-    // 	};
-    // }, []);
-
-    // change listeners when dependencies change
-    // useEffect(() => {
-    // 	socket?.removeAllListeners(SOCKET_LISTEN_EVENTS.PRESENT);
-    // 	socket?.removeAllListeners(SOCKET_LISTEN_EVENTS.VOTE);
-
-    // 	// init events
-    // 	socket?.on(SOCKET_LISTEN_EVENTS.PRESENT, doActionFromSocket);
-    // 	socket?.on(SOCKET_LISTEN_EVENTS.VOTE, changeResultFromSocket);
-    // }, [slideState.adminKey]);
-
-    // work around strictmode
-    // useEffect(() => {
-    // 	return () => {
-    // 		closeCurrentSocket();
-    // 	};
-    // }, [socket]);
-
-    // join room only 1 time when socket was connected
-    // useEffect(() => {
-    // 	if (!joinedRoom.current && socket?.connected && presentationState.voteKey !== "") {
-    // 		socket?.emit(SOCKET_EMIT_EVENTS.JOIN_ROOM, presentationState.voteKey);
-    // 		joinedRoom.current = true;
-    // 	}
-    // });
+        if (joinedRoom.current && status === SOCKET_STATUS.isConnected) {
+            // lock calling api when there is no socket connection
+            allowInteraction.current = true;
+        }
+    });
     // ================= end of handling socket section =================
 
     useEffect(() => {
@@ -244,6 +272,7 @@ export default function PresentPresentation() {
 
                     if (res.data.isValid) {
                         resetPresentationState({ votingCode: { ...res.data } });
+                        gotVotingCode.current = true;
                         return;
                     }
                 }
@@ -260,18 +289,22 @@ export default function PresentPresentation() {
             // get voting code if this is none
             if (presentationState.votingCode.code === "") {
                 fetchVotingCode();
+                return;
             }
 
             // get voting code if the voting code was expired
             if (moment(presentationState.votingCode.expiresAt).diff(moment()) < 0) {
                 fetchVotingCode();
+                return;
             }
         }
     });
 
     const handleTurnOffPresentationMode = async () => {
-        if (!allowInteraction) return;
+        if (!allowInteraction.current) return;
+        calledQuit.current = true;
         const handleNavigate = () => navigate(`/presentation/${presentationId}/${slideId}/edit`);
+
         try {
             await PresentationService.updatePresentationPaceAsync(presentationId || "", null, "quit");
 
@@ -290,7 +323,7 @@ export default function PresentPresentation() {
     };
 
     const changeSlide = async (next: boolean) => {
-        if (!allowInteraction) return;
+        if (!allowInteraction.current) return;
         const targetSlideId = next
             ? presentationState.slides[thisSlideIndex.current + 1].id
             : presentationState.slides[thisSlideIndex.current - 1].id;
