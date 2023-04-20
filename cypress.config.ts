@@ -11,7 +11,6 @@ export default defineConfig({
           const browserWidth = 1980;
           const browserHeight = 1080;
 
-          launchOptions.args.push('--start-fullscreen')
           launchOptions.args.push(`--window-size=${browserWidth},${browserHeight}`)
         }
         return launchOptions

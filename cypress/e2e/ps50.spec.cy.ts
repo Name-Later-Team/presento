@@ -1,6 +1,6 @@
 
 
-describe("PS108", () => {
+describe("PS50", () => {
     it("TC001", () => {
         cy.intercept(
             {
