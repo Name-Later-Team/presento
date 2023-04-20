@@ -27,7 +27,18 @@ const app = express();
 app.enable("trust proxy");
 
 app.use(compression());
-app.use(helmet());
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                "connect-src": `'self' ${APP_CONFIG.socketService} ws://${APP_CONFIG.socketService.split("//")[1]}`,
+                "img-src": ["'self'", "https: data:"],
+            },
+        },
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        crossOriginEmbedderPolicy: false,
+    })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(APP_CONFIG.cookie.secret));

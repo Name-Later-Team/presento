@@ -309,15 +309,15 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                         <img
                                             className="static-header__avatar"
                                             src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
-                                            alt="profile-avatar"
+                                            alt=""
                                             loading="lazy"
                                         />
                                     </Dropdown.Toggle>
 
                                     <Dropdown.Menu style={{ margin: 0 }}>
-                                        <Dropdown.Item onClick={() => navigate("/profile")}>
+                                        {/* <Dropdown.Item onClick={() => navigate("/profile")}>
                                             Hồ sơ cá nhân
-                                        </Dropdown.Item>
+                                        </Dropdown.Item> */}
                                         <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
                                     </Dropdown.Menu>
                                 </Dropdown>
@@ -338,15 +338,15 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                                 <img
                                                     className="static-header__avatar"
                                                     src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
-                                                    alt="profile-avatar"
+                                                    alt=""
                                                     loading="lazy"
                                                 />
                                             </Dropdown.Toggle>
 
                                             <Dropdown.Menu style={{ margin: 0 }}>
-                                                <Dropdown.Item onClick={() => navigate("/profile")}>
+                                                {/* <Dropdown.Item onClick={() => navigate("/profile")}>
                                                     Hồ sơ cá nhân
-                                                </Dropdown.Item>
+                                                </Dropdown.Item> */}
                                                 <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
                                             </Dropdown.Menu>
                                         </Dropdown>
