@@ -15,6 +15,8 @@ import { APP_CONFIG } from "./configs/index.js";
 import RedisClient from "./connections/redis.js";
 import { router as authRouter } from "./routes/auth.js";
 import { router as apiRouter } from "./routes/index.js";
+import { router as presentationRouter } from "./routes/presentation.js";
+import { router as socketRouter } from "./routes/socket.js";
 
 env.TZ = "Asia/Ho_Chi_Minh";
 
@@ -25,7 +27,18 @@ const app = express();
 app.enable("trust proxy");
 
 app.use(compression());
-app.use(helmet());
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                "connect-src": `'self' ${APP_CONFIG.socketService} ws://${APP_CONFIG.socketService.split("//")[1]}`,
+                "img-src": ["'self'", "https: data:"],
+            },
+        },
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        crossOriginEmbedderPolicy: false,
+    })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(APP_CONFIG.cookie.secret));
@@ -74,6 +87,8 @@ app.get("/favicon.ico", (req, res) => res.status(204).end());
 
 // handle API route here
 app.use("/api/auth", authRouter);
+app.use("/api/presentation", presentationRouter);
+app.use("/api/socket", socketRouter);
 app.use("/api", apiRouter);
 
 // serve react app in production mode here
@@ -89,8 +104,7 @@ if (APP_CONFIG.appEnvironment !== "development") {
 
 // 404
 app.use(function (req, res, next) {
-    res.status(404);
-    next();
+    res.sendStatus(404);
 });
 
 // error

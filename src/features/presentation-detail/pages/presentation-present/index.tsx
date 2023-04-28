@@ -1,13 +1,9 @@
 import { faChevronLeft, faChevronRight, faExpand, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Stack } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router";
-import {
-    IPresentationPace,
-    IPresentationSlide,
-    usePresentFeature,
-} from "../../../../common/contexts/present-feature-context";
+import { usePresentFeature } from "../../../../common/contexts/present-feature-context";
 import "./style.scss";
 import PresentationSlide from "../../components/presentation-slide";
 import CustomizedTooltip from "../../../../common/components/tooltip";
@@ -15,18 +11,33 @@ import { useGlobalContext } from "../../../../common/contexts";
 import { AlertBuilder } from "../../../../common/components/alert";
 import PresentationService from "../../../../services/presentation-service";
 import { Notification } from "../../../../common/components/notification";
-import { ERROR_NOTIFICATION } from "../../../../constants";
+import {
+    ERROR_NOTIFICATION,
+    RESPONSE_CODE,
+    SOCKET_EMIT_EVENT,
+    SOCKET_LISTEN_EVENT,
+    SOCKET_NAMESPACE,
+} from "../../../../constants";
+import DataMappingUtil from "../../../../common/utils/data-mapping-util";
+import SlideService from "../../../../services/slide-service";
+import moment from "moment";
+import useSocket, { SOCKET_STATUS } from "../../../../common/hooks/use-socket";
+import { IAudienceVoteSocketMsg, IChangeSlideSocketMsg, IQuitSlideSocketMsg } from "../../../../common/interfaces";
+import _ from "lodash";
 
 export default function PresentPresentation() {
     // contexts
     const globalContext = useGlobalContext();
-    const { presentationState, slideState, changePresentationState, changeSlideState } = usePresentFeature();
-    // const { socket, initNewSocket, closeCurrentSocket } = useSocket();
+    const { presentationState, slideState, resetPresentationState, resetSlideState } = usePresentFeature();
+    // custom hooks
+    const { socket, status, methods } = useSocket();
 
     // states
     // const [showChatbox, setShowChatbox] = useState(false);
     // const [showQA, setShowQA] = useState(false);
     const [unreadMsg] = useState(0);
+    // use this state to temporary disable actions in this page (block calling APIs)
+    // const [allowInteraction, setAllowInteraction] = useState(false);
 
     // others
     const { presentationId, slideId } = useParams();
@@ -34,7 +45,15 @@ export default function PresentPresentation() {
 
     // refs
     const thisSlideIndex = useRef(-1);
-    // const joinedRoom = useRef(false); // keep track of calling join-room
+    const gotSlideDetail = useRef(false);
+    const gotVotingCode = useRef(false);
+    const isInitialRender = useRef(true);
+    const joinedRoom = useRef(false); // keep track of calling join-room
+    const allowInteraction = useRef(false);
+    const calledQuit = useRef(false);
+
+    // find path for next and back slide button
+    thisSlideIndex.current = presentationState.slides.findIndex((slide) => slide.id.toString() === slideId?.toString());
 
     // automatically maximize the screen
     useEffect(() => {
@@ -62,346 +81,278 @@ export default function PresentPresentation() {
     }, []);
 
     // ================= handle socket section =================
-    // handle events
-    // const doActionFromSocket = (data: any) => {
-    // 	if (data?.action === "change_slide") {
-    // 		navigate(`/presentations/${data?.seriesId}/${data?.pace?.active}`);
-    // 		return;
-    // 	}
+    const handleChangeSlideFromSocket = useCallback(
+        (data: IChangeSlideSocketMsg) => {
+            if (data?.presentationIdentifier !== presentationId) return;
+            if (data?.pace?.active_slide_id?.toString() === slideId?.toString()) return;
 
-    // 	if (data?.action === "quit") {
-    // 		handleTurnOffPresentationMode(false);
-    // 		return;
-    // 	}
-    // };
+            navigate(`/presentation/${presentationId}/${data.pace.active_slide_id}`);
+        },
+        [presentationId, slideId, navigate]
+    );
 
-    // const changeResultFromSocket = (data: any) => {
-    // 	if (data?.slideAdminKey === slideState.adminKey) {
-    // 		const choices: any = [];
-    // 		slideState.options.forEach((option, idx) => {
-    // 			choices?.push({
-    // 				id: option.key,
-    // 				label: option.value,
-    // 				position: idx,
-    // 				correctAnswer: option.key === slideState.selectedOption,
-    // 			});
-    // 		});
+    const handleQuitSlideFromSocket = useCallback(
+        (data: IQuitSlideSocketMsg) => {
+            if (data?.presentationIdentifier !== presentationId) return;
+            if (calledQuit.current) return;
 
-    // 		const processedResult = handleResultData(choices, JSON.parse(data?.results));
-    // 		changeSlideState({
-    // 			...slideState,
-    // 			respondents: data?.respondents,
-    // 			options: processedResult.options,
-    // 			result: processedResult.results,
-    // 			selectedOption: processedResult.selectedOption,
-    // 		});
-    // 	}
-    // };
+            allowInteraction.current = false;
 
-    // effect that runs 1 time
-    // useEffect(() => {
-    // 	const pageSocket = initNewSocket(SOCKET_NAMESPACES.PRESENT);
+            new AlertBuilder()
+                .setTitle("Thông báo")
+                .setText("Phiên trình chiếu đã kết thúc")
+                .setAlertType("info")
+                .setConfirmBtnText("OK")
+                .setOnConfirm(() => navigate("/dashboard/presentation-list"))
+                .preventDismiss()
+                .getAlert()
+                .fireAlert();
+        },
+        [presentationId, navigate]
+    );
 
-    // 	// init events
-    // 	pageSocket.on(SOCKET_LISTEN_EVENTS.PRESENT, doActionFromSocket);
-    // 	pageSocket.on(SOCKET_LISTEN_EVENTS.VOTE, changeResultFromSocket);
+    const handleAudienceVoteFromSocket = useCallback(
+        (data: IAudienceVoteSocketMsg) => {
+            if (data?.slideId?.toString() !== slideId?.toString()) return;
 
-    // 	return () => {
-    // 		closeCurrentSocket();
-    // 	};
-    // }, []);
+            const dataResults = data?.results;
+            if (!Array.isArray(dataResults)) return;
 
-    // change listeners when dependencies change
-    // useEffect(() => {
-    // 	socket?.removeAllListeners(SOCKET_LISTEN_EVENTS.PRESENT);
-    // 	socket?.removeAllListeners(SOCKET_LISTEN_EVENTS.VOTE);
+            const modifiedResults = _.cloneDeep(slideState.result);
 
-    // 	// init events
-    // 	socket?.on(SOCKET_LISTEN_EVENTS.PRESENT, doActionFromSocket);
-    // 	socket?.on(SOCKET_LISTEN_EVENTS.VOTE, changeResultFromSocket);
-    // }, [slideState.adminKey]);
-
-    // work around strictmode
-    // useEffect(() => {
-    // 	return () => {
-    // 		closeCurrentSocket();
-    // 	};
-    // }, [socket]);
-
-    // join room only 1 time when socket was connected
-    // useEffect(() => {
-    // 	if (!joinedRoom.current && socket?.connected && presentationState.voteKey !== "") {
-    // 		socket?.emit(SOCKET_EMIT_EVENTS.JOIN_ROOM, presentationState.voteKey);
-    // 		joinedRoom.current = true;
-    // 	}
-    // });
-    // ================= end of handling socket section =================
-
-    // process result and choices received from api
-    const handleResultData: (
-        choices: any,
-        resultsData: any
-    ) => {
-        options: { key: string; value: string }[];
-        results: { key: string; value: number }[];
-        selectedOption: string;
-    } = (choices, resultsData) => {
-        const options: { key: string; value: string }[] = [];
-        const results: { key: string; value: number }[] = [];
-        let selectedOption = "";
-
-        if (Array.isArray(choices)) {
-            const flag = Array.isArray(resultsData);
-
-            choices.sort((a, b) => a?.position - b?.position);
-
-            let haveCorrectAnswer = false;
-
-            choices.forEach((item, idx) => {
-                options.push({
-                    key: item?.id ?? idx,
-                    value: item?.label ?? "",
+            dataResults.forEach((dataItem) => {
+                modifiedResults.every((item) => {
+                    if (item.key.toString() === dataItem.id.toString()) {
+                        item.value = dataItem.score[0] || item.value;
+                        return false;
+                    }
+                    return true;
                 });
-                const tempResult = {
-                    key: item?.id ?? idx,
-                    value: 0,
-                };
-
-                if (flag) {
-                    tempResult.value =
-                        (resultsData as any[]).find((element) => element?.id === item?.id)?.score[0] ?? 0;
-                }
-
-                results.push(tempResult);
-                if (item?.correctAnswer === true) {
-                    haveCorrectAnswer = true;
-                    selectedOption = item?.id;
-                }
             });
 
-            if (!haveCorrectAnswer) selectedOption = "";
+            resetSlideState({ result: modifiedResults, respondents: data?.respondents });
+        },
+        [slideState, slideId, resetSlideState]
+    );
+
+    // handle events
+    useEffect(() => {
+        if (!socket) return;
+
+        // reset all event listeners
+        socket.removeAllListeners(SOCKET_LISTEN_EVENT.change_slide);
+        socket.removeAllListeners(SOCKET_LISTEN_EVENT.quit_slide);
+        socket.removeAllListeners(SOCKET_LISTEN_EVENT.audience_vote);
+
+        // init all event listeners
+        socket.on(SOCKET_LISTEN_EVENT.change_slide, (data: IChangeSlideSocketMsg) => handleChangeSlideFromSocket(data));
+        socket.on(SOCKET_LISTEN_EVENT.quit_slide, (data: IQuitSlideSocketMsg) => handleQuitSlideFromSocket(data));
+        socket.on(SOCKET_LISTEN_EVENT.audience_vote, (data: IAudienceVoteSocketMsg) =>
+            handleAudienceVoteFromSocket(data)
+        );
+    }, [socket, handleChangeSlideFromSocket, handleQuitSlideFromSocket, handleAudienceVoteFromSocket]);
+
+    useEffect(() => {
+        // init a new websocket when have gotten all the slide detail and the socket is not initialized
+        if (gotSlideDetail.current && gotVotingCode.current && status === SOCKET_STATUS.notInitialized) {
+            methods.initSocket(SOCKET_NAMESPACE.presentation);
         }
-        return {
-            options: options,
-            results: results,
-            selectedOption: selectedOption,
-        };
-    };
+
+        // join room only 1 time when socket was connected
+        if (!joinedRoom.current && socket && status === SOCKET_STATUS.isConnected) {
+            socket.emit(SOCKET_EMIT_EVENT.join_room, presentationId);
+            joinedRoom.current = true;
+        }
+
+        if (joinedRoom.current && status === SOCKET_STATUS.isConnected) {
+            // lock calling api when there is no socket connection
+            allowInteraction.current = true;
+        }
+    });
+    // ================= end of handling socket section =================
 
     useEffect(() => {
         const fetchingPresentationDetail = async () => {
             globalContext.blockUI("Đang lấy thông tin");
+
             const alert = new AlertBuilder()
                 .setTitle("Thông báo")
                 .setText("Bài trình chiếu này hiện đang không được trình chiếu.")
                 .setAlertType("info")
                 .setConfirmBtnText("OK")
-                .setOnConfirm(() => navigate("/"))
+                .setOnConfirm(() => navigate("/dashboard/presentation-list"))
                 .preventDismiss()
                 .getAlert();
-            // const alertNavigate = new AlertBuilder()
-            //     .setAlertType("error")
-            //     .setConfirmBtnText("Về trang chủ")
-            //     .preventDismiss()
-            //     .setOnConfirm(() => navigate("./"));
-            const kickAlert = new AlertBuilder()
-                .setTitle("Thông báo")
-                .setText("Bạn không có quyền truy cập trang này")
+            const alertNavigate = new AlertBuilder()
+                .reset()
+                .setTitle("Lỗi")
                 .setAlertType("error")
+                .setText("Có lỗi xảy ra khi lấy thông tin trang chiếu")
                 .setConfirmBtnText("OK")
-                .setOnConfirm(() => navigate("/", { replace: true }))
-                .preventDismiss()
-                .getAlert();
+                .setOnConfirm(() => navigate("/dashboard/presentation-list"));
+
             try {
                 // get presentation detail
                 const presentationRes = await PresentationService.getPresentationDetailAsync(presentationId || "");
                 if (presentationRes.code === 200) {
                     const data = presentationRes.data as any;
-                    const slideList = data.slides;
-                    if (data?.permission?.presentationRole === null && data?.permission?.groupRole === null) {
-                        kickAlert.fireAlert();
-                        globalContext.unBlockUI();
-                        return;
-                    }
-                    if (data?.permission?.presentationRole === "collaborator" && data?.permission?.groupRole === null) {
-                        kickAlert.fireAlert();
-                        globalContext.unBlockUI();
-                        return;
-                    }
-                    const mappedSlideList: IPresentationSlide[] = slideList.map(
-                        (item: any) =>
-                            ({
-                                id: item?.id ?? "",
-                                adminKey: item?.admin_key ?? "",
-                                type: item?.type ?? "",
-                            } as IPresentationSlide)
+                    const mappedPresentationState = DataMappingUtil.mapPresentationStateFromApiData(
+                        presentationState,
+                        data
                     );
-                    changePresentationState({
-                        ...presentationState,
-                        slides: mappedSlideList,
-                        voteKey: data?.voteKey ?? "",
-                        pace: {
-                            active: data?.pace?.active ?? "",
-                            counter: data?.pace?.counter ?? 0,
-                            mode: data?.pace?.mode ?? "",
-                            state: data?.pace?.state ?? "",
-                            groupId: data?.pace?.groupId ?? null,
-                        } as IPresentationPace,
-                    });
+
+                    if (!isInitialRender.current)
+                        mappedPresentationState.votingCode = { ...presentationState.votingCode };
+                    resetPresentationState(mappedPresentationState);
+
                     // if the slide has not been presented yet (user enters the URL directly into the URL bar)
                     if (data?.pace?.state === "idle") {
                         globalContext.unBlockUI();
                         alert.fireAlert();
-                        return;
+                        return Promise.reject();
                     }
+
                     // get slide detail
-                    const res = await PresentationService.getSlideDetailAsync(presentationId || "", slideId || "");
+                    const res = await SlideService.getSlideDetailAsync(presentationId || "", slideId || "");
+
                     if (res.code === 200) {
-                        // get slide result
-                        const resultRes = await PresentationService.getSlideResultAsync(
-                            presentationId || "",
-                            slideId || ""
-                        );
-                        const resultResData = resultRes?.data;
-                        if (resultRes.code === 200) {
-                            const resData = res.data;
-                            const newVal = { ...slideState };
-                            newVal.question = resData?.question ?? "";
-                            newVal.description = resData?.questionDescription ?? "";
-                            newVal.type = resData?.type ?? "";
-                            newVal.respondents = resultResData?.respondents ?? 0;
-                            const processedResult = handleResultData(resData?.choices, resultResData?.results);
-                            newVal.selectedOption = processedResult.selectedOption;
-                            newVal.options = processedResult.options;
-                            newVal.result = processedResult.results;
-                            newVal.enableVoting = resData?.active ?? true;
-                            newVal.showInstructionBar = !resData?.hideInstructionBar ?? true;
-                            newVal.fontSize = resData?.textSize ?? 32;
-                            newVal.id = resData?.id ?? "";
-                            newVal.adminKey = resData?.adminKey ?? "";
-                            newVal.presentationId = resData?.presentationId ?? "";
-                            newVal.presentationSeriesId = resData?.presentationSeriesId ?? "";
-                            newVal.position = resData?.position ?? "";
-                            newVal.createdAt = resData?.createdAt ?? "";
-                            newVal.config = null;
-                            newVal.updatedAt = resData?.updatedAt ?? "";
-                            newVal.questionImageUrl = resData?.questionImageUrl ?? "";
-                            newVal.questionVideoUrl = resData?.questionVideoUrl ?? "";
-                            changeSlideState(newVal);
+                        const resData = res?.data;
+                        if (!resData) {
                             globalContext.unBlockUI();
                             return;
                         }
-                        Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_RESULT);
+                        const mappedSlideDetail = DataMappingUtil.mapSlideStateFromApiData(slideState, resData);
+                        resetSlideState(mappedSlideDetail);
                         globalContext.unBlockUI();
                         return;
                     }
-                    //     if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-                    //         alertNavigate.setTitle("Bài trình bày không tồn tại").setText("");
-                    //         alertNavigate.getAlert().fireAlert();
-                    //         globalContext.unBlockUI();
-                    //         return;
-                    //     }
-                    //     if (res.code === RESPONSE_CODE.SLIDE_NOT_FOUND) {
-                    //         alertNavigate.setTitle("Trang chiếu không tồn tại").setText("");
-                    //         alertNavigate.getAlert().fireAlert();
-                    //         globalContext.unBlockUI();
-                    //         return;
-                    //     }
-                    //     if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                    //         Notification.notifyError("Có lỗi xảy ra khi gửi yêu cầu");
-                    //         globalContext.unBlockUI();
-                    //         return;
-                    //     }
-                    //     Notification.notifyError("Có lỗi xảy ra khi lấy chi tiết trang chiếu");
-                    //     globalContext.unBlockUI();
-                    //     return;
                 }
-                // if (presentationRes.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                //     const errors = (presentationRes.errors as any[]) || null;
-                //     if (errors) {
-                //         const msg = errors[0]?.message;
-                //         alertNavigate.setTitle(msg);
-                //         alertNavigate.getAlert().fireAlert();
-                //         globalContext.unBlockUI();
-                //         return;
-                //     }
-                //     globalContext.unBlockUI();
-                //     return;
-                // }
-                // if (presentationRes.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-                //     alertNavigate.setTitle("Bài trình bày không tồn tại").setText("");
-                //     alertNavigate.getAlert().fireAlert();
-                //     globalContext.unBlockUI();
-                //     return;
-                // }
+
                 throw new Error("Unknown http code");
-            } catch (err) {
-                console.error(err);
-                if (err === "forbidden") {
-                    kickAlert.fireAlert();
+            } catch (err: any) {
+                const res = err?.response?.data;
+                if (
+                    res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION ||
+                    res.code === RESPONSE_CODE.VALIDATION_ERROR
+                ) {
+                    alertNavigate.setText(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION).getAlert().fireAlert();
+                    globalContext.unBlockUI();
+                    return Promise.reject();
                 }
+
+                if (res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                    alertNavigate.setText(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE).getAlert().fireAlert();
+                    globalContext.unBlockUI();
+                    return Promise.reject();
+                }
+
+                console.error(err);
                 globalContext.unBlockUI();
+                return Promise.reject();
             }
         };
-        fetchingPresentationDetail();
+
+        gotSlideDetail.current = false;
+        fetchingPresentationDetail()
+            .then(() => {
+                gotSlideDetail.current = true;
+                isInitialRender.current = false;
+            })
+            .catch(() => (isInitialRender.current = false));
         // eslint-disable-next-line
     }, [slideId]);
 
-    const handleTurnOffPresentationMode = async (callApi: boolean = true) => {
+    useEffect(() => {
+        const fetchVotingCode = async () => {
+            try {
+                const res = await PresentationService.postVotingCodeAsync(presentationId || "");
+
+                if (res.code === 200) {
+                    if (!res.data) return;
+
+                    if (res.data.isValid) {
+                        resetPresentationState({ votingCode: { ...res.data } });
+                        gotVotingCode.current = true;
+                        return;
+                    }
+                }
+
+                throw new Error("Unknown http code");
+            } catch (err) {
+                console.error(err);
+                Notification.notifyError(ERROR_NOTIFICATION.FETCH_VOTING_CODE_PROCESS);
+            }
+        };
+
+        // called voting code api when have got slide detail
+        if (gotSlideDetail.current) {
+            // get voting code if this is none
+            if (presentationState.votingCode.code === "") {
+                fetchVotingCode();
+                return;
+            }
+
+            // get voting code if the voting code was expired
+            if (moment(presentationState.votingCode.expiresAt).diff(moment()) < 0) {
+                fetchVotingCode();
+                return;
+            }
+        }
+    });
+
+    const handleTurnOffPresentationMode = async () => {
+        if (!allowInteraction.current) return;
+        calledQuit.current = true;
+        const handleNavigate = () => navigate(`/presentation/${presentationId}/${slideId}/edit`);
+
         try {
-            if (callApi) await PresentationService.updatePresentationPaceAsync(presentationId ?? "", "", "quit");
-            // if (
-            // 	presentationState.permission.presentationRole === "owner" ||
-            // 	presentationState.permission.presentationRole === "collaborator"
-            // ) {
-            // 	navigate(`/presentations/${presentationId}/${slideId}/edit`);
-            // 	return;
-            // }
-            // if (
-            // 	presentationState.permission.groupRole === "owner" ||
-            // 	presentationState.permission.groupRole === "co-owner"
-            // ) {
-            // 	presentationState.pace.groupId !== null
-            // 		? navigate(`/groups/group-list/${presentationState.pace.groupId}`)
-            // 		: navigate("/");
-            // 	return;
-            // }
-            navigate(`/presentation/${presentationId}/${slideId}/edit`);
-        } catch (err) {
+            await PresentationService.updatePresentationPaceAsync(presentationId || "", null, "quit");
+
+            handleNavigate();
+        } catch (err: any) {
+            const res = err?.response?.data;
+
+            if (res.code === RESPONSE_CODE.QUIT_SLIDE_PERMISSION) {
+                handleNavigate();
+                return;
+            }
+
             console.error(err);
-            Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_STATE);
+            Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_PACE_PROCESS);
         }
     };
 
-    // find path for next and back slide button
-    thisSlideIndex.current = presentationState.slides.findIndex((slide) => slide.adminKey === slideId);
-
     const changeSlide = async (next: boolean) => {
-        // const targetSlideId = next
-        // 	? presentationState.slides[thisSlideIndex.current + 1].adminKey
-        // 	: presentationState.slides[thisSlideIndex.current - 1].adminKey;
-        // try {
-        // 	const updatePaceRes = await PresentationService.updatePresentationPaceAsync(
-        // 		presentationId ?? "",
-        // 		targetSlideId ?? "",
-        // 		"change_slide",
-        // 	);
-        // 	if (updatePaceRes.code === RESPONSE_CODE.CHANGE_SLIDE_PERMISSION) {
-        // 		new AlertBuilder()
-        // 			.setTitle("Thông báo")
-        // 			.setText("Bài trình chiếu này hiện đang không được trình chiếu.")
-        // 			.setAlertType("info")
-        // 			.setConfirmBtnText("OK")
-        // 			.setOnConfirm(() => navigate("/"))
-        // 			.preventDismiss()
-        // 			.getAlert()
-        // 			.fireAlert();
-        // 		return;
-        // 	}
-        // } catch (updatePaceErr) {
-        // 	Notification.notifyError("Có lỗi xảy ra khi cập nhật trạng thái trình chiếu");
-        // 	console.error(updatePaceErr);
-        // }
+        if (!allowInteraction.current) return;
+        const targetSlideId = next
+            ? presentationState.slides[thisSlideIndex.current + 1].id
+            : presentationState.slides[thisSlideIndex.current - 1].id;
+        try {
+            await PresentationService.updatePresentationPaceAsync(
+                presentationId || "",
+                targetSlideId || "",
+                "change_slide"
+            );
+
+            navigate(`/presentation/${presentationId}/${targetSlideId}`);
+        } catch (error: any) {
+            const res = error?.response?.data;
+
+            if (res.code === RESPONSE_CODE.CHANGE_SLIDE_PERMISSION) {
+                new AlertBuilder()
+                    .setTitle("Thông báo")
+                    .setText("Bài trình chiếu này hiện đang không được trình chiếu.")
+                    .setAlertType("info")
+                    .setConfirmBtnText("OK")
+                    .setOnConfirm(() => navigate("/dashboard/presentation-list"))
+                    .preventDismiss()
+                    .getAlert()
+                    .fireAlert();
+                return;
+            }
+            Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_PACE_PROCESS);
+            console.error(error);
+        }
     };
 
     const toggleFullscreen = async () => {

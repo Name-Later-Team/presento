@@ -8,21 +8,41 @@ import { IBaseComponent } from "../../../../interfaces";
 import { CustomActionDropdownToggle } from "../custom-action-dropdown";
 import "./style.scss";
 import CustomizedTooltip from "../../../../components/tooltip";
+import React from "react";
+import { DraggableProvided } from "react-beautiful-dnd";
+import { AlertBuilder } from "../../../../components/alert";
 
 interface ICustomSlideNav extends IBaseComponent, ISidebarSlideNav {
     slideNum?: number;
     actions?: {
-        onDelete: (adminKey: string) => void;
+        onDelete: (slideId: string) => void;
     };
+    draggableProvided: DraggableProvided;
 }
 
-export default function CustomSlideNav(props: ICustomSlideNav) {
-    const { presentationState } = usePresentFeature();
-    const { icon, path, slideId, slideNum, actions } = props;
+const CustomSlideNav = React.forwardRef<HTMLDivElement, ICustomSlideNav>((props, ref) => {
+    const { presentationState, indicators } = usePresentFeature();
+    const { icon, typeLabel, path, slideId, slideNum, actions, draggableProvided } = props;
     const navigate = useNavigate();
 
     const handleOnClick = () => {
-        navigate(path);
+        const goTo = () => navigate(path);
+        if (indicators.isModifiedDetail.isSlideDetailModified) {
+            new AlertBuilder()
+                .setTitle("Cảnh báo")
+                .setAlertType("warning")
+                .setText("Dữ liệu trang chiếu vừa thay đổi của bạn sẽ mất nếu chưa được lưu, vẫn muốn chuyển trang?")
+                .setConfirmBtnText("Đồng ý")
+                .setCancelBtnText("Không")
+                .setOnConfirm(goTo)
+                .preventDismiss()
+                .getAlert()
+                .fireAlert();
+        } else {
+            goTo();
+        }
+
+        // navigate(path);
     };
 
     const handleDeleteSlide = (slideId: string) => {
@@ -30,7 +50,13 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
     };
 
     return (
-        <div className="custom-slide-nav__container">
+        <div
+            ref={ref}
+            {...draggableProvided.draggableProps}
+            {...draggableProvided.dragHandleProps}
+            className="custom-slide-nav__container"
+            id={slideId}
+        >
             <Nav.Item className="custom-slide-nav__slide">
                 <Nav.Link className="custom-slide-nav__slide-link" onClick={handleOnClick} eventKey={path}>
                     <div className="d-flex justify-content-between">
@@ -38,7 +64,7 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
                             <div className="custom-slide-nav__slide-info w-100">
                                 <span className="custom-slide-nav__slide-number mb-1">{slideNum}</span>
 
-                                {presentationState.pace.active === slideId ? (
+                                {presentationState.pace.active_slide_id.toString() === slideId.toString() ? (
                                     <span
                                         onClick={(e) => {
                                             e.preventDefault();
@@ -74,7 +100,7 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
                                         as="button"
                                         onClick={() => handleDeleteSlide(slideId)}
                                     >
-                                        <FontAwesomeIcon className="me-2" icon={faTrash} />
+                                        <FontAwesomeIcon className="me-3" icon={faTrash} />
                                         Xóa trang chiếu
                                     </Dropdown.Item>
                                 </Dropdown.Menu>
@@ -84,6 +110,7 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
                         <div className="custom-slide-nav__slide-preview">
                             <span className="custom-slide-nav__slide-name">
                                 <FontAwesomeIcon icon={icon} />
+                                <span style={{ fontSize: "0.8rem" }}>{typeLabel}</span>
                             </span>
                         </div>
                     </div>
@@ -91,4 +118,6 @@ export default function CustomSlideNav(props: ICustomSlideNav) {
             </Nav.Item>
         </div>
     );
-}
+});
+
+export default CustomSlideNav;

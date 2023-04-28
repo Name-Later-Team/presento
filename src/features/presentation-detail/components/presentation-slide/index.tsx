@@ -1,6 +1,6 @@
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Stack } from "react-bootstrap";
+import { Spinner, Stack } from "react-bootstrap";
 import { Notification } from "../../../../common/components/notification";
 import CustomizedTooltip from "../../../../common/components/tooltip";
 import { APP_CONSTANTS } from "../../../../constants/app-constants";
@@ -9,8 +9,12 @@ import HeadingSlideComponent from "./components/heading";
 import MultipleChoiceSlideComponent from "./components/multiple-choice";
 import ParagraphSlideComponent from "./components/paragraph";
 import "./style.scss";
+import FormatUtil from "../../../../common/utils/format-util";
+import { SUCCESS_NOTIFICATION } from "../../../../constants";
 
-const slideTypeComponents: { [type: string]: JSX.Element } = {
+// define all types of slide here
+export type SlideType = "multiple_choice" | "heading" | "paragraph";
+export const slideTypeComponents: Record<SlideType, JSX.Element> = {
     multiple_choice: <MultipleChoiceSlideComponent />,
     heading: <HeadingSlideComponent />,
     paragraph: <ParagraphSlideComponent />,
@@ -20,35 +24,51 @@ export default function PresentationSlide() {
     const { slideState, presentationState } = usePresentFeature();
 
     const handleCopyLink = () => {
-        navigator.clipboard.writeText(`${APP_CONSTANTS.APP_DOMAIN}/voting/${presentationState.voteKey}`);
-        Notification.notifySuccess("Sao chép liên kết thành công!");
+        navigator.clipboard.writeText(`${APP_CONSTANTS.VOTE_APP_DOMAIN}/${presentationState.identifier}`);
+        Notification.notifySuccess(SUCCESS_NOTIFICATION.COPIED_LINK_SUCCESS);
     };
 
     return (
         <div className="presentation-slide__slide-wrapper">
             <div className="presentation-slide__slide text-break">
-                <Stack className="text-center h-100" gap={3}>
+                <Stack className="presentation-slide__slide__slide-stack text-center h-100">
                     {slideState.showInstructionBar && (
-                        <div className="presentation-slide__instruction-bar">
-                            Truy cập
-                            <span
-                                id="instruction-bar__vote-link"
-                                onClick={handleCopyLink}
-                                className="instruction-bar__vote-link mx-1 fw-bolder text-primary"
-                            >
-                                {`${APP_CONSTANTS.APP_DOMAIN}/voting/${presentationState.voteKey}`}
-                            </span>
-                            <CustomizedTooltip
-                                place="bottom"
-                                anchorSelect="#instruction-bar__vote-link"
-                                content="Nhấn để sao chép liên kết"
-                            />
-                            để bầu chọn
-                        </div>
+                        <>
+                            <div className="presentation-slide__instruction-bar">
+                                <div
+                                    className="presentation-slide__instruction-bar__content-wrapper"
+                                    id="instruction-bar__vote-link"
+                                    onClick={() => presentationState.votingCode.code !== "" && handleCopyLink()}
+                                >
+                                    Truy cập
+                                    <span className="fw-bolder text-primary" style={{ marginInline: "0.5vw" }}>
+                                        {APP_CONSTANTS.VOTE_APP_DOMAIN}
+                                    </span>
+                                    nhập mã
+                                    <span className="fw-bolder text-primary" style={{ marginInline: "0.5vw" }}>
+                                        {presentationState.votingCode.code === "" ? (
+                                            <Spinner
+                                                className="vote-link__voting-code--spinner mx-2"
+                                                animation="border"
+                                                variant="primary"
+                                            />
+                                        ) : (
+                                            FormatUtil.formatVotingCodeString(presentationState.votingCode.code)
+                                        )}
+                                    </span>
+                                    để bầu chọn
+                                </div>
+                            </div>
+                            {presentationState.votingCode.code !== "" && (
+                                <CustomizedTooltip place="bottom" anchorSelect="#instruction-bar__vote-link">
+                                    Nhấn để sao chép đường dẫn bầu chọn
+                                </CustomizedTooltip>
+                            )}
+                        </>
                     )}
 
                     <div className="presentation-slide__slide-component flex-grow-1">
-                        {slideTypeComponents[slideState.type]}
+                        {slideTypeComponents[slideState.type as SlideType]}
                     </div>
 
                     <div className="presentation-slide__footer-placeholder">
@@ -65,8 +85,8 @@ export default function PresentationSlide() {
 
                             {/* Display the number of people who voted on this question */}
                             <div id="footer__total-respondents">
-                                {slideState.respondents}
-                                <FontAwesomeIcon className="footer__total-respondents-logo ms-2" icon={faUser} />
+                                <span>{slideState.respondents}</span>
+                                <FontAwesomeIcon className="footer__total-respondents-logo" icon={faUser} />
                             </div>
                             <CustomizedTooltip
                                 place="left"

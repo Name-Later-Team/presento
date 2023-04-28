@@ -1,0 +1,23 @@
+// responsive code
+@import "../../../../assets/scss/mixins/common";
+
+@include responsiveMax($breakpoint-md) {
+    .presentation-list__header__actions {
+        > * {
+            width: 100%;
+        }
+    }
+
+    .presentation-list__header__filters {
+        width: 100%;
+
+        > *,
+        .presentation-list__header__filters__filter-select {
+            width: 100%;
+        }
+    }
+
+    .presentation-list__header__filters__filter-text {
+        margin-block: 0.3rem;
+    }
+}

@@ -2,7 +2,7 @@ import { faBars, faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useState } from "react";
 import { Button, Dropdown } from "react-bootstrap";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "../../contexts/auth-context";
 import { IBaseComponent } from "../../interfaces/basic-interfaces";
 import "./style.scss";
@@ -13,12 +13,11 @@ interface IDashboardLayout extends IBaseComponent {
 
 export default function DashboardLayout(props: IDashboardLayout) {
     const { sidebarElement } = props;
-    const { userInfo } = useAuth();
+    const { userInfo, removeUserInfo } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
-    const navigate = useNavigate();
 
     const handleLogout = () => {
-        // removeUserInfo();
+        removeUserInfo();
     };
 
     return (
@@ -71,7 +70,7 @@ export default function DashboardLayout(props: IDashboardLayout) {
                             </Dropdown.Toggle>
 
                             <Dropdown.Menu style={{ margin: 0 }}>
-                                <Dropdown.Item onClick={() => navigate("/profile")}>Hồ sơ cá nhân</Dropdown.Item>
+                                {/* <Dropdown.Item onClick={() => navigate("/profile")}>Hồ sơ cá nhân</Dropdown.Item> */}
                                 <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
                             </Dropdown.Menu>
                         </Dropdown>

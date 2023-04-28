@@ -1,23 +1,27 @@
-import { toast } from "react-toastify";
+import { Id, ToastOptions, toast } from "react-toastify";
 
 export class Notification {
-	static notifyInfo(msg: string) {
-		toast.info(msg);
-	}
+    static notifyInfo(msg: React.ReactNode, toastOptions?: ToastOptions) {
+        return toast.info<React.ReactNode>(msg, toastOptions);
+    }
 
-	static notifySuccess(msg: string) {
-		toast.success(msg);
-	}
+    static notifySuccess(msg: React.ReactNode, toastOptions?: ToastOptions) {
+        return toast.success<React.ReactNode>(msg, toastOptions);
+    }
 
-	static notifyWarning(msg: string) {
-		toast.warn(msg);
-	}
+    static notifyWarning(msg: React.ReactNode, toastOptions?: ToastOptions) {
+        return toast.warn<React.ReactNode>(msg, toastOptions);
+    }
 
-	static notifyError(msg: string) {
-		toast.error(msg);
-	}
+    static notifyError(msg: React.ReactNode, toastOptions?: ToastOptions) {
+        return toast.error<React.ReactNode>(msg, toastOptions);
+    }
 
-	static notify(msg: string) {
-		toast(msg);
-	}
+    static notify(msg: React.ReactNode, toastOptions?: ToastOptions) {
+        return toast<React.ReactNode>(msg, toastOptions);
+    }
+
+    static dismiss(toastId: Id) {
+        toast.dismiss(toastId);
+    }
 }

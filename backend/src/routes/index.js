@@ -1,33 +1,66 @@
-import axios from "axios";
 import * as express from "express";
 import { asyncRouteHandler } from "../common/middlewares/async-route.handler.js";
 import { ResponseBuilder } from "../common/utils/builders/response.builder.js";
-import { Logger } from "../common/utils/logger.js";
-import { APP_CONFIG } from "../configs/index.js";
+import { ApiService } from "../services/api.service.js";
 
 export const router = express.Router();
 
 router.get(
-    "/:service/:path",
-    asyncRouteHandler((req, res) => {
-        axios({
-            method: req.method,
-            url: `${APP_CONFIG.apiGateway}/${req.params.service}/${req.params.path}`,
-        })
-            .then((response) => res.send(response.data))
+    "/:service/v1/*",
+    asyncRouteHandler(async (req, res) => {
+        const { accessToken, tokenType } = req.session?.user ?? {};
+        const authorization = `${tokenType} ${accessToken}`;
+
+        new ApiService()
+            .getRequestAsync(req.originalUrl.replace("/api", ""), { Authorization: authorization })
+            .then((response) => res.status(response.status).send(response.data))
             .catch((error) => {
-                if (error.response) {
-                    return res.status(error.response.status).send(error.response.data);
-                }
+                res.status(error.status).send(error.data);
+            });
+    })
+);
 
-                Logger.error(error);
+router.post(
+    "/:service/v1/*",
+    asyncRouteHandler((req, res) => {
+        const { accessToken, tokenType } = req.session?.user ?? {};
+        const authorization = `${tokenType} ${accessToken}`;
 
-                // todo: handle error here
+        new ApiService()
+            .postJsonRequestAsync(req.originalUrl.replace("/api", ""), req.body, { Authorization: authorization })
+            .then((response) => res.status(response.status).send(response.data))
+            .catch((error) => {
+                res.status(error.status).send(error.data);
+            });
+    })
+);
 
-                return res.status(504).json({
-                    code: 504,
-                    message: "Gateway Timeout",
-                });
+router.put(
+    "/:service/v1/*",
+    asyncRouteHandler((req, res) => {
+        const { accessToken, tokenType } = req.session?.user ?? {};
+        const authorization = `${tokenType} ${accessToken}`;
+
+        new ApiService()
+            .putJsonRequestAsync(req.originalUrl.replace("/api", ""), req.body, { Authorization: authorization })
+            .then((response) => res.status(response.status).send(response.data))
+            .catch((error) => {
+                res.status(error.status).send(error.data);
+            });
+    })
+);
+
+router.delete(
+    "/:service/v1/*",
+    asyncRouteHandler((req, res) => {
+        const { accessToken, tokenType } = req.session?.user ?? {};
+        const authorization = `${tokenType} ${accessToken}`;
+
+        new ApiService()
+            .deleteRequestAsync(req.originalUrl.replace("/api", ""), { Authorization: authorization })
+            .then((response) => res.status(response.status).send(response.data))
+            .catch((error) => {
+                res.status(error.status).send(error.data);
             });
     })
 );

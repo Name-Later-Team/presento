@@ -1,31 +1,39 @@
-import { faBars, faChevronLeft, faFloppyDisk, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faCheck, faChevronLeft, faList, faPlay, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReactElement, useEffect, useState } from "react";
-import { Button, Dropdown, Stack } from "react-bootstrap";
+import { Button, Dropdown, Spinner, Stack } from "react-bootstrap";
 import { Link, Outlet, useNavigate, useParams } from "react-router-dom";
-import { ERROR_NOTIFICATION } from "../../../constants";
+import { ERROR_NOTIFICATION, RESPONSE_CODE, SUCCESS_NOTIFICATION } from "../../../constants";
 import PresentationService from "../../../services/presentation-service";
 import { Notification } from "../../components/notification";
 import CustomizedTooltip from "../../components/tooltip";
 import { useAuth } from "../../contexts/auth-context";
-import { useGlobalContext } from "../../contexts/global-context";
-import { usePresentFeature } from "../../contexts/present-feature-context";
+import { ErrorState, usePresentFeature } from "../../contexts/present-feature-context";
 import { IBaseComponent } from "../../interfaces/basic-interfaces";
+import PresentationInfo from "./presentation-info";
 import "./style.scss";
+import { AlertBuilder } from "../../components/alert";
 
 interface IEditPresentationLayout extends IBaseComponent {
     sidebarElement: ReactElement;
 }
 
+const smallScreenMediaQuery = "(max-width: 768px)";
+
 export default function EditPresentationLayout(props: IEditPresentationLayout) {
     const { sidebarElement } = props;
+    // contexts
     const { userInfo, removeUserInfo } = useAuth();
-    const { presentationState, slideState, changeSlideState } = usePresentFeature();
-    const globalContext = useGlobalContext();
+    const { indicators, presentationState } = usePresentFeature();
 
-    const { presentationId, slideId } = useParams();
+    // states
     const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+    const [hideHeaderRight, setHideHeaderRight] = useState(false);
+    const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(smallScreenMediaQuery).matches);
     // const [showSelectGroupModal, setShowSelectGroupModal] = useState<boolean>(false);
+
+    // libs
+    const { presentationId, slideId } = useParams();
     const navigate = useNavigate();
 
     // add event to alert user to save before leaving
@@ -33,303 +41,169 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
         const onCloseWindow = (e: BeforeUnloadEvent) => {
             e.preventDefault();
 
-            return (e.returnValue = "Sure?");
+            return indicators.isModified && (e.returnValue = "Sure?");
         };
 
         window.addEventListener("beforeunload", onCloseWindow);
         return () => {
             window.removeEventListener("beforeunload", onCloseWindow);
         };
-    }, []);
+    }, [indicators.isModified]);
 
-    // effect that happens when change slide within the edit page
     useEffect(() => {
-        const fetchingSlideDetail = async () => {
-            globalContext.blockUI("Đang lấy thông tin");
-            try {
-                const res = await PresentationService.getSlideDetailAsync(presentationId || "", slideId || "");
-                if (res.code === 200) {
-                    const resultRes = await PresentationService.getSlideResultAsync(
-                        presentationId || "",
-                        slideId || ""
-                    );
-                    const resultResData = resultRes?.data;
-                    if (resultRes.code === 200) {
-                        const resData = res.data;
-                        const newVal = { ...slideState };
-                        newVal.question = resData?.question ?? "";
-                        newVal.description = resData?.questionDescription ?? "";
-                        newVal.type = resData?.type ?? "";
-                        newVal.respondents = resultResData?.respondents ?? 0;
-                        const choices = resData?.choices;
-                        const options: { key: string; value: string }[] = [];
-                        const results: { key: string; value: number }[] = [];
-                        if (Array.isArray(choices)) {
-                            const flag = Array.isArray(resultResData?.results);
-                            choices.sort((a, b) => a?.position - b?.position);
-                            let haveCorrectAnswer = false;
-                            choices.forEach((item, idx) => {
-                                options.push({
-                                    key: item?.id ?? idx,
-                                    value: item?.label ?? "",
-                                });
-                                const tempResult = {
-                                    key: item?.id ?? idx,
-                                    value: 0,
-                                };
-                                if (flag) {
-                                    tempResult.value =
-                                        (resultResData?.results as any[]).find((element) => element?.id === item?.id)
-                                            ?.score[0] ?? 0;
-                                }
-                                results.push(tempResult);
-                                if (item?.correctAnswer === true) {
-                                    haveCorrectAnswer = true;
-                                    newVal.selectedOption = item?.id;
-                                }
-                            });
-                            if (!haveCorrectAnswer) newVal.selectedOption = "";
-                            newVal.options = options;
-                            newVal.result = results;
-                        }
-                        newVal.enableVoting = resData?.active ?? true;
-                        newVal.showInstructionBar = !resData?.hideInstructionBar ?? true;
-                        newVal.fontSize = resData?.textSize ?? 32;
-                        newVal.id = resData?.id ?? "";
-                        newVal.adminKey = resData?.adminKey ?? "";
-                        newVal.presentationId = resData?.presentationId ?? "";
-                        newVal.presentationSeriesId = resData?.presentationSeriesId ?? "";
-                        newVal.position = resData?.position ?? "";
-                        newVal.createdAt = resData?.createdAt ?? "";
-                        newVal.config = null;
-                        newVal.updatedAt = resData?.updatedAt ?? "";
-                        newVal.questionImageUrl = resData?.questionImageUrl ?? "";
-                        newVal.questionVideoUrl = resData?.questionVideoUrl ?? "";
-                        changeSlideState(newVal);
-                        globalContext.unBlockUI();
-                        return;
-                    }
-                    Notification.notifyError(ERROR_NOTIFICATION.FETCH_SLIDE_RESULT);
-                    globalContext.unBlockUI();
-                    return;
-                }
-                // if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-                // 	Notification.notifyError("Không tìm thấy bài trình chiếu");
-                // 	globalContext.unBlockUI();
-                // 	return;
-                // }
-                // if (res.code === RESPONSE_CODE.SLIDE_NOT_FOUND) {
-                // 	Notification.notifyError("Không tìm thấy trang chiếu");
-                // 	globalContext.unBlockUI();
-                // 	return;
-                // }
-                // if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-                // 	Notification.notifyError("Có lỗi xảy ra khi gửi yêu cầu");
-                // 	globalContext.unBlockUI();
-                // 	return;
-                // }
-                throw new Error("Unknown http code");
-            } catch (err) {
-                console.error(err);
-                globalContext.unBlockUI();
-            }
+        const onChange = (e: MediaQueryListEvent) => setIsSmallScreen(e.matches);
+        const mediaQueryList = window.matchMedia(smallScreenMediaQuery);
+        mediaQueryList.addEventListener("change", onChange);
+        return () => {
+            mediaQueryList.removeEventListener("change", onChange);
         };
-        fetchingSlideDetail();
-        // eslint-disable-next-line
-    }, [presentationId, slideId]);
+    }, []);
 
     const handleLogout = () => {
         removeUserInfo();
     };
 
-    const handleSaveSlide = async () => {
-        // try {
-        // 	globalContext.blockUI();
-        // 	// prepare request values
-        // 	const reqData: ISlideDetailResponse = {
-        // 		id: slideState.id,
-        // 		adminKey: slideState.adminKey,
-        // 		active: slideState.enableVoting,
-        // 		hideInstructionBar: !slideState.showInstructionBar,
-        // 		choices: [],
-        // 		config: slideState.config ?? {},
-        // 		createdAt: slideState.createdAt,
-        // 		updatedAt: slideState.updatedAt,
-        // 		position: slideState.position,
-        // 		presentationId: slideState.presentationId,
-        // 		presentationSeriesId: slideState.presentationSeriesId,
-        // 		question: slideState.question,
-        // 		questionDescription: slideState.description,
-        // 		questionImageUrl: slideState.questionImageUrl === "" ? null : slideState.questionImageUrl,
-        // 		questionVideoUrl: slideState.questionVideoUrl === "" ? null : slideState.questionVideoUrl,
-        // 		speakerNotes: slideState.speakerNotes,
-        // 		textSize: slideState.fontSize,
-        // 		type: slideState.type,
-        // 	};
-        // 	// map state into req data
-        // 	slideState.options.forEach((option, idx) => {
-        // 		reqData.choices.push({
-        // 			id: option.key,
-        // 			label: option.value,
-        // 			position: idx,
-        // 			correctAnswer: option.key === slideState.selectedOption,
-        // 		});
-        // 	});
-        // 	// call update slide api
-        // 	const res = await HttpService.put<any>(`/v1/presentations/${presentationId}/slides/${slideId}`, reqData);
-        // 	if (res.code === 200) {
-        // 		Notification.notifySuccess("Lưu thay đổi thành công");
-        // 		// update slide list icon locally insteads of get new info from api
-        // 		changePresentationState({
-        // 			...presentationState,
-        // 			slides: presentationState.slides.map((slide) => {
-        // 				if (slide.adminKey === slideId) {
-        // 					return {
-        // 						...slide,
-        // 						type: slideState.type || "",
-        // 					};
-        // 				}
-        // 				return { ...slide };
-        // 			}),
-        // 		});
-        // 		globalContext.unBlockUI();
-        // 		return;
-        // 	}
-        // 	if (res.code === RESPONSE_CODE.PRESENTATION_NOT_FOUND) {
-        // 		Notification.notifyError("Lưu thất bại do không tìm thấy bài trình chiếu");
-        // 		globalContext.unBlockUI();
-        // 		return;
-        // 	}
-        // 	if (res.code === RESPONSE_CODE.SLIDE_NOT_FOUND) {
-        // 		Notification.notifyError("Lưu thất bại do không tìm thấy trang chiếu");
-        // 		globalContext.unBlockUI();
-        // 		return;
-        // 	}
-        // 	if (res.code === RESPONSE_CODE.VALIDATION_ERROR) {
-        // 		Notification.notifyError("Có lỗi xảy ra khi gửi yêu cầu");
-        // 		globalContext.unBlockUI();
-        // 		return;
-        // 	}
-        // 	if (res.code === RESPONSE_CODE.PRESENTING_PRESENTATION) {
-        // 		const handleRequestTurnOffPresenting = async () => {
-        // 			globalContext.blockUI(undefined, true);
-        // 			try {
-        // 				await PresentationService.updatePresentationPaceAsync(
-        // 					presentationId ?? "",
-        // 					slideId ?? "",
-        // 					"quit",
-        // 				);
-        // 				Notification.notifySuccess("Tắt trang đang chiếu thành công");
-        // 			} catch (err) {
-        // 				console.error(err);
-        // 				Notification.notifyError(
-        // 					"Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
-        // 				);
-        // 			}
-        // 			globalContext.unBlockUI();
-        // 		};
-        // 		if (presentationState.permission.presentationRole === "owner") {
-        // 			new AlertBuilder()
-        // 				.setTitle("Thông báo")
-        // 				.setText(
-        // 					"Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?",
-        // 				)
-        // 				.setAlertType("info")
-        // 				.setConfirmBtnText("Đến trang chiếu")
-        // 				.setCancelBtnText("Tắt trang chiếu")
-        // 				.showCloseButton()
-        // 				.preventDismiss()
-        // 				.setOnConfirm(() =>
-        // 					navigate(`/presentations/${presentationId}/${presentationState.pace.active}`),
-        // 				)
-        // 				.setOnCancel(handleRequestTurnOffPresenting)
-        // 				.getAlert()
-        // 				.fireAlert();
-        // 		} else {
-        // 			new AlertBuilder()
-        // 				.setTitle("Thông báo")
-        // 				.setText("Bài này đang được trình chiếu, bạn không được phép thao tác chỉnh sửa trang chiếu")
-        // 				.setAlertType("info")
-        // 				.setConfirmBtnText("Đã hiểu")
-        // 				.showCloseButton()
-        // 				.getAlert()
-        // 				.fireAlert();
-        // 		}
-        // 		globalContext.unBlockUI();
-        // 		return;
-        // 	}
-        // 	throw new Error("Unknown http code");
-        // } catch (error) {
-        // 	console.error(error);
-        // 	globalContext.unBlockUI();
-        // }
-    };
-
     const handlePresentSlide = async () => {
         try {
-            globalContext.blockUI(undefined, true);
-            await PresentationService.updatePresentationPaceAsync(presentationId ?? "", slideId ?? "", "present", {
-                scope: "public",
-                groupId: null,
-            });
-            // if (
-            // 	res.code === RESPONSE_CODE.MY_PRESENTATION_IN_GROUP ||
-            // 	res.code === RESPONSE_CODE.PRESENTING_SLIDE_PERMISSION
-            // ) {
-            // 	const handleRequestTurnOffPresenting = async () => {
-            // 		globalContext.blockUI(undefined, true);
-            // 		try {
-            // 			await PresentationService.updatePresentationPaceAsync(
-            // 				presentationId ?? "",
-            // 				slideId ?? "",
-            // 				"quit",
-            // 			);
-            // 			Notification.notifySuccess("Tắt trang đang chiếu thành công");
-            // 		} catch (err) {
-            // 			console.error(err);
-            // 			Notification.notifyError(
-            // 				"Có lỗi xảy ra khi cập nhật trạng thái trình chiếu, vui lòng thử lại sau",
-            // 			);
-            // 		}
-            // 		globalContext.unBlockUI();
-            // 	};
-            // 	new AlertBuilder()
-            // 		.setTitle("Thông báo")
-            // 		.setText(
-            // 			"Bài này đang được trình chiếu, bạn có muốn đi đến trang đang chiếu hoặc buộc tắt trang đang được chiếu không?",
-            // 		)
-            // 		.setAlertType("info")
-            // 		.setConfirmBtnText("Đến trang chiếu")
-            // 		.setCancelBtnText("Tắt trang chiếu")
-            // 		.showCloseButton()
-            // 		.preventDismiss()
-            // 		.setOnConfirm(() => navigate(`/presentations/${presentationId}/${presentationState.pace.active}`))
-            // 		.setOnCancel(handleRequestTurnOffPresenting)
-            // 		.getAlert()
-            // 		.fireAlert();
-            // 	globalContext.unBlockUI();
-            // 	return;
-            // }
-            // if (res.code === RESPONSE_CODE.OTHER_PRESENTATION_IN_GROUP) {
-            // 	new AlertBuilder()
-            // 		.setTitle("Thông báo")
-            // 		.setText("Bạn không được phép trình chiếu do nhóm này đang có người khác đang trình chiếu")
-            // 		.setAlertType("info")
-            // 		.setConfirmBtnText("Đã hiểu")
-            // 		.showCloseButton()
-            // 		.getAlert()
-            // 		.fireAlert();
-            // 	globalContext.unBlockUI();
-            // 	return;
-            // }
-            globalContext.unBlockUI();
+            await PresentationService.updatePresentationPaceAsync(presentationId || "", slideId ?? "", "present");
+
             navigate(`/presentation/${presentationId}/${slideId}`);
-        } catch (updatePaceErr) {
-            console.error(updatePaceErr);
-            Notification.notifyError(ERROR_NOTIFICATION.PRESENT_FAILED);
-            globalContext.unBlockUI();
+        } catch (error: any) {
+            const res = error?.response?.data;
+
+            if (res.code === RESPONSE_CODE.CANNOT_FIND_PRESENTATION) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_PRESENTATION);
+                return;
+            }
+
+            if (res.code === RESPONSE_CODE.CANNOT_FIND_SLIDE) {
+                Notification.notifyError(ERROR_NOTIFICATION.CANNOT_FIND_SLIDE);
+                return;
+            }
+
+            if (res.code === RESPONSE_CODE.PRESENT_SLIDE_PERMISSION) {
+                const handleRequestTurnOffPresenting = async () => {
+                    try {
+                        await PresentationService.updatePresentationPaceAsync(presentationId || "", null, "quit");
+
+                        Notification.notifySuccess(SUCCESS_NOTIFICATION.QUIT_SLIDE_SUCCESS);
+                    } catch (err: any) {
+                        const res = err?.response?.data;
+
+                        if (res.code === RESPONSE_CODE.QUIT_SLIDE_PERMISSION) {
+                            Notification.notifySuccess(SUCCESS_NOTIFICATION.QUIT_SLIDE_SUCCESS);
+                            return;
+                        }
+
+                        console.error(err);
+                        Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_PACE_PROCESS);
+                    }
+                };
+
+                new AlertBuilder()
+                    .setTitle("Thông báo")
+                    .setText(
+                        "Bài trình bày này đang được trình chiếu, bạn muốn đi đến trang đang chiếu hay buộc tắt trang đang được chiếu?"
+                    )
+                    .setAlertType("info")
+                    .setConfirmBtnText("Đến trang chiếu")
+                    .setCancelBtnText("Buộc tắt")
+                    .showCloseButton()
+                    .preventDismiss()
+                    .setOnConfirm(() =>
+                        navigate(`/presentation/${presentationId}/${presentationState.pace.active_slide_id}`)
+                    )
+                    .setOnCancel(handleRequestTurnOffPresenting)
+                    .getAlert()
+                    .fireAlert();
+                return;
+            }
+
+            console.error(error);
+            Notification.notifyError(ERROR_NOTIFICATION.UPDATE_PRESENTATION_PACE_PROCESS);
             return;
         }
+    };
+
+    // rendering functions
+    const renderIndicator = (): React.ReactNode => {
+        if (indicators.isSaving) {
+            return (
+                <>
+                    <div id="indicator" className="mx-2">
+                        {!isSmallScreen && (
+                            <span className="text-muted me-2" style={{ fontSize: "0.9rem" }}>
+                                Đang lưu
+                            </span>
+                        )}
+                        <Spinner animation="border" size="sm" variant="primary" />
+                    </div>
+                    <CustomizedTooltip
+                        anchorSelect="#indicator"
+                        content="Chỉnh sửa của bạn sẽ tự động được lưu"
+                        place="bottom"
+                    />
+                </>
+            );
+        }
+
+        if (!indicators.isModified) {
+            return (
+                <>
+                    <div id="indicator" className="mx-2">
+                        {!isSmallScreen && (
+                            <span className="text-muted me-2" style={{ fontSize: "0.9rem" }}>
+                                Đã lưu
+                            </span>
+                        )}
+                        <FontAwesomeIcon className="text-success" icon={faCheck} size="lg" />
+                    </div>
+                    <CustomizedTooltip
+                        anchorSelect="#indicator"
+                        content="Chỉnh sửa của bạn sẽ tự động được lưu"
+                        place="bottom"
+                    />
+                </>
+            );
+        }
+
+        if (indicators.error !== ErrorState.none) {
+            return (
+                <>
+                    <div id="indicator" className="mx-2">
+                        {!isSmallScreen && (
+                            <span className="text-danger me-2" style={{ fontSize: "0.9rem" }}>
+                                Chưa lưu
+                            </span>
+                        )}
+                        <FontAwesomeIcon className=" text-danger" icon={faXmark} size="lg" />
+                    </div>
+                    <CustomizedTooltip
+                        anchorSelect="#indicator"
+                        content="Chỉnh sửa của bạn sẽ tự động được lưu"
+                        place="bottom"
+                    />
+                </>
+            );
+        }
+
+        return (
+            <>
+                <div id="indicator" className="mx-2">
+                    {!isSmallScreen && (
+                        <span className="text-muted me-2" style={{ fontSize: "0.9rem" }}>
+                            Đang lưu
+                        </span>
+                    )}
+                    <Spinner animation="border" size="sm" variant="primary" />
+                </div>
+                <CustomizedTooltip
+                    anchorSelect="#indicator"
+                    content="Chỉnh sửa của bạn sẽ tự động được lưu"
+                    place="bottom"
+                />
+            </>
+        );
     };
 
     return (
@@ -358,17 +232,10 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                 </div>
                 <div className="edit-presentation-layout__main-content">
                     <div className="main-content__static-header">
-                        <Button
-                            className="static-header__menu-btn"
-                            variant="light"
-                            onClick={() => setIsCollapsed(false)}
-                        >
-                            <FontAwesomeIcon className="text-primary" icon={faBars} size="lg" />
-                        </Button>
-                        <Stack direction="horizontal" className="align-items-center">
+                        <div className="static-header__menu-btn-container--lg me-1">
                             <Link
                                 to="/dashboard/presentation-list"
-                                className="px-0 mx-2 h-100 d-flex align-items-center justify-content-center"
+                                className="px-0 mx-1 h-100 d-flex align-items-center justify-content-center"
                                 id="back-to-presentation"
                             >
                                 <FontAwesomeIcon className="me-2" icon={faChevronLeft} size="lg" />
@@ -378,15 +245,43 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                 content="Danh sách bài trình chiếu"
                                 place="bottom"
                             />
+                        </div>
 
-                            <Stack className="justify-content-center ms-1">
-                                <p className="mb-0 fs-5" style={{ fontWeight: 600 }}>
-                                    {presentationState.name}
-                                </p>
-                                <span className="mb-0" style={{ fontSize: "0.76rem" }}>
-                                    Được tạo bởi {presentationState.ownerDisplayName}
-                                </span>
-                            </Stack>
+                        <div className="static-header__menu-btn-container--sm me-1">
+                            <Dropdown>
+                                <Dropdown.Toggle className="static-header__menu-btn" variant="light">
+                                    <FontAwesomeIcon className="text-primary" icon={faBars} size="lg" />
+                                </Dropdown.Toggle>
+
+                                <Dropdown.Menu style={{ margin: 0 }}>
+                                    <Dropdown.Item
+                                        className="d-flex align-items-center"
+                                        onClick={() => setIsCollapsed(false)}
+                                    >
+                                        <FontAwesomeIcon
+                                            style={{ width: "1rem", marginRight: "0.6rem" }}
+                                            icon={faList}
+                                        />
+                                        Danh sách trang chiếu
+                                    </Dropdown.Item>
+                                    <Dropdown.Item
+                                        className="d-flex align-items-center"
+                                        onClick={() => navigate("/dashboard/presentation-list")}
+                                    >
+                                        <FontAwesomeIcon
+                                            style={{ width: "1rem", marginRight: "0.6rem" }}
+                                            icon={faChevronLeft}
+                                        />
+                                        Danh sách bài trình bày
+                                    </Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </div>
+                        <Stack direction="horizontal" className="align-items-center">
+                            <PresentationInfo
+                                doesWhenEditModeOn={() => setHideHeaderRight(true)}
+                                doesWhenEditModeOff={() => setHideHeaderRight(false)}
+                            />
                         </Stack>
 
                         <div className="static-header__header-actions">
@@ -398,29 +293,65 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                                 <FontAwesomeIcon className="me-1" icon={faSquarePollVertical} size="lg" /> Xem kết quả
                             </Button> */}
 
-                            <Button className="mx-2" variant="secondary" onClick={handleSaveSlide}>
-                                <FontAwesomeIcon className="me-1" icon={faFloppyDisk} size="lg" /> Lưu
-                            </Button>
+                            {/* if the screen is big enough */}
+                            {!hideHeaderRight && renderIndicator()}
 
-                            <Button className="mx-2" variant="primary" onClick={handlePresentSlide}>
-                                <FontAwesomeIcon className="me-1" icon={faPlay} size="lg" /> Trình chiếu
-                            </Button>
+                            {!isSmallScreen && (
+                                <Button className="mx-2" variant="primary" onClick={handlePresentSlide}>
+                                    <FontAwesomeIcon icon={faPlay} size="lg" />
+                                    <span className="ms-2">Trình chiếu</span>
+                                </Button>
+                            )}
 
-                            <Dropdown>
-                                <Dropdown.Toggle className="static-header__avatar-dropdown-btn" variant="light">
-                                    <img
-                                        className="static-header__avatar"
-                                        src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
-                                        alt=""
-                                        loading="lazy"
-                                    />
-                                </Dropdown.Toggle>
+                            {!isSmallScreen && (
+                                <Dropdown>
+                                    <Dropdown.Toggle className="static-header__avatar-dropdown-btn" variant="light">
+                                        <img
+                                            className="static-header__avatar"
+                                            src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
+                                            alt=""
+                                            loading="lazy"
+                                        />
+                                    </Dropdown.Toggle>
 
-                                <Dropdown.Menu style={{ margin: 0 }}>
-                                    <Dropdown.Item onClick={() => navigate("/profile")}>Hồ sơ cá nhân</Dropdown.Item>
-                                    <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
+                                    <Dropdown.Menu style={{ margin: 0 }}>
+                                        {/* <Dropdown.Item onClick={() => navigate("/profile")}>
+                                            Hồ sơ cá nhân
+                                        </Dropdown.Item> */}
+                                        <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
+                                    </Dropdown.Menu>
+                                </Dropdown>
+                            )}
+
+                            {/* if the screen is small */}
+                            {isSmallScreen &&
+                                (hideHeaderRight ? null : (
+                                    <>
+                                        <Button className="mx-2 px-3" variant="primary" onClick={handlePresentSlide}>
+                                            <FontAwesomeIcon icon={faPlay} size="lg" />
+                                        </Button>
+                                        <Dropdown>
+                                            <Dropdown.Toggle
+                                                className="static-header__avatar-dropdown-btn px-2"
+                                                variant="light"
+                                            >
+                                                <img
+                                                    className="static-header__avatar"
+                                                    src={`${userInfo?.avatar || "/images/default-avatar.png"}`}
+                                                    alt=""
+                                                    loading="lazy"
+                                                />
+                                            </Dropdown.Toggle>
+
+                                            <Dropdown.Menu style={{ margin: 0 }}>
+                                                {/* <Dropdown.Item onClick={() => navigate("/profile")}>
+                                                    Hồ sơ cá nhân
+                                                </Dropdown.Item> */}
+                                                <Dropdown.Item onClick={handleLogout}>Đăng xuất</Dropdown.Item>
+                                            </Dropdown.Menu>
+                                        </Dropdown>
+                                    </>
+                                ))}
                         </div>
                     </div>
                     <div className="main-content__dynamic-content">
@@ -428,11 +359,6 @@ export default function EditPresentationLayout(props: IEditPresentationLayout) {
                     </div>
                 </div>
             </div>
-            {/* <SelectGroupModal
-				show={showSelectGroupModal}
-				hideModal={() => setShowSelectGroupModal(false)}
-				callbackWithGroupId={handlePresentSlideToGroup}
-			/> */}
         </>
     );
 }
